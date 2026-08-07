@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#050508">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LOLZ">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon.png">
+    <link rel="apple-touch-icon" href="icons/icon.png">
+    <title>LOLZ // DAILY SPRINT 10</title>
+    <link rel="stylesheet" href="style.css">
+    
+ <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            chtml: {
+                displayAlign: 'left'
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+    <style>
+        .sprint-container { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; min-height: calc(100vh - 3rem); }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a2a35; padding-bottom: 1rem; flex-wrap: wrap; gap: 0.8rem; }
+        .timer-display { font-size: 2rem; font-weight: 900; color: var(--accent-magenta); font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255, 0, 127, 0.3); }
+        .progress-badge { background: transparent; color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+        
+        .problem-card { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1.5rem; 
+            padding: 2rem; 
+            background: var(--card-bg-glass); 
+            border: 1px solid rgba(0, 243, 255, 0.2); 
+            box-shadow: 4px 4px 0px rgba(0, 243, 255, 0.05);
+            height: auto !important;
+            position: relative;
+        }
+        
+        .sprint-title { font-size: 1.4rem; font-weight: 800; line-height: 1.6; color: var(--text-main); min-height: auto; margin-bottom: 1rem; }
+        .control-panel { display: flex; gap: 1rem; width: 100%; margin-top: 1rem; position: relative; z-index: 10; }
+        .btn-action { flex: 1; height: 54px; font-size: 1.1rem; font-weight: 800; cursor: pointer; }
+        .btn-wrong { background: var(--accent-magenta) !important; color: #000 !important; box-shadow: 4px 4px 0px #9e004f !important; }
+        .btn-correct { background: var(--accent-cyan) !important; color: #000 !important; box-shadow: 4px 4px 0px #008b94 !important; }
+        
+        .reveal-zone { display: none; flex-direction: column; gap: 1.2rem; background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 16px; border: 1px dashed #3a3a4a; margin-top: 1.5rem; width: 100%; }
+        .result-screen { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; border: 1px solid var(--accent-cyan); background: var(--card-bg-glass); }
+        
+        .mjx-chtml { margin: 0.5rem 0 !important; padding-left: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="sprint-container">
+        <!-- GLOBAL CYBER HUD NAV -->
+        <nav class="global-cyber-nav">
+            <div class="nav-brand">SYSTEM OS // LOLZ</div>
+            <button type="button" class="nav-hamburger-btn" aria-label="メニューを開く" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="nav-links">
+                <a href="index.html" class="nav-btn">🧠 誤答ノート</a>
+                <a href="daily.html" class="nav-btn active">🏁 計算スプリント</a>
+                <a href="custom-sprint.html" class="nav-btn">🎯 カスタムスプリント</a>
+                <a href="lesson.html" class="nav-btn">📖 授業・解説</a>
+                <a href="answer-check.html" class="nav-btn">⚡ 答え合わせ</a>
+                <a href="mark-test.html" class="nav-btn">🎯 マーク模試</a>
+                <a href="tokei/index.html" class="nav-btn global-timer-link">⏱️ 集中タイマー</a>
+                <a href="study/index.html" class="nav-btn" title="24hログを開く">📊 24hログ</a>
+                <a href="https://photos.google.com" target="_blank" rel="noopener" class="nav-btn" title="Google Photosを開く">📷 Photos</a>
+            </div>
+        </nav>
+        <div class="nav-drawer-overlay"></div>
+        <script src="global-timer-sync.js"></script>
+        <script src="mobile-nav.js"></script>
+
+        <header>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span style="font-weight: 900; letter-spacing: -1px; color: var(--accent-cyan)">DAILY SPRINT 10</span>
+                <span class="badge progress-badge" id="sprint-progress">ANALYZING...</span>
+            </div>
+            <div class="timer-display" id="sprint-timer">00:00.00</div>
+        </header>
+
+        <main id="sprint-play-zone" class="squircle-tile problem-card">
+            <div style="display: flex; gap: 0.5rem;">
+                <span class="badge badge-physics" id="problem-meta">AI // SYNAPSES</span>
+            </div>
+            
+            <div class="sprint-title" id="problem-title-display">🤖 クラウド同期完了。AIがあなたの誤答データをスキャンし、本日の特訓問題10問を生成しています。少々お待ちください（約5秒）...</div>
+
+            <div class="control-panel" id="action-trigger-zone">
+                <button type="button" class="tactile-btn btn-action" id="btn-reveal-ans" style="background:#111; color:#fff; border:1px solid #333; display:none;">👁 答えを確認する</button>
+            </div>
+
+            <div class="reveal-zone" id="sprint-reveal-zone">
+                <hr style="border: 0; border-top: 1px dashed #22222a; margin-bottom: 0.5rem;">
+                <div style="font-size:0.8rem; color:var(--text-muted); font-weight:800; margin-bottom:0.2rem;">CORRECT ANSWER</div>
+                <div class="model-answer-text" id="sprint-answer-display" style="font-size:1.3rem; color:var(--accent-cyan); font-weight:900; margin-bottom:1rem;">---</div>
+                
+                <div style="font-size:0.8rem; color:var(--text-muted); font-weight:800; margin-bottom:0.2rem;">STEPS</div>
+                <div class="model-answer-text" id="sprint-steps-display" style="font-size:1rem; white-space:pre-wrap; line-height:1.6; color:var(--text-bright-muted); margin-bottom:1rem;">---</div>
+                
+                <div class="control-panel">
+                    <button type="button" class="tactile-btn btn-action btn-wrong" id="btn-sprint-wrong">❌ ミスった（LOLZへ送る）</button>
+                    <button type="button" class="tactile-btn btn-action btn-correct" id="btn-sprint-correct">🎉 解けた！(次へ)</button>
+                </div>
+            </div>
+        </main>
+
+        <div id="sprint-result-zone" class="squircle-tile result-screen">
+            <h2 style="font-size: 2rem; font-weight: 900; color: var(--accent-cyan); margin-bottom: 1rem;">🏁 FINISH // チェッカーフラッグ！</h2>
+            <p style="color:var(--text-muted); margin-bottom: 2rem;">本日の計算スプリント10問をすべてクリアしました。</p>
+            <div style="font-size: 1rem; color:var(--text-bright-muted); margin-bottom: 0.5rem; font-weight: 800;">TOTAL TIME</div>
+            <div class="timer-display" id="final-time-display" style="font-size: 3.5rem; margin-bottom: 3rem;">00:00.00</div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                <button type="button" class="tactile-btn" id="btn-regenerate-sprint" style="padding: 1rem 2rem; background: #111; color: var(--accent-yellow); border: 1px solid var(--accent-yellow); box-shadow: 4px 4px 0px rgba(255,245,0,0.2);">🔄 新しい10問でもう一周する</button>
+                <button type="button" class="tactile-btn" onclick="location.href='index.html'" style="padding: 1rem 2rem; background: var(--accent-cyan); box-shadow: 4px 4px 0px #008b94;">ダッシュボードに戻る</button>
+            </div>
+        </div>
+    </div>
+
+
+    
+    
+    <script type="module">
+        import { dailyProblemBank } from "./daily-data.js";
+        import { getDeepseekKeys, fetchWithKeyRotation, initApiKeyManager } from "./api-key-manager.js";
+
+        const proto = "https" + "://";
+        const d = ".";
+        const fbBase = proto + "www" + d + "gstatic" + d + "com/firebasejs/10.12.0/";
+
+        const { initializeApp } = await import(fbBase + "firebase-app.js");
+        const { getAuth, onAuthStateChanged } = await import(fbBase + "firebase-auth.js");
+        const { getDatabase, ref, set, get, onValue } = await import(fbBase + "firebase-database.js");
+
+        // Firebase設定
+        const firebaseConfig = {
+            apiKey: "AIzaSyB55MdhpjJizQaLEdRu-XhBVJ4PqrHsAyY", 
+            authDomain: "buturi-2449e.firebaseapp.com",
+            databaseURL: proto + "buturi-2449e-default-rtdb" + d + "asia-southeast1" + d + "firebasedatabase" + d + "app/",
+            projectId: "buturi-2449e",
+            storageBucket: "buturi-2449e.appspot.com",
+            messagingSenderId: "976306696124",
+            appId: "1:976306696124:web:e455c1953544bff5c345b9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        // 🔑【複数キー対応】index.html/problem.htmlと共通の管理UIを注入（未登録なら自動で開く）
+        initApiKeyManager({ needDeepseek: true });
+        const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
+
+        let selectedQuestions = [];
+        let currentQuestionIndex = 0;
+        let loginUid = null;
+        let startTime = 0;
+        let timerInterval = null;
+        let currentTodayStr = null;
+        let currentSprintCacheRef = null;
+
+
+        // ==========================================================================
+        // 🛠【関数定義群】(ReferenceErrorを防ぐため、先にすべて評価させます)
+        // ==========================================================================
+
+        // ✨ クラウドキャッシュ確認＆AI生成パイプライン
+        function setupDailySprintAI(uid) {
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+            currentTodayStr = todayStr;
+
+            // クラウド上に「今日の問題」が既にキャッシュされているかチェック
+            const sprintCacheRef = ref(database, 'users/' + uid + '/daily_sprint/' + todayStr);
+            currentSprintCacheRef = sprintCacheRef;
+
+            onValue(sprintCacheRef, async (snapshot) => {
+                const cacheData = snapshot.val();
+                if (cacheData && cacheData.questions) {
+                    // 既に今日1回作っていたら、それを流用（リロード対策）
+                    selectedQuestions = cacheData.questions;
+                    startSprintTimer();
+                } else {
+                    // 今日まだ作ってないなら、あなたの弱点データを集計してAIに生成させる
+                    await generateSprintWithAI(uid, todayStr, sprintCacheRef);
+                }
+            }, { onlyOnce: true });
+        }
+
+        // 🔄【新設】1周終わった後、新しい10問を再生成してもう一周プレイする
+        async function regenerateSprint() {
+            if (!loginUid || !currentTodayStr || !currentSprintCacheRef) return;
+
+            currentQuestionIndex = 0;
+            clearInterval(timerInterval);
+            document.getElementById("sprint-timer").textContent = "00:00.00";
+
+            document.getElementById("sprint-result-zone").style.display = "none";
+            document.getElementById("sprint-play-zone").style.display = "flex";
+            document.getElementById("sprint-progress").textContent = "ANALYZING...";
+            document.getElementById("sprint-reveal-zone").style.display = "none";
+            document.getElementById("btn-reveal-ans").style.display = "none";
+            document.getElementById("problem-title-display").innerHTML = "🤖 新しい10問を生成しています。少々お待ちください（約5秒）...";
+
+            await generateSprintWithAI(loginUid, currentTodayStr, currentSprintCacheRef);
+        }
+
+        // ✨ 誤答自動スキャン＆DeepSeek（最新V4・Thinkingモード）問題作成処理
+        async function generateSprintWithAI(uid, todayStr, sprintCacheRef) {
+            // 🔁【新設】直近数日分の出題履歴を取得し、「最近扱った分野」を集計する
+            //    → 弱点分野の自動抽出はやめて、代わりに「直近と被らないようにする」ための重複回避に使う
+            const historyRootRef = ref(database, 'users/' + uid + '/daily_sprint');
+            const historySnapshot = await get(historyRootRef);
+            const historyData = historySnapshot.val() || {};
+
+            const recentFields = [];
+            Object.keys(historyData)
+                .filter(dateKey => dateKey !== todayStr) // 今日の分は除く
+                .sort((a, b) => new Date(historyData[b].generatedAt || 0) - new Date(historyData[a].generatedAt || 0))
+                .slice(0, 4) // 直近4回分だけ見る
+                .forEach(dateKey => {
+                    const qs = historyData[dateKey].questions || [];
+                    qs.forEach(q => { if (q.field) recentFields.push(q.field); });
+                });
+
+            const uniqueRecentFields = [...new Set(recentFields)].slice(0, 15);
+            const recentFieldsText = uniqueRecentFields.length > 0
+                ? uniqueRecentFields.join("、")
+                : "（まだ出題履歴がありません）";
+
+            // DeepSeekの推論力を引き出すプロンプト
+            const systemPrompt = `
+あなたは日本の高校数学の教育に精通した、極めて優秀なAI数学教師です。
+生徒の数学目的思考力と計算力を限界まで引き上げるため、本日の【数学I,A,II,B,C】の計算特訓タイムアタック問題を【厳密に10問】作成してください（数学IIIの範囲は対象外とします）。
+
+【🚫 除外分野・禁止事項】
+- 「軌跡」「軌跡と領域」に関する問題は完全に除外してください。
+- 「複素数」「複素数平面」に関する問題は完全に除外してください。
+- 数学IIIの範囲（微分法・積分法の発展的内容、極限、媒介変数・極座標など）に関する問題は完全に除外してください。
+- 上記以外で、タイムアタックに適した、純粋な式変形や計算・展開・評価問題のみを選定すること。
+
+【🔁 出題の多様性（重複回避）】
+- 直近の演習で扱った分野は次の通りです：${recentFieldsText}
+- 最近似たような分野・パターンの問題ばかりが続いている可能性があるため、上記の分野には可能な限り偏らせず、別の分野・別の解法アプローチを積極的に選ぶこと。ただし前述の除外分野を避けた上での話であり、無理に不自然な分野へこじつける必要はない。
+
+【出題テーマ・難易度】
+1. 対象範囲：【数学I,A,II,B,C】の全範囲（数学IIIは含まない）から、特定の分野に偏らないようバランスよく10問を構成。
+2. 難易度設定：国立大学入学レベルの問題。難しめにすること。
+3. 質的アプローチ：単なる数字が大きくて面倒なだけの計算ではなく、公式の鮮やかな組み合わせ、対称性の利用、適切な文字の置き換え（置換）、因数分解の一工夫など、数学的な「視点や気付き」を必要とする少しひねりのある良質な計算・標準問題にしてください。紙とペンを使い、1問あたり3〜5分程度で完結するもの。
+
+【数式・解説ルール】
+1. 数式フォーマット：問題文(title)、答え(answer)、解説(steps)に含まれる数式や変数は、必ず前後に $ または $$ をつけて美しいLaTeX数式形式にしてください。
+2. 解説の構造化：steps（解説）は1行に詰め込まず、計算過程や使用した公式、思考のステップごとに必ず改行コード（\\\\n）を挟んで、論理の飛躍がない見やすい箇条書き形式にしてください。
+
+【JSONフォーマット】
+[
+  {
+    "id": "AI_SPRINT_${Date.now()}_1",
+    "subject": "数学II",
+    "field": "分野名（例: 三角関数）",
+    "title": "問題文（数式は$ $で挟む）",
+    "answer": "最終的な正しい答え（数式は$ $で挟む）",
+    "steps": "ステップごとの解説（\\\\nで改行を挟む）"
+  }
+]
+`;
+
+            try {
+                    // 🛡️【キーの防衛チェック】1件も登録されていないか検証
+                    if (getDeepseekKeys().length === 0) {
+                        throw new Error("DeepSeekのAPIキーがブラウザに設定されていません。右下の🔑ボタンから登録してください。");
+                    }
+
+                    // 🚀 最新のDeepSeek V4「Pro」＋「Thinking Mode（思考モード）」の公式リクエスト構造
+                    // 🔁 登録済みの複数キーを順に試し、429やエラーの時は自動で次のキーへ切り替える
+                    const sprintDeepseekBody = JSON.stringify({
+                        "model": "deepseek-v4-pro", // ✨最上位のV4 Proモデルを指定（精度最優先）
+                        "messages": [
+                            { "role": "system", "content": "あなたは優秀なAI数学教師です。指定されたJSONフォーマットの配列のみを厳密に返してください。" },
+                            { "role": "user", "content": systemPrompt }
+                        ],
+                        "extra_body": {
+                            "thinking": { "type": "enabled" } // ✨公式の思考プロセス（推論）有効化フラグ
+                        }
+                    });
+
+                    const response = await fetchWithKeyRotation(getDeepseekKeys(), (key) => ({
+                        url: DEEPSEEK_API_URL,
+                        options: {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${key}`
+                            },
+                            body: sprintDeepseekBody
+                        }
+                    }));
+
+                    const data = await response.json();
+                    let rawJsonText = data.choices[0].message.content.trim();
+
+                    // Markdownのコードブロックタグを正規表現で綺麗に削除
+                    rawJsonText = rawJsonText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+                    let aiQuestions;
+                    try {
+                        // AIの出力を信じてそのままパースする
+                        aiQuestions = JSON.parse(rawJsonText);
+                    } catch (e) {
+                        // もしAIが \frac などのバックスラッシュをエスケープし忘れていた場合の安全策
+                        // JSONとして不正な単独のバックスラッシュのみを二重に修正して再パース
+                        rawJsonText = rawJsonText.replace(/\\([^"\\/bfnrtu])/g, '\\\\$1');
+                        aiQuestions = JSON.parse(rawJsonText);
+                    }
+                    
+                    if (!Array.isArray(aiQuestions) || aiQuestions.length === 0) {
+                        throw new Error("AIの応答配列が異常です。");
+                    }
+
+                    await set(sprintCacheRef, { questions: aiQuestions, generatedAt: new Date().toISOString() });
+                    selectedQuestions = aiQuestions;
+                    startSprintTimer();
+
+                // ──────────────────────────────────────────────────────────
+// 【差し替え】予備問題バンクからランダムに10問選出するロジックに更新
+// ──────────────────────────────────────────────────────────
+                } catch (error) {
+                    console.error("AI問題生成エラー:", error);
+                    alert("⚠️ DeepSeekによる問題生成に失敗しました。\n\n【エラー内容】\n" + error.message + "\n\n※予備問題データベース（200問）からランダムに10問選出して特訓を開始します！");
+                    
+                    // 200問の予備問題バンクからランダムにシャッフルして10問を抽出
+                    const shuffled = [...dailyProblemBank].sort(() => 0.5 - Math.random());
+                    selectedQuestions = shuffled.slice(0, 10);
+
+                    startSprintTimer();
+                }
+        }
+
+        function startSprintTimer() {
+            document.getElementById("btn-reveal-ans").style.display = "block";
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 10);
+            renderQuestion();
+        }
+
+        function updateTimer() {
+            const diff = Date.now() - startTime;
+            const min = String(Math.floor(diff / 60000)).padStart(2, '0');
+            const sec = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+            const ms = String(Math.floor((diff % 1000) / 10)).padStart(2, '0');
+            document.getElementById("sprint-timer").textContent = `${min}:${sec}.${ms}`;
+        }
+
+        async function forceTriggerMathJax() {
+            if (window.MathJax && MathJax.typesetPromise) {
+                try { await MathJax.typesetPromise(); } catch (err) { console.log(err.message); }
+            }
+        }
+
+        function renderQuestion() {
+            if (currentQuestionIndex >= selectedQuestions.length) {
+                finishSprint();
+                return;
+            }
+
+            document.getElementById("sprint-reveal-zone").style.display = "none";
+            document.getElementById("btn-reveal-ans").style.display = "block";
+            document.getElementById("sprint-progress").textContent = `Q. ${currentQuestionIndex + 1} / ${selectedQuestions.length}`;
+
+            const q = selectedQuestions[currentQuestionIndex];
+            document.getElementById("problem-meta").textContent = `${q.subject} // ${q.field} // AI生成`;
+            
+            document.getElementById("problem-title-display").innerHTML = q.title;
+            document.getElementById("sprint-answer-display").innerHTML = q.answer;
+            
+            let cleanSteps = q.steps || "";
+            cleanSteps = cleanSteps.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+            document.getElementById("sprint-steps-display").innerHTML = cleanSteps;
+
+            forceTriggerMathJax();
+        }
+
+        async function sendToMainRemindList() {
+            if (!loginUid) return;
+            const q = selectedQuestions[currentQuestionIndex];
+            
+            const targetRef = ref(database, 'users/' + loginUid + '/problems/' + q.id);
+            
+            const remindProblem = {
+                id: q.id,
+                title: q.title,
+                short_title: `【DS】${q.field}計算`,
+                subject: q.subject,
+                field: q.field,
+                trap_description: "デイリースプリントノックでミスした問題。数式の展開や符号ミス、計算ルートの選定を見直してください。",
+                errorCount: 1,
+                lastAttemptAt: new Date().toISOString(),
+                lastResult: false,
+                imageData: null,
+                answerFormula: `${q.answer}\n\n【解説】\n${q.steps}`
+            };
+
+            try {
+                await set(targetRef, remindProblem);
+                alert("🚨 弱点としてロックオン！ダッシュボード（LOLZ）の復習リストに自動転送・同期しました！");
+                nextQuestion();
+            } catch (e) {
+                console.error(e);
+                alert("クラウドへの転送に失敗しました。");
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            renderQuestion();
+        }
+
+        function finishSprint() {
+            clearInterval(timerInterval);
+            const finalTime = document.getElementById("sprint-timer").textContent;
+            document.getElementById("sprint-play-zone").style.display = "none";
+            document.getElementById("sprint-result-zone").style.display = "flex";
+            document.getElementById("final-time-display").textContent = finalTime;
+        }
+
+
+        // ==========================================================================
+        // 📋【共通イベントリスナー登録群】
+        // ==========================================================================
+        document.getElementById("btn-reveal-ans").addEventListener("click", () => {
+            document.getElementById("btn-reveal-ans").style.display = "none";
+            document.getElementById("sprint-reveal-zone").style.display = "flex";
+            forceTriggerMathJax();
+        });
+
+        document.getElementById("btn-sprint-correct").addEventListener("click", nextQuestion);
+        document.getElementById("btn-sprint-wrong").addEventListener("click", sendToMainRemindList);
+        document.getElementById("btn-regenerate-sprint").addEventListener("click", regenerateSprint);
+
+
+        // ==========================================================================
+        // 🚀【重要】最下部へ引越し：すべての関数が出揃った後に認証状態を監視開始
+        // ==========================================================================
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginUid = user.uid;
+                setupDailySprintAI(user.uid);
+            } else {
+                location.href = "index.html";
+            }
+        });
+    </script>
+</body>
+</html>

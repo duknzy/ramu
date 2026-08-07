@@ -1,0 +1,305 @@
+/* ==========================================================================
+   COMMON DESIGN SYSTEM (Tactile Brutalism 2.0) — スマホ専用版
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+:root {
+    --bg-color: #000000;
+    --card-bg: #050508;
+    --card-bg-glass: rgba(10, 10, 18, 0.5);
+    --border-color: #22222a;
+    --border-glow: #3a3a4a;
+
+    /* Neon Accents */
+    --accent-cyan: #00f3ff;
+    --accent-magenta: #ff007f;
+    --accent-yellow: #fff500;
+
+    /* Text */
+    --text-main: #ffffff;
+    --text-muted: #708590;
+    --text-bright-muted: #a0b5c0;
+
+    /* Fonts（スマホの画面幅基準に調整） */
+    --fs-xl: clamp(2.1rem, 9vw, 3rem);
+    --fs-lg: clamp(1.3rem, 5.5vw, 1.8rem);
+    --fs-md: clamp(1.05rem, 4vw, 1.25rem);
+    --fs-sm: 0.9rem;
+
+    /* 画面端の安全領域（ノッチ・ホームバー対応） */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+}
+
+html, body {
+    overscroll-behavior-y: contain; /* Pull-to-refreshの誤爆を抑止 */
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 1rem;
+    padding-top: calc(1rem + var(--safe-top));
+    padding-bottom: calc(1rem + var(--safe-bottom));
+    padding-left: calc(1rem + var(--safe-left));
+    padding-right: calc(1rem + var(--safe-right));
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ドロワー展開中は背面をスクロールさせない */
+body.nav-drawer-locked {
+    overflow: hidden;
+    height: 100dvh;
+}
+
+/* 物理的なノイズテクスチャ */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 9999;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* スクワークル構造 */
+.squircle-card, .squircle-tile {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 24px / 24px;
+    padding: 1.4rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    box-shadow: 4px 4px 0px rgba(0, 243, 255, 0.05);
+}
+
+/* ボタンの150ms高速アクション（タップ領域はスマホ基準で最低44pxを確保） */
+.tactile-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-cyan);
+    color: #000;
+    border: none;
+    border-radius: 14px / 14px;
+    padding: 0.85rem 1.5rem;
+    min-height: 44px;
+    font-weight: 900;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 150ms cubic-bezier(0.1, 0.8, 0.2, 1);
+    box-shadow: 3px 3px 0px #008b94;
+}
+.tactile-btn:active { transform: scale(0.94) translate(1px, 1px); }
+
+
+/* ==========================================================================
+   問題写真：スマホ画面幅に収まるようサイズを抑制
+   ========================================================================== */
+html body .physics-figure-box {
+    max-height: 340px !important;
+    margin-top: 1rem !important;
+}
+
+html body .physics-figure-box img {
+    max-width: 100% !important;
+    max-height: 320px !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    display: block !important;
+}
+
+/* ==========================================================================
+   GLOBAL CYBER HUD NAVIGATION（スマホ：ハンバーガー＋スライドドロワー）
+   ========================================================================== */
+.global-cyber-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10, 10, 18, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 243, 255, 0.25);
+    border-radius: 16px;
+    padding: 0.7rem 1rem;
+    padding-top: calc(0.7rem + var(--safe-top) / 2);
+    margin: calc(-1rem - var(--safe-top)) calc(-1rem - var(--safe-left)) 1.2rem calc(-1rem - var(--safe-right));
+    margin-bottom: 1.2rem;
+    gap: 0.75rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-radius: 0 0 16px 16px;
+    border-top: none;
+}
+
+.nav-brand {
+    font-family: monospace;
+    font-weight: 900;
+    font-size: 0.8rem;
+    letter-spacing: 1.5px;
+    color: var(--accent-cyan, #00f3ff);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-brand::before {
+    content: "●";
+    color: #00ff78;
+    font-size: 0.6rem;
+    animation: blink-dot 1.5s infinite;
+    flex-shrink: 0;
+}
+
+@keyframes blink-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+
+/* 🍔 ハンバーガーボタン */
+.nav-hamburger-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    cursor: pointer;
+    touch-action: manipulation;
+    z-index: 1201;
+}
+
+.nav-hamburger-btn span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--accent-cyan);
+    border-radius: 2px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.nav-hamburger-btn.is-open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.nav-hamburger-btn.is-open span:nth-child(2) {
+    opacity: 0;
+}
+.nav-hamburger-btn.is-open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* 🗔 ドロワー背景オーバーレイ */
+.nav-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 1150;
+}
+
+.nav-drawer-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 📱 ドロワー本体（右からスライドイン） */
+.nav-links {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100dvh;
+    width: min(78vw, 320px);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    background: #08080d;
+    border-left: 1px solid rgba(0, 243, 255, 0.25);
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.6);
+    padding: calc(1.2rem + var(--safe-top)) 1rem calc(1.2rem + var(--safe-bottom)) 1rem;
+    padding-right: calc(1rem + var(--safe-right));
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-y: auto;
+    z-index: 1200;
+}
+
+.nav-links.is-open {
+    transform: translateX(0);
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: #a0b5c0;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.9rem 1rem;
+    min-height: 48px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-decoration: none;
+    touch-action: manipulation;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-btn:active {
+    color: #ffffff;
+    background: rgba(0, 243, 255, 0.15);
+    border-color: #00f3ff;
+}
+
+.nav-btn.active {
+    color: #000000;
+    background: #00f3ff;
+    border-color: #00f3ff;
+    box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+}
+
+.nav-btn.active-timer {
+    background: linear-gradient(135deg, rgba(255, 0, 127, 0.25), rgba(0, 243, 255, 0.25)) !important;
+    border-color: #ff007f !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+    animation: pulse-timer-btn 1.5s infinite alternate;
+}
+
+@keyframes pulse-timer-btn {
+    0% { box-shadow: 0 0 8px rgba(255, 0, 127, 0.4); }
+    100% { box-shadow: 0 0 18px rgba(0, 243, 255, 0.7); }
+}

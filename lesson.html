@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#050508">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LOLZ">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon.png">
+    <link rel="apple-touch-icon" href="icons/icon.png">
+    <title>LOLZ // 参考書 授業モード</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            chtml: { displayAlign: 'left' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+    <style>
+        /* 🌌 レスポンシブ＆PC大画面フィット型レイアウト */
+        html, body {
+            min-height: 100vh;
+        }
+
+        .lesson-container { 
+            max-width: 1550px; 
+            margin: 0 auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1.2rem; 
+            width: 100%;
+            padding: 0 0.5rem;
+        }
+
+        header.lesson-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid #1a2a35; 
+            padding-bottom: 0.8rem; 
+            flex-wrap: wrap; 
+            gap: 0.8rem; 
+        }
+        .lesson-header h1 { font-size: 1.6rem; font-weight: 900; color: var(--accent-yellow); }
+        .back-link { color: var(--text-muted); font-size: 0.85rem; text-decoration: none; }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        /* ── リスト＆新規作成 ── */
+        .lesson-card-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem; margin-bottom: 0.7rem; cursor: pointer; }
+        .lesson-card-row:hover { border-color: var(--border-glow); }
+        .lesson-card-title { font-weight: 800; font-size: 1rem; margin-bottom: 0.3rem; }
+        .lesson-card-meta { font-size: 0.75rem; color: var(--text-muted); }
+        .lesson-progress-badge { font-size: 0.7rem; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 20px; flex-shrink: 0; }
+        .badge-teaching { background: rgba(0,243,255,0.1); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+        .badge-completed { background: rgba(255,245,0,0.1); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
+
+        .new-lesson-form { display: flex; flex-direction: column; gap: 1rem; }
+        .file-drop-label { border: 1px dashed #3a3a4a; border-radius: 14px; padding: 1.2rem; text-align: center; cursor: pointer; color: var(--text-muted); font-size: 0.9rem; }
+        .file-drop-label:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .thumb-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .thumb-row img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; border: 1px solid #22222a; }
+        .note-textarea { width: 100%; min-height: 80px; background: #000; border: 1px solid #22222a; color: #fff; padding: 0.8rem; border-radius: 10px; font-family: inherit; resize: vertical; }
+        .settings-link { font-size: 0.8rem; color: var(--text-muted); background: none; border: none; cursor: pointer; text-decoration: underline; align-self: flex-start; }
+        .settings-link:hover { color: var(--accent-cyan); }
+
+        /* ── プランプレビュー ── */
+        .plan-part-item { border-left: 3px solid var(--accent-yellow); padding: 0.6rem 1rem; margin-bottom: 0.6rem; background: rgba(255,245,0,0.03); border-radius: 0 10px 10px 0; }
+        .plan-part-item b { color: var(--accent-yellow); }
+        .plan-part-item p { font-size: 0.85rem; color: var(--text-bright-muted); margin-top: 0.2rem; }
+
+        /* 💻 PC大画面用 2カラムGrid構成 */
+        @media screen and (min-width: 1025px) {
+            .lesson-layout-grid {
+                display: grid;
+                grid-template-columns: 1fr 420px;
+                gap: 1.5rem;
+                align-items: start;
+                min-height: calc(100vh - 140px);
+            }
+            .lesson-main-card {
+                display: flex;
+                flex-direction: column;
+                min-height: calc(100vh - 140px);
+                max-height: calc(100vh - 140px);
+                min-width: 0;
+            }
+            .lesson-sidebar-card {
+                display: flex;
+                flex-direction: column;
+                min-height: calc(100vh - 140px);
+                max-height: calc(100vh - 140px);
+                min-width: 0;
+            }
+            .chat-transcript {
+                flex-grow: 1;
+                overflow-y: auto;
+                max-height: none !important;
+                padding-right: 0.5rem;
+            }
+        }
+
+        /* 📱 スマホ・タブレット用（縦並び） */
+        @media (max-width: 1024px) {
+            .lesson-layout-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 1.2rem;
+            }
+            .chat-transcript {
+                max-height: 55vh;
+            }
+        }
+
+        /* ── 授業（チャット）画面 ── */
+        .progress-strip { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.8rem; }
+        .progress-strip b { color: var(--accent-cyan); }
+        .chat-transcript { 
+            display: flex; 
+            flex-direction: column; 
+            overflow-y: auto; 
+            padding: 0.5rem;
+            gap: 1rem;
+            min-width: 0;
+        }
+        .chat-bubble { 
+            padding: 1rem 1.3rem; 
+            border-radius: 18px; 
+            font-size: 1.02rem; 
+            line-height: 1.65; 
+            max-width: 94%; 
+            min-width: 0;
+            box-sizing: border-box;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+        }
+        .bubble-ai { 
+            background: rgba(18, 22, 34, 0.85); 
+            border-left: 4px solid var(--accent-yellow); 
+            color: #f0f4f8; 
+            align-self: flex-start; 
+        }
+        .bubble-user { 
+            background: rgba(255, 0, 127, 0.15); 
+            border-right: 4px solid var(--accent-magenta); 
+            color: #ffffff; 
+            align-self: flex-end; 
+        }
+        .bubble-divider { 
+            align-self: center; 
+            font-size: 0.8rem; 
+            color: var(--accent-yellow); 
+            font-weight: 800; 
+            margin: 1.2rem 0 0.8rem; 
+            letter-spacing: 0.5px; 
+            background: rgba(255, 245, 0, 0.08);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 245, 0, 0.2);
+        }
+
+        /* MathJax溢れ防止 */
+        .chat-bubble mjx-container {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            vertical-align: middle;
+            padding: 0.2em 0;
+        }
+        .chat-bubble mjx-container[jax="CHTML"][display="true"] {
+            display: block !important;
+            margin: 0.6em 0 !important;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.6rem;
+            border-radius: 8px;
+        }
+
+        /* カスタムスクロールバー */
+        .chat-transcript::-webkit-scrollbar,
+        .parts-toc-container::-webkit-scrollbar,
+        .source-text-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-transcript::-webkit-scrollbar-track,
+        .parts-toc-container::-webkit-scrollbar-track,
+        .source-text-box::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+        .chat-transcript::-webkit-scrollbar-thumb,
+        .parts-toc-container::-webkit-scrollbar-thumb,
+        .source-text-box::-webkit-scrollbar-thumb {
+            background: rgba(255, 245, 0, 0.3);
+            border-radius: 3px;
+        }
+        .chat-transcript::-webkit-scrollbar-thumb:hover,
+        .parts-toc-container::-webkit-scrollbar-thumb:hover,
+        .source-text-box::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-yellow);
+        }
+
+        /* ── サイドバー（タブ＆コンテンツ） ── */
+        .sidebar-tab-group {
+            display: flex;
+            gap: 0.4rem;
+            border-bottom: 1px solid #22222a;
+            padding-bottom: 0.6rem;
+            margin-bottom: 1rem;
+        }
+        .sidebar-tab-btn {
+            flex: 1;
+            text-align: center;
+            white-space: nowrap; /* 💡 改行を完全防御 */
+            background: transparent;
+            border: 1px solid #22222a;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 800;
+            padding: 0.5rem 0.3rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .sidebar-tab-btn.active {
+            background: rgba(0, 243, 255, 0.12);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.15);
+        }
+        .sidebar-panel {
+            display: none;
+            flex-grow: 1;
+            flex-direction: column;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .sidebar-panel.active {
+            display: flex;
+        }
+
+        /* パート目次アイテム */
+        .parts-toc-container {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 0.3rem;
+        }
+        .toc-item {
+            padding: 0.9rem 1.1rem;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #1a2a35;
+            margin-bottom: 0.7rem;
+            transition: all 0.15s ease;
+        }
+        .toc-item.current-active {
+            background: rgba(255, 245, 0, 0.08);
+            border-color: var(--accent-yellow);
+            box-shadow: 0 0 14px rgba(255, 245, 0, 0.15);
+        }
+        .toc-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.6rem;
+        }
+        .toc-item-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.45;
+            word-break: break-word;
+            flex-grow: 1;
+        }
+        .toc-item.current-active .toc-item-title {
+            color: var(--accent-yellow);
+        }
+        .toc-status-badge {
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 0.2rem 0.55rem;
+            border-radius: 12px;
+            white-space: nowrap; /* 💡 バッジ文字の改行を完全防御 */
+            flex-shrink: 0;     /* 💡 潰れ防止 */
+            line-height: 1.2;
+        }
+        .toc-regen-btn {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            line-height: 1.2;
+            background: transparent;
+            border: 1px solid var(--accent-magenta, #ff007f);
+            color: var(--accent-magenta, #ff007f);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .toc-regen-btn:hover { background: rgba(255, 0, 127, 0.12); }
+        .toc-regen-btn:disabled { opacity: 0.5; cursor: default; }
+        .badge-toc-active {
+            color: var(--accent-yellow);
+            border: 1px solid var(--accent-yellow);
+            background: rgba(255, 245, 0, 0.15);
+        }
+        .badge-toc-done {
+            color: var(--text-muted);
+            border: 1px solid #3a3a4a;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .badge-toc-upcoming {
+            color: #607080;
+            border: 1px dashed #222233;
+        }
+        .toc-item-summary {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+            line-height: 1.45;
+        }
+
+        /* 授業ノートテキストエリア */
+        .lesson-note-textarea {
+            width: 100%;
+            flex-grow: 1;
+            min-height: 250px;
+            background: #000;
+            border: 1px solid #22222a;
+            color: #fff;
+            padding: 0.9rem;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            font-family: inherit;
+            resize: none;
+        }
+        .lesson-note-textarea:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        /* 原本テキスト表示エリア */
+        .source-text-box {
+            background: #000;
+            border: 1px solid #1a2a35;
+            padding: 0.9rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text-bright-muted);
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            flex-grow: 1;
+        }
+
+        .chat-input-wrap { display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid #1a2a35; padding-top: 1rem; margin-top: 0.5rem; }
+        .chat-input-row { display: flex; gap: 0.5rem; }
+        .chat-input { flex-grow: 1; background: #000; border: 1px solid #222; padding: 0.7rem 1rem; color: #fff; border-radius: 10px; }
+        .chat-attach-btn {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            background: #111;
+            border: 1px solid #333;
+            color: var(--accent-cyan);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.15s ease;
+        }
+        .chat-attach-btn:hover { border-color: var(--accent-cyan); background: rgba(0,243,255,0.08); }
+        .chat-attach-btn.has-images { border-color: var(--accent-yellow); color: var(--accent-yellow); }
+        .chat-image-thumb-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .chat-image-thumb-wrap { position: relative; }
+        .chat-image-thumb-wrap img { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; border: 1px solid #22222a; }
+        .chat-image-thumb-remove {
+            position: absolute; top: -6px; right: -6px;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: var(--accent-magenta); color: #fff;
+            border: none; font-size: 0.7rem; font-weight: 900;
+            line-height: 18px; text-align: center; cursor: pointer; padding: 0;
+        }
+        .bubble-user-images { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+        .bubble-user-images img { width: 90px; height: 90px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; }
+        .lesson-controls { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 0.8rem; }
+        .completed-banner { text-align: center; padding: 1.5rem; color: var(--accent-yellow); font-weight: 800; }
+
+        /* ── モーダル（設定） ── */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 100000; padding: 1rem; }
+        .modal-content { width: 100%; max-width: 600px; background: rgba(10,10,18,0.97); border: 1px solid var(--accent-cyan); box-shadow: 0 0 30px rgba(0,243,255,0.25); border-radius: 20px; padding: 1.8rem; }
+        .modal-content textarea { width: 100%; min-height: 220px; background: #000; border: 1px solid #22222a; color: #fff; padding: 1rem; border-radius: 12px; font-size: 0.9rem; font-family: inherit; resize: vertical; line-height: 1.6; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 0.7rem; margin-top: 1rem; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="lesson-container">
+        <!-- GLOBAL CYBER HUD NAV -->
+        <nav class="global-cyber-nav">
+            <div class="nav-brand">SYSTEM OS // LOLZ</div>
+            <button type="button" class="nav-hamburger-btn" aria-label="メニューを開く" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="nav-links">
+                <a href="index.html" class="nav-btn">🧠 誤答ノート</a>
+                <a href="daily.html" class="nav-btn">🏁 計算スプリント</a>
+                <a href="custom-sprint.html" class="nav-btn">🎯 カスタムスプリント</a>
+                <a href="lesson.html" class="nav-btn active">📖 授業・解説</a>
+                <a href="answer-check.html" class="nav-btn">⚡ 答え合わせ</a>
+                <a href="mark-test.html" class="nav-btn">🎯 マーク模試</a>
+                <a href="tokei/index.html" class="nav-btn global-timer-link">⏱️ 集中タイマー</a>
+                <a href="study/index.html" class="nav-btn" title="24hログを開く">📊 24hログ</a>
+                <a href="https://photos.google.com" target="_blank" rel="noopener" class="nav-btn" title="Google Photosを開く">📷 Photos</a>
+            </div>
+        </nav>
+        <div class="nav-drawer-overlay"></div>
+        <script src="global-timer-sync.js"></script>
+        <script src="mobile-nav.js"></script>
+
+        <header class="lesson-header">
+            <div>
+                <h1>📖 参考書 授業モード</h1>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.3rem;">
+                    <a class="back-link" href="lesson.html" style="color: var(--accent-cyan); font-weight: 700;">📚 授業一覧・新しい授業</a>
+                    <span style="color: #334455;">|</span>
+                    <a class="back-link" href="index.html">← ダッシュボードに戻る</a>
+                </div>
+            </div>
+            <button type="button" class="settings-link" id="open-settings-btn">⚙️ 授業の方針を編集</button>
+        </header>
+
+        <div id="login-required-notice" style="display:none; padding: 2rem; text-align:center; color: var(--text-muted);">
+            ログインが必要です。<a href="index.html" style="color: var(--accent-cyan);">ダッシュボードに戻ってログインしてください。</a>
+        </div>
+
+        <!-- ============ 一覧・新規作成 ============ -->
+        <div id="view-list">
+            <div class="squircle-card new-lesson-form">
+                <div style="font-weight:900; font-size:1.05rem;">🆕 新しい授業を始める</div>
+
+                <div style="display:flex; gap:0.5rem; margin: 0.8rem 0 1rem 0;">
+                    <button type="button" class="tactile-btn mode-tab-btn active" id="mode-tab-photo" style="flex:1; background: var(--accent-cyan); color:#000; box-shadow: 3px 3px 0px #008b94;">📷 参考書から</button>
+                    <button type="button" class="tactile-btn mode-tab-btn" id="mode-tab-topic" style="flex:1; background:#111; color:var(--text-bright-muted); border:1px solid #333; box-shadow:none;">✏️ 単元名だけで</button>
+                </div>
+
+                <div style="margin-bottom: 0.6rem;">
+                    <label for="continuation-select" style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">
+                        🔗 これは以前の授業の続きですか？（同じ参考書の前の講など）
+                    </label>
+                    <select id="continuation-select" style="width:100%; background:#0a0a12; color:#fff; border:1px solid var(--border-color); border-radius:10px; padding:0.6rem; font-size:0.9rem;">
+                        <option value="">続きではない（新規シリーズとして開始）</option>
+                    </select>
+                </div>
+
+                <div id="mode-group-photo">
+                    <label class="file-drop-label" id="file-drop-label" for="image-input">
+                        📷 参考書のページ写真をアップロード（複数枚OK）
+                    </label>
+                    <input type="file" id="image-input" accept="image/*" multiple style="display:none;">
+                    <div class="thumb-row" id="thumb-row"></div>
+                    <textarea class="note-textarea" id="note-input" placeholder="（任意）特にここが分からない、というメモがあれば入力してください"></textarea>
+                </div>
+
+                <div id="mode-group-topic" style="display:none;">
+                    <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">
+                        📝 学びたい単元名
+                    </label>
+                    <input type="text" id="topic-input" placeholder="例：数学III 微分方程式／物理 コンデンサー回路 など"
+                        style="width:100%; background:#000; border:1px solid #22222a; color:#fff; padding:0.9rem; border-radius:12px; font-size:1rem; margin-bottom:0.8rem;">
+                    <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">
+                        🎚️ レベル感
+                    </label>
+                    <select id="topic-level-select" style="width:100%; background:#0a0a12; color:#fff; border:1px solid var(--border-color); border-radius:10px; padding:0.6rem; font-size:0.9rem; margin-bottom:0.8rem;">
+                        <option value="教科書レベル（基礎の基礎から）">教科書レベル（基礎の基礎から）</option>
+                        <option value="定期テストレベル">定期テストレベル</option>
+                        <option value="入試基礎レベル" selected>入試基礎レベル</option>
+                        <option value="入試標準〜応用レベル">入試標準〜応用レベル</option>
+                    </select>
+                    <textarea class="note-textarea" id="topic-note-input" placeholder="（任意）特に重点を置いてほしい内容、すでに知っている前提などがあれば入力してください"></textarea>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.4rem;">※参考書がないため、AIが自身の知識だけでカリキュラムと解説を作成します。まれに細部が不正確な場合があるので、重要な公式・定義は自分でも確認してください。</div>
+                </div>
+
+                <button type="button" class="tactile-btn" id="generate-plan-btn" style="background: var(--accent-yellow); color:#000; box-shadow: 3px 3px 0px #a89f00; margin-top: 0.8rem;">
+                    🧑‍🏫 授業プランを作ってもらう
+                </button>
+            </div>
+
+            <div id="lesson-list-wrap">
+                <div style="font-weight:900; font-size:1rem; margin: 0.5rem 0;">📚 これまでの授業</div>
+                <div id="lesson-list"></div>
+                <div id="lesson-list-empty" style="color: var(--text-muted); font-size:0.85rem; display:none;">まだ授業履歴はありません。</div>
+            </div>
+        </div>
+
+        <!-- ============ プランプレビュー（未保存） ============ -->
+        <div id="view-plan-preview" class="squircle-card hidden">
+            <div style="font-weight:900; font-size:1.1rem; color: var(--accent-yellow); margin-bottom: 0.3rem;" id="plan-preview-title">授業プラン</div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">この内容で進めてよければ「授業を始める」を押してください。分割が気に入らなければ作り直せます。</div>
+            <div id="plan-preview-parts"></div>
+            <div class="lesson-controls">
+                <button type="button" class="tactile-btn" id="confirm-plan-btn" style="background: var(--accent-cyan); box-shadow: 3px 3px 0px #008b94;">✅ この内容で授業を始める</button>
+                <button type="button" class="tactile-btn" id="regenerate-plan-btn" style="background:#111; color: var(--accent-yellow); border:1px solid var(--accent-yellow);">🔄 作り直す</button>
+                <button type="button" class="tactile-btn" id="cancel-plan-btn" style="background:#111; color:#fff; border:1px solid #333;">キャンセル</button>
+            </div>
+        </div>
+
+        <!-- ============ 授業（チャット）画面 ============ -->
+        <div id="view-lesson" class="hidden">
+            <div class="lesson-layout-grid">
+                <!-- 左メイン：授業チャット -->
+                <div class="squircle-card lesson-main-card">
+                    <div class="progress-strip">
+                        <span id="lesson-title-display" style="font-weight: 800; color: var(--accent-yellow); font-size: 1.05rem;">---</span>
+                        <span id="continuation-source-badge" style="display:none; font-size: 0.78rem; color: var(--accent-cyan); font-weight:700;"></span>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">パート <b id="part-progress-display" style="color: var(--accent-cyan); font-weight: 900;">-/-</b></span>
+                        <button type="button" class="tactile-btn" id="solve-related-problem-btn" style="background: var(--accent-magenta); box-shadow: 3px 3px 0px #8a004f; font-size: 0.8rem; padding: 0.5rem 0.9rem; margin-left: auto;">
+                            🎯 この授業の続きとして問題を解く
+                        </button>
+                    </div>
+
+                    <div class="chat-transcript" id="chat-transcript"></div>
+
+                    <div id="completed-banner" class="completed-banner hidden">
+                        🎉 この授業はすべてのパートが終了しました！お疲れさまでした。
+                    </div>
+
+                    <div class="chat-input-wrap" id="chat-input-wrap">
+                        <div class="chat-image-thumb-row" id="chat-image-thumb-row"></div>
+                        <div class="chat-input-row">
+                            <button type="button" class="chat-attach-btn" id="chat-attach-btn" title="参考書のページ写真を添付して質問する">📷</button>
+                            <input type="file" id="chat-image-input" accept="image/*" multiple style="display:none;">
+                            <input type="text" class="chat-input" id="chat-input" placeholder="このパートについて質問する...（📷で該当ページの写真を添付できます）">
+                            <button type="button" class="tactile-btn" id="send-chat-btn">送信</button>
+                        </div>
+                    </div>
+
+                    <div class="lesson-controls">
+                        <button type="button" class="tactile-btn" id="next-part-btn" style="background: var(--accent-yellow); color:#000; box-shadow: 3px 3px 0px #a89f00;">▶ 次のパートへ進む</button>
+                    </div>
+                </div>
+
+                <!-- 右サイドバー：目次・ノート・原本参照 -->
+                <div class="squircle-card lesson-sidebar-card">
+                    <!-- サイドバータブ切り替え -->
+                    <div class="sidebar-tab-group">
+                        <button type="button" class="sidebar-tab-btn active" data-tab="tab-parts">📚 パート目次</button>
+                        <button type="button" class="sidebar-tab-btn" data-tab="tab-notes">📝 授業ノート</button>
+                        <button type="button" class="sidebar-tab-btn" data-tab="tab-source">📖 原本テキスト</button>
+                    </div>
+
+                    <!-- パネル1: パート目次 -->
+                    <div class="sidebar-panel active" id="tab-parts">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem; font-weight: 700;">
+                            💡 全パートの構成一覧です。
+                        </div>
+                        <div id="lesson-parts-toc-list" class="parts-toc-container"></div>
+                    </div>
+
+                    <!-- パネル2: 授業ノート -->
+                    <div class="sidebar-panel" id="tab-notes">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem; font-weight: 700;">
+                            ✏️ 授業で気づいたことや要点をメモ（自動保存）
+                        </div>
+                        <textarea class="lesson-note-textarea" id="lesson-note-input" placeholder="例: ベクトルの内積の公式：a・b = a1b1 + a2b2 + a3b3&#10;・垂直条件は a・b = 0"></textarea>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                            <span id="note-save-status" style="font-size: 0.75rem; color: var(--text-muted);">クラウド同期中</span>
+                            <button type="button" class="tactile-btn" id="save-lesson-note-btn" style="font-size: 0.75rem; padding: 0.3rem 0.8rem; background: var(--accent-cyan); color:#000; box-shadow: 2px 2px 0px #008b94;">💾 保存</button>
+                        </div>
+                    </div>
+
+                    <!-- パネル3: 原本テキスト -->
+                    <div class="sidebar-panel" id="tab-source">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem; font-weight: 700;" id="source-panel-label">
+                            🔍 参考書の文字起こし全文
+                        </div>
+                        <div id="lesson-extracted-source-text" class="source-text-box tex2jax_process"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 設定モーダル -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-content">
+            <div style="font-weight:900; font-size:1.1rem; margin-bottom:0.3rem;">⚙️ 授業の方針（システムプロンプト）</div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem;">AIが授業をする際の基本方針です。自由に編集できます。アカウントに保存されるので、どの端末からでも同じ方針が使われます。</div>
+            <textarea id="settings-textarea"></textarea>
+            <div class="modal-actions">
+                <button type="button" class="tactile-btn" id="reset-settings-btn" style="background:#111; color:#fff; border:1px solid #333;">デフォルトに戻す</button>
+                <button type="button" class="tactile-btn" id="close-settings-btn" style="background:#111; color:#fff; border:1px solid #333;">キャンセル</button>
+                <button type="button" class="tactile-btn" id="save-settings-btn" style="background: var(--accent-cyan); box-shadow: 3px 3px 0px #008b94;">💾 保存</button>
+            </div>
+        </div>
+    </div>
+
+   <script type="module">
+        import { getGeminiKeys, fetchWithKeyRotation, initApiKeyManager } from "./api-key-manager.js";
+
+        const proto = "https" + "://";
+        const d = ".";
+        const fbBase = proto + "www" + d + "gstatic" + d + "com/firebasejs/10.12.0/";
+
+        const { initializeApp } = await import(fbBase + "firebase-app.js");
+        const { getAuth, onAuthStateChanged } = await import(fbBase + "firebase-auth.js");
+        const { getDatabase, ref, set, get, onValue } = await import(fbBase + "firebase-database.js");
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB55MdhpjJizQaLEdRu-XhBVJ4PqrHsAyY",
+            authDomain: "buturi-2449e.firebaseapp.com",
+            databaseURL: proto + "buturi-2449e-default-rtdb" + d + "asia-southeast1" + d + "firebasedatabase" + d + "app/",
+            projectId: "buturi-2449e",
+            storageBucket: "buturi-2449e.appspot.com",
+            messagingSenderId: "976306696124",
+            appId: "1:976306696124:web:e455c1953544bff5c345b9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        initApiKeyManager({ needGemini: true });
+
+        const GEMINI_MODEL_FALLBACK_LIST = [
+            'gemini-3.6-flash',
+            'gemini-3.5-flash',
+            'gemini-3-flash-preview',
+            'gemini-2.5-flash',
+            'gemini-3.5-flash-lite',
+            'gemini-3.1-flash-lite',
+            'gemini-2.5-flash-lite'
+        ];
+        function buildGeminiUrl(modelName, apiKey) {
+            return `${proto}generativelanguage${d}googleapis${d}com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        }
+
+        const DEFAULT_POLICY_PROMPT = `あなたは大学受験生専属の家庭教師です。生徒が持ち込んだ「特定の参考書」の内容をもとに、わかりやすく解説授業を行ってください。
+
+【授業の方針】
+・概念理解を最優先し、「なぜそうなるか」を省略せずにしっかり説明すること
+・必要に応じて具体的な「例」を使って説明すること
+・大学受験において「暗記でよい部分」か「しっかり理解すべき部分」かの判断は、あなた自身が行うこと
+・生徒からの質問には、今扱っているパートの文脈に沿って丁寧に答えること
+・数式や変数は必ず $ または $$ で囲むLaTeX形式で書くこと
+
+【参考書の流儀を最優先すること（最重要）】
+・この授業は「一般的な物理の教科書」ではなく、生徒が持ち込んだ「その参考書」をベースに行うものです
+・その参考書が独自の用語・記号・公式の立て方・説明の順序を使っている場合は、必ずそれを踏襲すること。一般的な教科書での呼び方や順序に勝手に置き換えないこと
+・参考書の記述と、あなたが一般知識として持っている標準的な説明が食い違う場合は、参考書の記述を優先し、その参考書の流儀で説明すること。ただし参考書側に明らかな誤植・矛盾がある場合は、その旨を明示した上で指摘してよい
+・参考書に載っていない内容を補足する場合は、「ここから先は参考書に載っていない一般的な補足です」のように、参考書本文と自分の補足を生徒がはっきり区別できるように書くこと`;
+
+        function stripCodeFence(text) {
+            let t = text.trim();
+            if (t.startsWith("```json")) t = t.substring(7);
+            else if (t.startsWith("```")) t = t.substring(3);
+            if (t.endsWith("```")) t = t.substring(0, t.length - 3);
+            return t.trim();
+        }
+        function fixJsonEscapes(str) {
+            let inString = false; let result = "";
+            for (let i = 0; i < str.length; i++) {
+                let c = str[i];
+                if (c === '"' && (i === 0 || str[i-1] !== '\\')) { inString = !inString; result += c; }
+                else if (c === '\\' && inString) {
+                    let next = str[i+1];
+                    if (next === '"') { result += '\\"'; i++; }
+                    else if (next === '\\') { result += '\\\\'; i++; }
+                    else if (next === 'n' && (str[i+2] === ' ' || str[i+2] === '"' || str[i+2] === '\\' || !/[a-zA-Z]/.test(str[i+2]))) { result += '\\n'; i++; }
+                    else { result += '\\\\'; }
+                } else if (inString && c.charCodeAt(0) < 0x20) {
+                    if (c === '\n') result += '\\n';
+                    else if (c === '\r') result += '\\r';
+                    else if (c === '\t') result += '\\t';
+                    else result += '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0');
+                } else { result += c; }
+            }
+            return result;
+        }
+
+        // 🩹【新設】JSONの前後に余計な文章が付いてしまう事故への保険。
+        function extractJsonObject(text) {
+            const start = text.indexOf('{');
+            if (start === -1) return text;
+            let depth = 0; let inString = false;
+            for (let i = start; i < text.length; i++) {
+                const c = text[i];
+                if (c === '"' && text[i - 1] !== '\\') inString = !inString;
+                if (!inString) {
+                    if (c === '{') depth++;
+                    else if (c === '}') { depth--; if (depth === 0) return text.substring(start, i + 1); }
+                }
+            }
+            return text.substring(start);
+        }
+
+        // 🔁 Gemini呼び出し共通関数（モデル×キーの二重フォールバック）
+        async function callGeminiJSON(parts, systemInstruction) {
+            const requestBody = JSON.stringify({
+                "contents": [{ "parts": parts }],
+                "systemInstruction": { "parts": [{ "text": systemInstruction }] },
+                "generationConfig": { "responseMimeType": "application/json", "temperature": 0.4 }
+            });
+
+            let lastError = null;
+            for (const modelName of GEMINI_MODEL_FALLBACK_LIST) {
+                let response;
+                try {
+                    response = await fetchWithKeyRotation(getGeminiKeys(), (key) => ({
+                        url: buildGeminiUrl(modelName, key),
+                        options: { method: "POST", headers: { "Content-Type": "application/json" }, body: requestBody }
+                    }));
+                } catch (err) {
+                    console.warn(`⚠️ ${modelName} は登録済みの全キーで失敗しました → 次のモデルへ`, err);
+                    lastError = err;
+                    continue;
+                }
+                const candidateJson = await response.json();
+                const candidateText = candidateJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!candidateText) { lastError = new Error(`Empty response: ${modelName}`); continue; }
+                try {
+                    return JSON.parse(fixJsonEscapes(extractJsonObject(stripCodeFence(candidateText.trim()))));
+                } catch (parseErr) {
+                    lastError = parseErr;
+                    continue;
+                }
+            }
+            throw new Error(`全モデルが利用できませんでした。時間を置いて再度お試しください。\n最終エラー: ${lastError?.message || "不明"}`);
+        }
+
+        // --------------------------------------------------------------
+        // 状態
+        // --------------------------------------------------------------
+        let loginUid = null;
+        let selectedImages = []; // [{mimeType, data}] （新規授業作成フォーム用）
+        let creationMode = "photo"; // "photo" | "topic"
+
+        function setCreationMode(mode) {
+            creationMode = mode;
+            const photoBtn = el("mode-tab-photo");
+            const topicBtn = el("mode-tab-topic");
+            const photoGroup = el("mode-group-photo");
+            const topicGroup = el("mode-group-topic");
+            if (mode === "topic") {
+                photoBtn.style.background = "#111"; photoBtn.style.color = "var(--text-bright-muted)"; photoBtn.style.border = "1px solid #333"; photoBtn.style.boxShadow = "none";
+                topicBtn.style.background = "var(--accent-cyan)"; topicBtn.style.color = "#000"; topicBtn.style.border = "none"; topicBtn.style.boxShadow = "3px 3px 0px #008b94";
+                photoGroup.style.display = "none";
+                topicGroup.style.display = "block";
+            } else {
+                topicBtn.style.background = "#111"; topicBtn.style.color = "var(--text-bright-muted)"; topicBtn.style.border = "1px solid #333"; topicBtn.style.boxShadow = "none";
+                photoBtn.style.background = "var(--accent-cyan)"; photoBtn.style.color = "#000"; photoBtn.style.border = "none"; photoBtn.style.boxShadow = "3px 3px 0px #008b94";
+                topicGroup.style.display = "none";
+                photoGroup.style.display = "block";
+            }
+        }
+        el("mode-tab-photo").addEventListener("click", () => setCreationMode("photo"));
+        el("mode-tab-topic").addEventListener("click", () => setCreationMode("topic"));
+        let chatSelectedImages = []; // [{mimeType, data, previewUrl}] （授業チャット中の追加質問用）
+        let draftPlan = null;    // { extracted_text, lesson_title, parts }
+        let lastLessonsSnapshot = {}; // 🔗 続きの授業選択プルダウンの元データ
+        let customPolicyPrompt = DEFAULT_POLICY_PROMPT;
+        let currentLesson = null;
+        let currentLessonId = null;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const REQUESTED_ID = urlParams.get('id');
+
+        function el(id) { return document.getElementById(id); }
+
+        async function forceTriggerMathJax() {
+            if (window.MathJax && MathJax.typesetPromise) {
+                try { await MathJax.typesetPromise(); } catch (e) { console.log(e.message); }
+            }
+        }
+
+        // --------------------------------------------------------------
+        // 設定（授業の方針）
+        // --------------------------------------------------------------
+        async function loadPolicyPrompt(uid) {
+            try {
+                const snap = await get(ref(database, 'users/' + uid + '/lessonSettings/systemPrompt'));
+                if (snap.exists() && snap.val()) customPolicyPrompt = snap.val();
+            } catch (e) { console.warn("授業方針の読み込みに失敗:", e); }
+        }
+        async function savePolicyPrompt(uid, text) {
+            await set(ref(database, 'users/' + uid + '/lessonSettings/systemPrompt'), text);
+        }
+
+        el("open-settings-btn").addEventListener("click", () => {
+            el("settings-textarea").value = customPolicyPrompt;
+            el("settings-modal").style.display = "flex";
+        });
+        el("solve-related-problem-btn").addEventListener("click", () => {
+            if (!currentLessonId) return;
+            window.location.href = "index.html?fromLesson=" + encodeURIComponent(currentLessonId);
+        });
+        el("close-settings-btn").addEventListener("click", () => el("settings-modal").style.display = "none");
+        el("reset-settings-btn").addEventListener("click", () => { el("settings-textarea").value = DEFAULT_POLICY_PROMPT; });
+        el("settings-modal").addEventListener("click", (e) => { if (e.target.id === "settings-modal") el("settings-modal").style.display = "none"; });
+        el("save-settings-btn").addEventListener("click", async () => {
+            if (!loginUid) return;
+            const text = el("settings-textarea").value.trim() || DEFAULT_POLICY_PROMPT;
+            customPolicyPrompt = text;
+            await savePolicyPrompt(loginUid, text);
+            el("settings-modal").style.display = "none";
+            alert("授業の方針を保存しました。");
+        });
+
+        // --------------------------------------------------------------
+        // 画像アップロード（新規授業フォーム）
+        // --------------------------------------------------------------
+        // 🩹 Geminiが受け付けるMIMEタイプ（これ以外は再エンコードして矯正する）
+        const GEMINI_SUPPORTED_IMAGE_MIME = ["image/png", "image/jpeg", "image/webp"];
+
+        // iPhoneのHEIC/HEIF写真や、ブラウザがMIMEを正しく判定できない
+        // （application/octet-stream等になる）ファイルを、canvasでimage/jpegに
+        // 再エンコードし直すことで「Unsupported MIME type」400エラーを防ぐ。
+        // ※ file.type（宣言されたMIME）はHEICの場合しばしば信用できない
+        //   （octet-streamになったり、逆にimage/heicと出てもcanvasでは開けなかったりする）ため、
+        //   拡張子でも判定し、読み込みはdata URLではなくobjectURLで行う
+        //   （data URLだと誤ったMIME宣言のせいでブラウザがデコードを拒否することがある）
+        async function normalizeImageFile(file) {
+            const lowerName = (file.name || "").toLowerCase();
+            const isHeic = file.type === "image/heic" || file.type === "image/heif"
+                || lowerName.endsWith(".heic") || lowerName.endsWith(".heif");
+
+            if (!isHeic && GEMINI_SUPPORTED_IMAGE_MIME.includes(file.type)) {
+                const dataUrl = await new Promise((res, rej) => {
+                    const r = new FileReader();
+                    r.onload = () => res(r.result);
+                    r.onerror = rej;
+                    r.readAsDataURL(file);
+                });
+                return { mimeType: file.type, data: dataUrl.split(",")[1], previewUrl: dataUrl };
+            }
+
+            console.warn(`⚠️ ${isHeic ? "HEIC/HEIF画像" : `未対応/未判定のMIMEタイプ(${file.type || "不明"})`}を検出 → image/jpegへ再エンコードします`);
+            const objectUrl = URL.createObjectURL(file);
+            try {
+                const img = await new Promise((res, rej) => {
+                    const im = new Image();
+                    im.onload = () => res(im);
+                    im.onerror = () => rej(new Error("画像の読み込みに失敗しました"));
+                    im.src = objectUrl;
+                });
+                const canvas = document.createElement("canvas");
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                canvas.getContext("2d").drawImage(img, 0, 0);
+                const jpegUrl = canvas.toDataURL("image/jpeg", 0.92);
+                return { mimeType: "image/jpeg", data: jpegUrl.split(",")[1], previewUrl: jpegUrl };
+            } catch (e) {
+                console.error("画像の再エンコードに失敗しました（このブラウザはHEIC非対応の可能性）", e);
+                throw new Error(`「${file.name}」を変換できませんでした。iPhoneの「設定 > カメラ > フォーマット」で「互換性優先」にするか、写真アプリの共有時にJPEGへ変換してから再度アップロードしてください。`);
+            } finally {
+                URL.revokeObjectURL(objectUrl);
+            }
+        }
+
+        el("image-input").addEventListener("change", async (e) => {
+            const files = Array.from(e.target.files || []);
+            for (const file of files) {
+                try {
+                    selectedImages.push(await normalizeImageFile(file));
+                } catch (err) {
+                    alert(err.message);
+                }
+            }
+            renderThumbs();
+        });
+
+
+
+        function renderThumbs() {
+            el("thumb-row").innerHTML = selectedImages.map(img => `<img src="${img.previewUrl}">`).join("");
+        }
+
+        // --------------------------------------------------------------
+        // 画像アップロード（授業チャット中の追加質問用）
+        // --------------------------------------------------------------
+        el("chat-attach-btn").addEventListener("click", () => el("chat-image-input").click());
+        el("chat-image-input").addEventListener("change", async (e) => {
+            const files = Array.from(e.target.files || []);
+            for (const file of files) {
+                try {
+                    chatSelectedImages.push(await normalizeImageFile(file));
+                } catch (err) {
+                    alert(err.message);
+                }
+            }
+            e.target.value = "";
+            renderChatImageThumbs();
+        });
+
+        function renderChatImageThumbs() {
+            const row = el("chat-image-thumb-row");
+            row.innerHTML = chatSelectedImages.map((img, i) => `
+                <div class="chat-image-thumb-wrap">
+                    <img src="${img.previewUrl}">
+                    <button type="button" class="chat-image-thumb-remove" data-remove-chat-img="${i}">×</button>
+                </div>
+            `).join("");
+            row.querySelectorAll("[data-remove-chat-img]").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    chatSelectedImages.splice(parseInt(btn.getAttribute("data-remove-chat-img"), 10), 1);
+                    renderChatImageThumbs();
+                });
+            });
+            el("chat-attach-btn").classList.toggle("has-images", chatSelectedImages.length > 0);
+        }
+
+        // --------------------------------------------------------------
+        // 授業プラン生成
+        // --------------------------------------------------------------
+        el("generate-plan-btn").addEventListener("click", () => generatePlan());
+        el("regenerate-plan-btn").addEventListener("click", () => generatePlan());
+        el("cancel-plan-btn").addEventListener("click", () => {
+            draftPlan = null;
+            el("view-plan-preview").classList.add("hidden");
+            el("view-list").classList.remove("hidden");
+        });
+
+        async function generatePlan() {
+            if (creationMode === "photo" && selectedImages.length === 0) {
+                alert("まずは参考書のページ写真をアップロードしてください。");
+                return;
+            }
+            if (creationMode === "topic" && !el("topic-input").value.trim()) {
+                alert("学びたい単元名を入力してください。");
+                return;
+            }
+
+            const btn = el("generate-plan-btn");
+            const regenBtn = el("regenerate-plan-btn");
+            const originalText = btn.textContent;
+            btn.textContent = "⚙️ プラン作成中...";
+            btn.disabled = true;
+            if (regenBtn) regenBtn.disabled = true;
+
+            let PLAN_SYSTEM_INSTRUCTION, promptText, parts;
+
+            if (creationMode === "photo") {
+                const noteText = el("note-input").value.trim();
+
+                PLAN_SYSTEM_INSTRUCTION = `${customPolicyPrompt}
+
+今回はまだ授業本編ではなく、授業の準備をしてください。
+1. 添付された参考書ページの内容を正確に読み取り、全文を書き出すこと（数式は $ $ で囲むこと）
+2. 内容量を踏まえて、区切りの良い単位で「大まかな授業プラン」を作成すること（目安は2〜6パート程度。多すぎず少なすぎないように）
+3. この範囲の中で、参考書オリジナルの名前がついた法則・定理・原則・手順（例:「タッチの定理」「大原則」「手順①〜⑦」のような、この本独自の呼び方をしているもの）があれば、その名称と定義を簡潔に抽出すること。一般的な物理・数学用語（力、速度など）はここには含めない。「この本オリジナルの呼び方・造語・番号付き手順」だけを対象にすること
+
+出力は必ず以下のJSON形式のみで返してください。他のテキストは一切含めないこと。
+{
+  "extracted_text": "読み取った参考書の全文（数式は $ $ で囲む）",
+  "lesson_title": "この授業全体を表す短いタイトル",
+  "parts": [
+    { "title": "パートのタイトル", "summary": "このパートで扱う内容の要約（1〜2文）" }
+  ],
+  "key_terms": [
+    { "name": "この本オリジナルの用語・法則名（例：タッチの定理）", "definition": "簡潔で正確な定義（1〜2文）" }
+  ]
+}`;
+
+                promptText = "添付した参考書のページを解析し、指定のJSONで授業プランを作成してください。";
+                if (noteText) promptText += `\n\n【生徒からのメモ】\n${noteText}`;
+
+                parts = [{ text: promptText }];
+                selectedImages.forEach(img => parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } }));
+
+            } else {
+                // ✏️【単元名だけモード】参考書がないので、AI自身の知識でカリキュラムと解説ノートを新規作成する
+                const topicText = el("topic-input").value.trim();
+                const levelText = el("topic-level-select").value;
+                const topicNoteText = el("topic-note-input").value.trim();
+
+                PLAN_SYSTEM_INSTRUCTION = `${customPolicyPrompt}
+
+今回は生徒の手元に参考書がありません。指定された単元について、あなた自身の知識だけを使って、ゼロから授業を設計してください。
+1. 指定された単元・レベル感に沿って、生徒が体系的に理解できるように内容を組み立て、「授業ノート」として全文を書き出すこと（数式は $ $ で囲むこと）。このノートは後の授業本編で「教える内容の正解」として毎回参照されるので、公式・定義・成り立ち・典型的な考え方の流れを、正確かつ網羅的に、ただし冗長になりすぎない密度で書くこと
+2. 内容量を踏まえて、区切りの良い単位で「大まかな授業プラン」を作成すること（目安は2〜6パート程度。多すぎず少なすぎないように。基礎概念→典型パターン→応用、のように学習の階段になるよう並べること）
+3. この単元特有の重要用語・公式・定理（一般的すぎるものは除く）があれば、名称と定義を簡潔に抽出すること
+
+出力は必ず以下のJSON形式のみで返してください。他のテキストは一切含めないこと。
+{
+  "extracted_text": "この単元について新規に作成した授業ノート全文（数式は $ $ で囲む）",
+  "lesson_title": "この授業全体を表す短いタイトル",
+  "parts": [
+    { "title": "パートのタイトル", "summary": "このパートで扱う内容の要約（1〜2文）" }
+  ],
+  "key_terms": [
+    { "name": "重要な用語・公式・定理名", "definition": "簡潔で正確な定義（1〜2文）" }
+  ]
+}`;
+
+                promptText = `以下の単元について、指定のJSONで授業プランと授業ノートを作成してください。\n\n【単元名】\n${topicText}\n\n【レベル感】\n${levelText}`;
+                if (topicNoteText) promptText += `\n\n【生徒からの要望・前提】\n${topicNoteText}`;
+
+                parts = [{ text: promptText }];
+            }
+
+            try {
+                const result = await callGeminiJSON(parts, PLAN_SYSTEM_INSTRUCTION);
+                if (!Array.isArray(result.parts) || result.parts.length === 0) throw new Error("プランの形式が不正です。");
+                draftPlan = result;
+                draftPlan.sourceMode = creationMode;
+                renderPlanPreview();
+                el("view-list").classList.add("hidden");
+                el("view-plan-preview").classList.remove("hidden");
+                await forceTriggerMathJax();
+            } catch (err) {
+                console.error(err);
+                alert("授業プランの作成に失敗しました。\n原因: " + err.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                if (regenBtn) regenBtn.disabled = false;
+            }
+        }
+
+        function renderPlanPreview() {
+            el("plan-preview-title").textContent = `📘 ${draftPlan.lesson_title}（全${draftPlan.parts.length}回）`;
+            el("plan-preview-parts").innerHTML = draftPlan.parts.map((p, i) => `
+                <div class="plan-part-item">
+                    <b>第${i + 1}回: ${p.title}</b>
+                    <p>${p.summary}</p>
+                </div>
+            `).join("");
+        }
+
+        // --------------------------------------------------------------
+        // プラン確定 → 授業開始
+        // --------------------------------------------------------------
+        el("confirm-plan-btn").addEventListener("click", async () => {
+            if (!loginUid || !draftPlan) return;
+            const btn = el("confirm-plan-btn");
+            btn.textContent = "⚙️ 準備中...";
+            btn.disabled = true;
+            try {
+                // 🔗【続きの授業】選択されていれば、前回までの用語集（accumulatedKeyTerms）を引き継ぐ
+                const continuationId = el("continuation-select") ? el("continuation-select").value : "";
+                let inheritedKeyTerms = [];
+                let previousLessonTitle = null;
+                if (continuationId) {
+                    try {
+                        const prevSnap = await get(ref(database, 'users/' + loginUid + '/lessons/' + continuationId));
+                        const prevLesson = prevSnap.val();
+                        if (prevLesson) {
+                            inheritedKeyTerms = prevLesson.accumulatedKeyTerms || prevLesson.keyTerms || [];
+                            previousLessonTitle = prevLesson.title || "無題の授業";
+                        }
+                    } catch (e) {
+                        console.warn("⚠️ 続きの授業の用語集の読み込みに失敗しました:", e);
+                    }
+                }
+
+                const thisLessonKeyTerms = Array.isArray(draftPlan.key_terms) ? draftPlan.key_terms : [];
+                // 名前の重複は除外（先に登場した定義を優先）
+                const existingNames = new Set(inheritedKeyTerms.map(t => t.name));
+                const mergedKeyTerms = [
+                    ...inheritedKeyTerms,
+                    ...thisLessonKeyTerms.filter(t => t && t.name && !existingNames.has(t.name))
+                ];
+
+                const newId = "LESSON_" + Date.now();
+                const now = new Date().toISOString();
+                const lessonObj = {
+                    id: newId,
+                    title: draftPlan.lesson_title,
+                    extractedText: draftPlan.extracted_text,
+                    sourceMode: draftPlan.sourceMode || "photo",
+                    parts: draftPlan.parts,
+                    currentPartIndex: 0,
+                    status: "teaching",
+                    chatHistory: [],
+                    createdAt: now,
+                    updatedAt: now,
+                    keyTerms: thisLessonKeyTerms,           // この授業で新しく登場した用語
+                    inheritedKeyTerms: inheritedKeyTerms,    // 前回までに教わった用語（そのまま）
+                    accumulatedKeyTerms: mergedKeyTerms,      // 次の続き授業へ引き継ぐ累積用語集
+                    ...(continuationId ? { previousLessonId: continuationId, previousLessonTitle } : {})
+                };
+                await set(ref(database, 'users/' + loginUid + '/lessons/' + newId), lessonObj);
+                window.location.href = `lesson.html?id=${newId}`;
+            } catch (err) {
+                console.error(err);
+                alert("授業の開始に失敗しました。\n原因: " + err.message);
+                btn.textContent = "✅ この内容で授業を始める";
+                btn.disabled = false;
+            }
+        });
+
+        // --------------------------------------------------------------
+        // 🔗 続きの授業選択プルダウン
+        // --------------------------------------------------------------
+        function renderContinuationOptions(lessonsObj) {
+            const select = el("continuation-select");
+            if (!select) return;
+            const lessons = Object.values(lessonsObj || {}).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            const optionsHtml = lessons.map(l =>
+                `<option value="${l.id}">${(l.title || "無題の授業").replace(/</g, "&lt;")}</option>`
+            ).join("");
+            select.innerHTML = `<option value="">続きではない（新規シリーズとして開始）</option>${optionsHtml}`;
+        }
+
+        // --------------------------------------------------------------
+        // 授業一覧
+        // --------------------------------------------------------------
+        function renderLessonList(lessonsObj) {
+            const lessons = Object.values(lessonsObj || {}).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            const listEl = el("lesson-list");
+            if (lessons.length === 0) {
+                el("lesson-list-empty").style.display = "block";
+                listEl.innerHTML = "";
+                return;
+            }
+            el("lesson-list-empty").style.display = "none";
+            listEl.innerHTML = lessons.map(l => {
+                const total = (l.parts || []).length;
+                const done = l.status === "completed";
+                const badgeClass = done ? "badge-completed" : "badge-teaching";
+                const badgeText = done ? "完了" : `パート ${((l.currentPartIndex || 0) + 1)}/${total}`;
+                const updated = new Date(l.updatedAt).toLocaleString("ja-JP");
+                return `
+                    <div class="squircle-tile lesson-card-row" data-lesson-id="${l.id}">
+                        <div>
+                            <div class="lesson-card-title">${l.title || "無題の授業"}</div>
+                            <div class="lesson-card-meta">最終更新: ${updated}</div>
+                        </div>
+                        <span class="lesson-progress-badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                `;
+            }).join("");
+            listEl.querySelectorAll("[data-lesson-id]").forEach(row => {
+                row.addEventListener("click", () => {
+                    window.location.href = `lesson.html?id=${row.getAttribute("data-lesson-id")}`;
+                });
+            });
+        }
+
+        // --------------------------------------------------------------
+        // 授業（チャット）画面
+        // --------------------------------------------------------------
+        function buildTeachSystemInstruction(idxOverride) {
+            const parts = currentLesson.parts;
+            const idx = (idxOverride !== undefined && idxOverride !== null) ? idxOverride : currentLesson.currentPartIndex;
+
+            // 🔗【続きの授業】前回までに教わった、この参考書オリジナルの用語・法則の定義集
+            const inheritedTerms = currentLesson.inheritedKeyTerms || [];
+            const glossaryBlock = inheritedTerms.length > 0
+                ? `\n\n【生徒が以前の授業ですでに習った用語集（正確にこの定義で使うこと）】\n` +
+                  inheritedTerms.map(t => `・${t.name}：${t.definition}`).join("\n") +
+                  `\n※本文中で「第◯講で習った」のようにこれらの用語に言及する場合、上記の定義を正確に使って説明を補うこと。名前だけ引用して説明を省略しないこと。上記にない用語への言及は、無理に説明せず「これは別の回で扱う内容なので、気になったら質問してね」と一言添えること。`
+                : "";
+
+            const isTopicMode = currentLesson.sourceMode === "topic";
+            const sourceLabel = isTopicMode ? "この授業のためにAIが事前に作成した授業ノート" : "参考書から読み取った全文";
+            const photoHandlingBlock = isTopicMode
+                ? `【生徒が問題の写真を添付してきた場合】
+・生徒が会話の中で問題や自分の解答の写真を添付した場合、その内容を最優先の一次情報として扱い、写っている問題文・条件・生徒の解答をそのまま使って説明・回答すること
+・写真に写っている図（力の図示、グラフ、回路図など）について説明する際は、図のどの部分の話をしているか生徒に分かるように具体的に言及すること`
+                : `【生徒が参考書のページ写真を添付してきた場合】
+・生徒が会話の中で参考書のページ写真を添付した場合、それはこの授業の元になっている参考書そのもの（またはその関連ページ）です
+・添付された写真に写っている図・表・独自の記号や用語・説明の展開は、上記「${sourceLabel}」よりも一次情報として優先し、そこに書かれている表現・概念・解法をそのまま使って説明・回答すること
+・「${sourceLabel}」はOCR的に文字起こししたものなので、数式や図が正しく読み取れていない可能性があります。添付された写真の内容と「${sourceLabel}」が食い違う場合は、写真の内容を正としてください
+・写真に写っている図（力の図示、グラフ、回路図など）について説明する際は、図のどの部分の話をしているか生徒に分かるように具体的に言及すること`;
+
+            return `${customPolicyPrompt}
+
+以下は${isTopicMode ? "参考書の代わりにあなた自身が事前に作成した授業ノート全文です" : "参考書から読み取ったテキスト全文です"}。今回の授業では、このうち指定された「パート」の範囲だけを扱ってください（生徒から質問されない限り、他のパートの内容には深入りしないこと）。
+
+【${sourceLabel}】
+${currentLesson.extractedText}
+${glossaryBlock}
+
+【授業プラン全体（全${parts.length}パート）】
+${parts.map((p, i) => `${i + 1}. ${p.title} - ${p.summary}`).join("\n")}
+
+【今回実際に授業するパート】
+第${idx + 1}回: ${parts[idx].title}（${parts[idx].summary}）
+
+${photoHandlingBlock}
+
+返答は以下のJSONのみ（説明不要）：
+{
+  "ai_response": "授業内容、または生徒の質問への回答（数式は $ $ を使用し、手順ごとに改行を入れて読みやすく）",
+  "current_step_label": "このパートの授業状況を一言で（例: 授業中、質問対応中 など）"
+}`;
+        }
+
+        function renderFormattedMarkdown(text) {
+            if (!text) return "";
+            let formatted = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            // #### または ### 見出し
+            formatted = formatted.replace(/^#{3,4}\s*(.+)$/gm, '<h4 style="font-size:0.98rem; font-weight:800; color:var(--accent-yellow); margin:0.7rem 0 0.4rem 0; border-bottom:1px solid rgba(255,245,0,0.2); padding-bottom:0.2rem;">$1</h4>');
+            // --- 区切り線
+            formatted = formatted.replace(/^---\s*$/gm, '<hr style="border:none; border-top:1px dashed rgba(255,255,255,0.15); margin:0.7rem 0;">');
+            // **太字**
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#ffffff; font-weight:700;">$1</strong>');
+            // 箇条書き・リスト
+            formatted = formatted.replace(/^(\d+\.)\s*/gm, '<span style="color:var(--accent-cyan); font-weight:800; margin-right:0.3rem;">$1</span>');
+            formatted = formatted.replace(/^-\s+(.+)$/gm, '<div style="margin-left:0.6rem; text-indent:-0.6rem;">• $1</div>');
+
+            return formatted;
+        }
+
+        function renderChatTranscript() {
+            const wrap = el("chat-transcript");
+            wrap.innerHTML = (currentLesson.chatHistory || []).map(m => {
+                if (m.role === "divider") return `<div class="bubble-divider">──── ${m.content} ────</div>`;
+                if (m.role === "user") {
+                    const imagesHtml = (Array.isArray(m.images) && m.images.length > 0)
+                        ? `<div class="bubble-user-images">${m.images.map(img => `<img src="data:${img.mimeType};base64,${img.data}" onclick="window.open(this.src, '_blank')">`).join("")}</div>`
+                        : "";
+                    return `<div class="chat-bubble bubble-user">${imagesHtml}${m.content}</div>`;
+                }
+                return `<div class="chat-bubble bubble-ai">${renderFormattedMarkdown(m.content)}</div>`;
+            }).join("");
+            wrap.scrollTop = wrap.scrollHeight;
+        }
+
+        // 💡 【サイドバー機能 1】パート目次リストの描画
+        function renderPartsTOC() {
+            const container = el("lesson-parts-toc-list");
+            if (!container || !currentLesson || !currentLesson.parts) return;
+            const currentIdx = currentLesson.currentPartIndex || 0;
+            container.innerHTML = currentLesson.parts.map((p, i) => {
+                const isActive = i === currentIdx;
+                const isDone = i < currentIdx || currentLesson.status === "completed";
+                const isTaught = i <= currentIdx; // すでに授業データが存在する回（再生成の対象になり得る）
+
+                let badgeClass = isActive ? "badge-toc-active" : (isDone ? "badge-toc-done" : "badge-toc-upcoming");
+                let badgeText = isActive ? "▶ 授業中" : (isDone ? "✓ 完了" : "未講義");
+
+                const regenBtn = isTaught
+                    ? `<button type="button" class="toc-regen-btn" data-regenerate-part="${i}" title="この回の説明を作り直す">🔄 作り直す</button>`
+                    : "";
+
+                return `
+                    <div class="toc-item ${isActive ? 'current-active' : ''}">
+                        <div class="toc-item-header">
+                            <span class="toc-item-title">第${i + 1}回: ${p.title}</span>
+                            <span class="toc-status-badge ${badgeClass}">${badgeText}</span>
+                        </div>
+                        <div class="toc-item-summary">${p.summary || ''}</div>
+                        ${regenBtn ? `<div style="margin-top:0.6rem; text-align:right;">${regenBtn}</div>` : ""}
+                    </div>
+                `;
+            }).join("");
+        }
+
+        // 💡 特定の回だけ「区切り線から次の区切り線まで」の範囲をchatHistory内で特定する
+        // （区切りは必ず第1回から順番に1つずつ追加されるため、divider出現順＝パート番号と一致する）
+        function findPartDividerRange(partIndex) {
+            const history = currentLesson.chatHistory || [];
+            const dividerIndices = [];
+            history.forEach((m, i) => { if (m.role === "divider") dividerIndices.push(i); });
+            const startIdx = dividerIndices[partIndex];
+            if (startIdx === undefined) return null;
+            const endIdx = (dividerIndices[partIndex + 1] !== undefined) ? dividerIndices[partIndex + 1] : history.length;
+            return { startIdx, endIdx };
+        }
+
+        // 💡 特定の回だけを、別の切り口の説明で作り直す
+        async function regeneratePart(partIndex) {
+            if (!currentLesson) return;
+            const part = currentLesson.parts[partIndex];
+            if (!part) return;
+
+            const range = findPartDividerRange(partIndex);
+            if (!range) {
+                alert("この回の授業データが見つかりませんでした。");
+                return;
+            }
+
+            const ok = confirm(`第${partIndex + 1}回「${part.title}」の授業を作り直します。\nこの回の説明・質問履歴は新しい内容に置き換わります。よろしいですか？`);
+            if (!ok) return;
+
+            const btn = getRegenBtnEl(partIndex);
+            if (btn) { btn.disabled = true; btn.textContent = "⚙️ 作り直し中..."; }
+
+            try {
+                // この回より前のやり取りだけを文脈として渡す（今の回の古い説明は含めない）
+                const contextHistory = currentLesson.chatHistory
+                    .slice(0, range.startIdx)
+                    .filter(m => m.role !== "divider")
+                    .map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
+
+                contextHistory.push({
+                    role: "user",
+                    parts: [{ text: "この回の授業を、前回とは違う例え方・切り口で、最初からもう一度わかりやすくやり直してください。" }]
+                });
+
+                const aiJson = await callGeminiChat(contextHistory, buildTeachSystemInstruction(partIndex));
+
+                // この回の区切り線の直後〜次の区切り線の直前までを、新しい説明1件に丸ごと置き換える
+                currentLesson.chatHistory.splice(range.startIdx + 1, range.endIdx - range.startIdx - 1, {
+                    role: "assistant",
+                    content: aiJson.ai_response || "（応答の取得に失敗しました）"
+                });
+
+                await saveLesson();
+                renderChatTranscript();
+                await forceTriggerMathJax();
+            } catch (err) {
+                console.error(err);
+                alert("この回の作り直しに失敗しました。\n原因: " + err.message);
+            } finally {
+                renderPartsTOC();
+            }
+        }
+
+        function getRegenBtnEl(partIndex) {
+            const c = el("lesson-parts-toc-list");
+            return c ? c.querySelector(`[data-regenerate-part="${partIndex}"]`) : null;
+        }
+
+        // TOCリストへのクリック委任（動的に再描画されるため、コンテナ側で拾う）
+        (function bindTocRegenDelegation() {
+            const container = el("lesson-parts-toc-list");
+            if (!container) return;
+            container.addEventListener("click", (e) => {
+                const target = e.target.closest("[data-regenerate-part]");
+                if (!target) return;
+                const partIndex = parseInt(target.getAttribute("data-regenerate-part"), 10);
+                regeneratePart(partIndex);
+            });
+        })();
+
+        // 💡 【サイドバー機能 2】授業ノートの初期化＆自動同期
+        function initLessonNotes() {
+            const noteInput = el("lesson-note-input");
+            const saveBtn = el("save-lesson-note-btn");
+            const statusSpan = el("note-save-status");
+            if (!noteInput) return;
+
+            noteInput.value = currentLesson.lessonNote || "";
+
+            let saveTimeout = null;
+            async function triggerSaveNote() {
+                if (!currentLesson || !loginUid) return;
+                if (statusSpan) statusSpan.textContent = "⚙️ 保存中...";
+                currentLesson.lessonNote = noteInput.value;
+                await saveLesson();
+                if (statusSpan) statusSpan.textContent = "クラウド同期完了";
+            }
+
+            noteInput.addEventListener("input", () => {
+                if (statusSpan) statusSpan.textContent = "未保存の変更あり...";
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(triggerSaveNote, 1200);
+            });
+
+            if (saveBtn) {
+                saveBtn.addEventListener("click", () => {
+                    clearTimeout(saveTimeout);
+                    triggerSaveNote();
+                });
+            }
+        }
+
+        // 💡 【サイドバー機能 3】原本テキストの表示
+        function renderSourceText() {
+            const container = el("lesson-extracted-source-text");
+            const label = el("source-panel-label");
+            if (!container || !currentLesson) return;
+            const isTopicMode = currentLesson.sourceMode === "topic";
+            if (label) label.textContent = isTopicMode ? "🔍 AIが作成した授業ノート全文" : "🔍 参考書の文字起こし全文";
+            container.textContent = currentLesson.extractedText || (isTopicMode ? "（授業ノートが見つかりません）" : "（原本テキストが見つかりません）");
+        }
+
+        // 💡 【サイドバータブ切り替えの初期化】
+        document.querySelectorAll(".sidebar-tab-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".sidebar-tab-btn").forEach(b => b.classList.remove("active"));
+                document.querySelectorAll(".sidebar-panel").forEach(p => p.classList.remove("active"));
+                btn.classList.add("active");
+                const tabId = btn.getAttribute("data-tab");
+                const panel = el(tabId);
+                if (panel) panel.classList.add("active");
+                if (tabId === "tab-source") forceTriggerMathJax();
+            });
+        });
+
+        function updateProgressStrip() {
+            el("lesson-title-display").textContent = `📘 ${currentLesson.title}`;
+            const contBadge = el("continuation-source-badge");
+            if (contBadge) {
+                if (currentLesson.previousLessonTitle) {
+                    contBadge.textContent = `🔗 続き元: ${currentLesson.previousLessonTitle}`;
+                    contBadge.style.display = "inline";
+                } else {
+                    contBadge.style.display = "none";
+                }
+            }
+            const total = currentLesson.parts.length;
+            el("part-progress-display").textContent = `${currentLesson.currentPartIndex + 1}/${total}`;
+            renderPartsTOC();
+        }
+
+        function updateCompletionUI() {
+            const isCompleted = currentLesson.status === "completed";
+            el("completed-banner").classList.toggle("hidden", !isCompleted);
+            el("chat-input-wrap").classList.toggle("hidden", isCompleted);
+            el("next-part-btn").classList.toggle("hidden", isCompleted);
+            const isLastPart = currentLesson.currentPartIndex >= currentLesson.parts.length - 1;
+            el("next-part-btn").textContent = isLastPart ? "🏁 この授業を完了する" : "▶ 次のパートへ進む";
+            renderPartsTOC();
+        }
+
+        async function saveLesson() {
+            currentLesson.updatedAt = new Date().toISOString();
+            await set(ref(database, 'users/' + loginUid + '/lessons/' + currentLessonId), currentLesson);
+        }
+
+        // --------------------------------------------------------------
+        // Gemini呼び出し（会話履歴をrole付きで送る版）
+        // --------------------------------------------------------------
+        async function callGeminiChat(contentsWithRoles, systemInstruction) {
+            const requestBody = JSON.stringify({
+                "contents": contentsWithRoles,
+                "systemInstruction": { "parts": [{ "text": systemInstruction }] },
+                "generationConfig": { "responseMimeType": "application/json", "temperature": 0.4 }
+            });
+            let lastError = null;
+            for (const modelName of GEMINI_MODEL_FALLBACK_LIST) {
+                let response;
+                try {
+                    response = await fetchWithKeyRotation(getGeminiKeys(), (key) => ({
+                        url: buildGeminiUrl(modelName, key),
+                        options: { method: "POST", headers: { "Content-Type": "application/json" }, body: requestBody }
+                    }));
+                } catch (err) {
+                    lastError = err;
+                    continue;
+                }
+                const candidateJson = await response.json();
+                const candidateText = candidateJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!candidateText) { lastError = new Error(`Empty response: ${modelName}`); continue; }
+                try {
+                    return JSON.parse(fixJsonEscapes(extractJsonObject(stripCodeFence(candidateText.trim()))));
+                } catch (parseErr) {
+                    lastError = parseErr;
+                    continue;
+                }
+            }
+            throw new Error(`全モデルが利用できませんでした。時間を置いて再度お試しください。\n最終エラー: ${lastError?.message || "不明"}`);
+        }
+
+        async function sendTurn(userDisplayText, hiddenInstructionOverride, turnImages) {
+            const contentsWithRoles = (currentLesson.chatHistory || [])
+                .filter(m => m.role !== "divider")
+                .map(m => {
+                    const parts = [{ text: m.content }];
+                    if (m.role === "user" && Array.isArray(m.images)) {
+                        m.images.forEach(img => parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } }));
+                    }
+                    return { role: m.role === "assistant" ? "model" : "user", parts };
+                });
+
+            const instructionForApi = hiddenInstructionOverride || userDisplayText;
+            const currentTurnParts = [{ text: instructionForApi }];
+            if (Array.isArray(turnImages) && turnImages.length > 0) {
+                turnImages.forEach(img => currentTurnParts.push({ inlineData: { mimeType: img.mimeType, data: img.data } }));
+            }
+            contentsWithRoles.push({ role: "user", parts: currentTurnParts });
+
+            const aiJson = await callGeminiChat(contentsWithRoles, buildTeachSystemInstruction());
+
+            if (userDisplayText) {
+                const userEntry = { role: "user", content: userDisplayText };
+                if (Array.isArray(turnImages) && turnImages.length > 0) {
+                    userEntry.images = turnImages.map(img => ({ mimeType: img.mimeType, data: img.data }));
+                }
+                currentLesson.chatHistory.push(userEntry);
+            }
+            currentLesson.chatHistory.push({ role: "assistant", content: aiJson.ai_response || "（応答の取得に失敗しました）" });
+
+            await saveLesson();
+            renderChatTranscript();
+            await forceTriggerMathJax();
+        }
+
+        el("send-chat-btn").addEventListener("click", () => submitChatInput());
+        el("chat-input").addEventListener("keydown", (e) => { if (e.key === "Enter") submitChatInput(); });
+
+        async function submitChatInput() {
+            const input = el("chat-input");
+            const text = input.value.trim();
+            const imagesToSend = chatSelectedImages.slice();
+            if ((!text && imagesToSend.length === 0) || !currentLesson) return;
+            const displayText = text || "（参考書のページ写真を添付して質問しています）";
+            input.value = "";
+            chatSelectedImages = [];
+            renderChatImageThumbs();
+            const sendBtn = el("send-chat-btn");
+            sendBtn.disabled = true;
+            sendBtn.textContent = "…";
+            try {
+                await sendTurn(displayText, null, imagesToSend);
+            } catch (err) {
+                console.error(err);
+                alert("送信に失敗しました。\n原因: " + err.message);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = "送信";
+            }
+        }
+
+        el("next-part-btn").addEventListener("click", async () => {
+            if (!currentLesson) return;
+            const btn = el("next-part-btn");
+            btn.disabled = true;
+            const isLastPart = currentLesson.currentPartIndex >= currentLesson.parts.length - 1;
+
+            if (isLastPart) {
+                currentLesson.status = "completed";
+                await saveLesson();
+                updateCompletionUI();
+                btn.disabled = false;
+                return;
+            }
+
+            currentLesson.currentPartIndex += 1;
+            const part = currentLesson.parts[currentLesson.currentPartIndex];
+            currentLesson.chatHistory.push({ role: "divider", content: `第${currentLesson.currentPartIndex + 1}回: ${part.title}` });
+            renderChatTranscript();
+            updateProgressStrip();
+
+            btn.textContent = "⚙️ 準備中...";
+            try {
+                await sendTurn(null, "次のパートの授業を始めてください。");
+            } catch (err) {
+                console.error(err);
+                alert("授業の生成に失敗しました。\n原因: " + err.message);
+            } finally {
+                btn.disabled = false;
+                updateCompletionUI();
+            }
+        });
+
+        // --------------------------------------------------------------
+        // 起動
+        // --------------------------------------------------------------
+        async function loadLessonView(uid, lessonId) {
+            const snap = await get(ref(database, 'users/' + uid + '/lessons/' + lessonId));
+            if (!snap.exists()) {
+                alert("指定された授業が見つかりませんでした。");
+                window.location.href = "lesson.html";
+                return;
+            }
+            currentLesson = snap.val();
+            currentLessonId = lessonId;
+            if (!Array.isArray(currentLesson.chatHistory)) currentLesson.chatHistory = [];
+            if (!Array.isArray(currentLesson.parts)) currentLesson.parts = [];
+
+            el("view-list").classList.add("hidden");
+            el("view-plan-preview").classList.add("hidden");
+            el("view-lesson").classList.remove("hidden");
+
+            updateProgressStrip();
+            updateCompletionUI();
+
+            // 💡 サイドバー関連データの描画＆初期化
+            renderPartsTOC();
+            initLessonNotes();
+            renderSourceText();
+
+            if (currentLesson.chatHistory.length === 0) {
+                // 初回：第1回の授業をその場で生成
+                currentLesson.chatHistory.push({ role: "divider", content: `第1回: ${currentLesson.parts[0].title}` });
+                renderChatTranscript();
+                try {
+                    await sendTurn(null, "このパートの授業を始めてください。");
+                } catch (err) {
+                    console.error(err);
+                    alert("授業の生成に失敗しました。\n原因: " + err.message);
+                }
+            } else {
+                renderChatTranscript();
+                await forceTriggerMathJax();
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                el("login-required-notice").style.display = "block";
+                el("view-list").classList.add("hidden");
+                return;
+            }
+            loginUid = user.uid;
+            await loadPolicyPrompt(loginUid);
+
+            if (REQUESTED_ID) {
+                await loadLessonView(loginUid, REQUESTED_ID);
+            } else {
+                onValue(ref(database, 'users/' + loginUid + '/lessons'), (snapshot) => {
+                    lastLessonsSnapshot = snapshot.val() || {};
+                    renderLessonList(lastLessonsSnapshot);
+                    renderContinuationOptions(lastLessonsSnapshot);
+                });
+            }
+        });
+   </script>
+</body>
+</html>

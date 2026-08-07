@@ -1,0 +1,32 @@
+{
+  "name": "LOLZ // 誤答克服システム",
+  "short_name": "LOLZ",
+  "description": "誤答ノート・計算スプリント・授業モードなどを備えた学習アプリ",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#000000",
+  "theme_color": "#050508",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icons/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
