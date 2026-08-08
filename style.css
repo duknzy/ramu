@@ -149,7 +149,7 @@ html body .physics-figure-box img {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 1300;
     border-radius: 0 0 16px 16px;
     border-top: none;
 }
