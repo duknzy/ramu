@@ -128,7 +128,7 @@
             .workspace-container { height: auto; }
             .bento-grid { grid-template-rows: auto; }
             .main-question-tile, .answer-formula-tile, .ai-sidebar-tile { grid-column: span 12; }
-            .ai-sidebar-tile { height: 400px; }
+            .ai-sidebar-tile { height: min(60vh, 640px); min-height: 420px; }
             /* 💡 サイドバー内部を縦のflexboxとして扱い、chat-historyだけを
                伸縮させて独立スクロールさせる（これが無いと400pxを超えた分の
                会話が表示上あふれるだけでスクロールできなくなる） */
@@ -258,6 +258,61 @@
             background: rgba(0, 0, 0, 0.3);
             padding: 0.6rem;
             border-radius: 8px;
+        }
+
+        /* 📦【新設】問題文エリアの折りたたみ機能。
+           質問・解説の方が重要なので、問題文はデフォルトで小さくプレビュー表示にし、
+           必要な時だけ「全文を表示」で開けるようにする */
+        .question-text-block {
+            color: var(--text-main);
+            font-weight: 700;
+            line-height: 1.7;
+            text-align: left;
+            width: 100%;
+            padding: 0.5rem 0;
+            font-size: 1.35rem;
+        }
+        .question-collapsible-area {
+            position: relative;
+            overflow: hidden;
+            max-height: 240px;
+            transition: max-height 0.3s ease;
+        }
+        .question-collapsible-area.is-expanded {
+            max-height: 2000px;
+        }
+        .question-collapsible-area:not(.is-expanded)::after {
+            content: "";
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 48px;
+            background: linear-gradient(to bottom, rgba(5,5,8,0) 0%, var(--card-bg) 85%);
+            pointer-events: none;
+        }
+        .question-collapse-toggle {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+            width: 100%;
+            margin-top: 0.6rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-bright-muted);
+            font-size: 0.78rem;
+            font-weight: 800;
+            padding: 0.55rem 0.7rem;
+            border-radius: 10px;
+            cursor: pointer;
+            touch-action: manipulation;
+            min-height: 40px;
+        }
+        .question-collapse-toggle:active { transform: scale(0.97); }
+
+        @media (max-width: 1100px) {
+            /* 💡 問題文は「大事なのはAIとの質問・解説」という方針で、スマホでは控えめなサイズに */
+            .question-text-block { font-size: 1.05rem; line-height: 1.6; }
+            .question-collapsible-area { max-height: 150px; }
         }
         .judgment-buttons { display: flex; gap: 1.5rem; width: 100%; }
         .btn-correct { background: var(--accent-cyan) !important; box-shadow: 4px 4px 0px #008b94 !important; flex: 1; height: 54px; font-size: 1.1rem; }
@@ -491,8 +546,11 @@
                     <span id="analyze-engine-hint" style="display:none; font-size:0.7rem; color:var(--text-muted); font-weight:700; margin-left:0.3rem;"></span>
                 </div>
                 
-                <div class="physics-figure-box" id="figure-box"></div>
-                <div class="photo-gallery-strip" id="photo-gallery-strip" style="display:none;"></div>
+                <div class="question-collapsible-area" id="question-collapsible-area">
+                    <div class="physics-figure-box" id="figure-box"></div>
+                    <div class="photo-gallery-strip" id="photo-gallery-strip" style="display:none;"></div>
+                </div>
+                <button type="button" class="question-collapse-toggle" id="question-collapse-toggle">▼ 全文を表示</button>
             </section>
 
             <aside class="squircle-tile ai-sidebar-tile glass-sidebar">
@@ -952,6 +1010,44 @@
             setTimeout(() => { lightbox.style.opacity = "1"; lightbox.querySelector("#lightbox-img").style.transform = "scale(1)"; }, 10);
         }
 
+        // 📦【新設】問題文プレビューの折りたたみ制御。
+        //   内容がプレビュー高さに収まる時はボタン自体を出さない（無駄な折りたたみUIを避ける）
+        function setupQuestionCollapseToggle() {
+            const area = document.getElementById("question-collapsible-area");
+            const toggleBtn = document.getElementById("question-collapse-toggle");
+            if (!area || !toggleBtn) return;
+
+            area.classList.remove("is-expanded");
+            toggleBtn.style.display = "none";
+            toggleBtn.textContent = "▼ 全文を表示";
+            toggleBtn.onclick = null;
+
+            // レイアウト確定後（画像読み込み等）に高さを判定したいので次フレームで計測
+            requestAnimationFrame(() => {
+                if (area.scrollHeight > area.clientHeight + 16) {
+                    toggleBtn.style.display = "flex";
+                    toggleBtn.onclick = () => {
+                        const expanded = area.classList.toggle("is-expanded");
+                        toggleBtn.textContent = expanded ? "▲ 折りたたむ" : "▼ 全文を表示";
+                    };
+                }
+            });
+
+            // 🖼️ 画像はサイズが後から確定するため、読み込み完了時にも再判定する
+            area.querySelectorAll("img").forEach(img => {
+                if (img.complete) return;
+                img.addEventListener("load", () => {
+                    if (!area.classList.contains("is-expanded") && area.scrollHeight > area.clientHeight + 16) {
+                        toggleBtn.style.display = "flex";
+                        toggleBtn.onclick = () => {
+                            const expanded = area.classList.toggle("is-expanded");
+                            toggleBtn.textContent = expanded ? "▲ 折りたたむ" : "▼ 全文を表示";
+                        };
+                    }
+                }, { once: true });
+            });
+        }
+
         // 🖼️ 問題詳細ページ内のサムネイル・ギャラリーストリップを描画
         function renderPhotoGalleryStrip() {
             const strip = document.getElementById("photo-gallery-strip");
@@ -1142,15 +1238,7 @@ ${glossaryBlock}`;
                     // 💡 無駄な背景グラデーションや、元枠と喧嘩していた absolute/padding を排除。
                     // 💡 純粋に問題文テキストだけを美しく引き立たせるスマートな構造に変更。
                     contentHtml = `
-                        <div class="tex2jax_process" style="
-                            color: var(--text-main); 
-                            font-size: 1.35rem; 
-                            font-weight: 700;
-                            line-height: 1.7; 
-                            text-align: left; 
-                            width: 100%;
-                            padding: 0.5rem 0;
-                        ">
+                        <div class="tex2jax_process question-text-block">
                             ${currentProblemData.title}
                         </div>
                     `;
@@ -1169,6 +1257,7 @@ ${glossaryBlock}`;
 
                 figBox.innerHTML = contentHtml;
                 renderPhotoGalleryStrip();
+                setupQuestionCollapseToggle();
 
                 if (currentProblemData.subject === "未分類" && problemImages.length > 0) {
                     const mainImg = document.getElementById("figure-main-img");
