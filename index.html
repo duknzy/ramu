@@ -256,8 +256,32 @@
             border: 1px solid rgba(0,243,255,0.4);
         }
         
-        .auth-status-container { display: flex; align-items: center; gap: 1rem; }
-        .user-profile { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700; }
+        .auth-status-container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.6rem;
+            width: 100%;
+        }
+        .header-action-btn {
+            flex: 1 1 calc(50% - 0.3rem);
+            min-width: 0;
+            font-size: 0.85rem;
+            padding: 0.75rem 0.6rem;
+            white-space: normal;
+        }
+        .header-action-btn--full {
+            flex-basis: 100%;
+        }
+        #auth-panel {
+            flex: 1 1 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .user-profile { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700; min-width: 0; width: 100%; }
+        .user-profile span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1 1 auto; }
+        .user-profile #logout-btn { flex-shrink: 0; }
         .user-avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--accent-cyan); }
         #logout-btn { background: transparent; border: 1px solid #222; color: var(--text-muted); font-size: 0.8rem; padding: 0.3rem 0.6rem; border-radius: 8px; cursor: pointer; }
         #logout-btn:hover { border-color: var(--accent-magenta); color: var(--accent-magenta); }
@@ -635,17 +659,17 @@
                 <h1 class="logo">LOLZ</h1>
             </div>
             <div class="auth-status-container">
-                <button type="button" class="tactile-btn" id="open-modal-btn" style="background: var(--accent-magenta); box-shadow: 3px 3px 0px #9e004f; display:none;">
+                <button type="button" class="tactile-btn header-action-btn header-action-btn--full" id="open-modal-btn" style="background: var(--accent-magenta); box-shadow: 3px 3px 0px #9e004f; display:none;">
     ＋ 誤答問題を登録
 </button>
 
 <!-- 🧠【追加】全問題の気づき一覧モーダルを開くボタン -->
-<button type="button" class="tactile-btn" id="open-insight-list-btn" style="background: rgba(0, 243, 255, 0.1); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); box-shadow: 3px 3px 0px rgba(0,243,255,0.2); display:none;">
+<button type="button" class="tactile-btn header-action-btn" id="open-insight-list-btn" style="background: rgba(0, 243, 255, 0.1); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); box-shadow: 3px 3px 0px rgba(0,243,255,0.2); display:none;">
     🧠 気づき一覧
 </button>
 
 <!-- 💬【追加】全問題横断の質問履歴アーカイブモーダルを開くボタン -->
-<button type="button" class="tactile-btn" id="open-qna-archive-btn" style="background: rgba(255, 245, 0, 0.08); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); box-shadow: 3px 3px 0px rgba(255,245,0,0.2); display:none;">
+<button type="button" class="tactile-btn header-action-btn" id="open-qna-archive-btn" style="background: rgba(255, 245, 0, 0.08); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); box-shadow: 3px 3px 0px rgba(255,245,0,0.2); display:none;">
     💬 質問履歴アーカイブ
 </button>
                 <div id="auth-panel" style="font-weight: 800; border: 1px solid #22222a; padding: 0.5rem 1rem; border-radius: 12px;" class="glass-card">
