@@ -1,14 +1,12 @@
 // ==========================================================================
 // 📱 MOBILE NAV DRAWER CONTROLLER
-// PC版の横並びヘッダーnavを廃止し、ハンバーガー+スライドドロワーに統一する。
+// 上部の固定バーは廃止し、画面右上に浮くハンバーガーボタン単体から
+// スライドドロワーを開閉する。
 // ==========================================================================
 (function() {
     function initMobileNav() {
-        const nav = document.querySelector('.global-cyber-nav');
-        if (!nav) return;
-
-        const toggleBtn = nav.querySelector('.nav-hamburger-btn');
-        const links = nav.querySelector('.nav-links');
+        const toggleBtn = document.querySelector('.nav-hamburger-btn');
+        const links = document.querySelector('.nav-links');
         const overlay = document.querySelector('.nav-drawer-overlay');
         if (!toggleBtn || !links || !overlay) return;
 
