@@ -63,10 +63,22 @@ body {
     position: relative;
 }
 
-/* ドロワー展開中は背面をスクロールさせない */
-body.nav-drawer-locked {
+/* ドロワー／モーダル表示中は背面をスクロールさせない */
+body.nav-drawer-locked,
+body.modal-scroll-locked {
     overflow: hidden;
     height: 100dvh;
+}
+
+/* 🔘 アイコンのみの閉じるボタン等、視覚サイズが小さい要素でも
+   タップ領域は最低44×44pxを確保するための共通ユーティリティ */
+.tap-target-min {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
 }
 
 /* 物理的なノイズテクスチャ */

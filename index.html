@@ -33,11 +33,11 @@
             border: 1px solid #22222a;
             box-shadow: 4px 4px 0px #22222a;
         }
-        .squircle-card:hover {
+@media (hover: hover) and (pointer: fine) { .squircle-card:hover {
             transform: translate(-2px, -2px);
             border-color: #3a3a4a;
             box-shadow: 6px 6px 0px #3a3a4a;
-        }
+        } }
         .glass-card {
             background: var(--card-bg-glass);
             backdrop-filter: blur(16px);
@@ -158,20 +158,20 @@
             transition: all 0.15s ease;
             text-align: center;
         }
-        .math-key:hover {
+@media (hover: hover) and (pointer: fine) { .math-key:hover {
             background: #001515;
             border-color: var(--accent-cyan);
             color: var(--text-main);
             box-shadow: 0 0 8px rgba(0, 243, 255, 0.3);
-        }
+        } }
         .math-key.btn-accent {
             border-color: var(--accent-magenta);
             color: var(--accent-magenta);
         }
-        .math-key.btn-accent:hover {
+@media (hover: hover) and (pointer: fine) { .math-key.btn-accent:hover {
             background: rgba(255, 0, 127, 0.1);
             box-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
-        }
+        } }
 
         /* 💬【新設】質問履歴アーカイブ用のチャットバブル・一覧項目CSS */
         .qna-archive-chat-history { display: flex; flex-direction: column; gap: 0.6rem; }
@@ -207,7 +207,7 @@
             cursor: pointer;
             transition: border-color 0.15s ease;
         }
-        .qna-archive-item:hover { border-color: var(--accent-yellow); }
+@media (hover: hover) and (pointer: fine) { .qna-archive-item:hover { border-color: var(--accent-yellow); } }
         .qna-archive-item .qna-archive-date { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem; }
         .qna-archive-item .qna-archive-preview { font-size: 0.9rem; color: var(--text-bright-muted); margin-top: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -284,7 +284,7 @@
         .user-profile #logout-btn { flex-shrink: 0; }
         .user-avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--accent-cyan); }
         #logout-btn { background: transparent; border: 1px solid #222; color: var(--text-muted); font-size: 0.8rem; padding: 0.3rem 0.6rem; border-radius: 8px; cursor: pointer; }
-        #logout-btn:hover { border-color: var(--accent-magenta); color: var(--accent-magenta); }
+@media (hover: hover) and (pointer: fine) { #logout-btn:hover { border-color: var(--accent-magenta); color: var(--accent-magenta); } }
         .login-overlay-box { grid-column: span 12; padding: 4rem; text-align: center; background: rgba(5,5,8,0.6); border: 1px dashed #22222a; border-radius: 16px; }
 
         .card-inner-layout {
@@ -405,7 +405,7 @@
             cursor: pointer;
             user-select: none;
         }
-        .problem-section-header:hover { color: #fff; }
+@media (hover: hover) and (pointer: fine) { .problem-section-header:hover { color: #fff; } }
         .problem-section-header:first-child { margin-top: 0; }
         .problem-section-header-left { display: flex; align-items: center; gap: 0.5rem; }
         .problem-section-chevron {
@@ -435,7 +435,7 @@
             color: #fff;
             padding: 0.55rem 0.9rem;
             border-radius: 10px;
-            font-size: 0.85rem;
+            font-size: 1rem;
         }
         .problem-search-input:focus { outline: none; border-color: var(--accent-cyan); }
         .problem-search-clear-btn {
@@ -443,11 +443,14 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-muted);
             border-radius: 8px;
-            padding: 0.4rem 0.7rem;
+            padding: 0.4rem 0.9rem;
+            min-height: 44px;
             font-size: 0.75rem;
             font-weight: 800;
             cursor: pointer;
+            touch-action: manipulation;
             display: none;
+            align-items: center;
         }
 
         /* 🗓️【新設】追加日・気づき更新日メタ表示 */
@@ -473,10 +476,10 @@
             cursor: pointer;
             transition: all 150ms ease;
         }
-        .problem-row:hover {
+@media (hover: hover) and (pointer: fine) { .problem-row:hover {
             background: rgba(255, 255, 255, 0.03);
             transform: translateX(3px);
-        }
+        } }
         .row-thumb {
             position: relative;
             width: 44px;
@@ -534,10 +537,10 @@
             cursor: pointer;
             transition: all 0.15s ease;
         }
-        .filter-btn:hover {
+@media (hover: hover) and (pointer: fine) { .filter-btn:hover {
             background: rgba(255, 255, 255, 0.08);
             color: #fff;
-        }
+        } }
         .filter-btn.active {
             background: rgba(0, 243, 255, 0.14) !important;
             color: var(--accent-cyan) !important;
@@ -558,11 +561,11 @@
             cursor: pointer;
             transition: all 0.15s ease;
         }
-        .insight-card-item:hover {
+@media (hover: hover) and (pointer: fine) { .insight-card-item:hover {
             border-color: var(--accent-cyan);
             background: rgba(0, 243, 255, 0.05);
             transform: translateX(3px);
-        }
+        } }
         .badge-insight {
             background: rgba(0, 243, 255, 0.15) !important;
             color: var(--accent-cyan) !important;
@@ -601,11 +604,11 @@
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.1, 0.8, 0.2, 1);
         }
-        .subject-tab-btn:hover {
+@media (hover: hover) and (pointer: fine) { .subject-tab-btn:hover {
             background: rgba(0, 243, 255, 0.08);
             border-color: var(--accent-cyan);
             color: #fff;
-        }
+        } }
         .subject-tab-btn.active {
             background: var(--accent-cyan) !important;
             color: #000 !important;
@@ -619,7 +622,7 @@
             border: 1px solid var(--accent-cyan);
             padding: 0.4rem 0.8rem;
             border-radius: 8px;
-            font-size: 0.8rem;
+            font-size: 1rem;
             font-weight: 800;
             cursor: pointer;
             outline: none;
@@ -653,6 +656,7 @@
         <div class="nav-drawer-overlay"></div>
         <script src="global-timer-sync.js"></script>
         <script src="mobile-nav.js"></script>
+        <script src="modal-scroll-lock.js"></script>
 
         <header>
             <div>
@@ -779,12 +783,12 @@
                     color: var(--text-bright-muted);
                     padding: 0.45rem 0.9rem;
                     border-radius: 10px;
-                    font-size: 0.85rem;
+                    font-size: 1rem;
                     font-weight: 800;
                     cursor: pointer;
                     transition: all 0.15s ease;
                 }
-                .subject-select-btn:hover { border-color: var(--accent-cyan); color: #fff; }
+@media (hover: hover) and (pointer: fine) { .subject-select-btn:hover { border-color: var(--accent-cyan); color: #fff; } }
                 .subject-select-btn.active {
                     background: var(--accent-cyan);
                     color: #000;

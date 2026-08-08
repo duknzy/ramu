@@ -46,7 +46,7 @@
         .user-profile { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700; }
         .user-avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--accent-cyan); }
         #logout-btn { background: transparent; border: 1px solid #222; color: var(--text-muted); font-size: 0.8rem; padding: 0.3rem 0.6rem; border-radius: 8px; cursor: pointer; }
-        #logout-btn:hover { border-color: var(--accent-magenta); color: var(--accent-magenta); }
+@media (hover: hover) and (pointer: fine) { #logout-btn:hover { border-color: var(--accent-magenta); color: var(--accent-magenta); } }
         .login-overlay-box { padding: 4rem; text-align: center; background: rgba(5,5,8,0.6); border: 1px dashed #22222a; border-radius: 16px; }
 
         /* バッジ共通 */
@@ -66,9 +66,9 @@
         .subject-select-btn {
             background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
             color: var(--text-bright-muted); padding: 0.5rem 1rem; border-radius: 10px;
-            font-size: 0.85rem; font-weight: 800; cursor: pointer; transition: all 0.15s ease;
+            font-size: 1rem; font-weight: 800; cursor: pointer; transition: all 0.15s ease;
         }
-        .subject-select-btn:hover { border-color: var(--accent-cyan); color: #fff; }
+@media (hover: hover) and (pointer: fine) { .subject-select-btn:hover { border-color: var(--accent-cyan); color: #fff; } }
         .subject-select-btn.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); box-shadow: 0 0 10px rgba(0,243,255,0.4); }
 
         .setup-grid {
@@ -78,7 +78,7 @@
         .setup-field label { font-size: 0.75rem; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 0.35rem; }
         .setup-field input, .setup-field select {
             width: 100%; background: #000; border: 1px solid #222; color: #fff;
-            padding: 0.6rem 0.7rem; border-radius: 10px; font-size: 0.95rem; font-family: inherit;
+            padding: 0.6rem 0.7rem; border-radius: 10px; font-size: 1rem; font-family: inherit;
         }
         .setup-field input:focus, .setup-field select:focus { border-color: var(--accent-cyan); outline: none; }
 
@@ -90,7 +90,7 @@
         @media (max-width: 640px) { .bulk-input-row { grid-template-columns: 1fr; } }
         .bulk-input-box textarea {
             width: 100%; min-height: 70px; background: #000; border: 1px solid #222;
-            color: #fff; padding: 0.7rem; border-radius: 10px; font-size: 0.9rem; resize: vertical; font-family: inherit;
+            color: #fff; padding: 0.7rem; border-radius: 10px; font-size: 1rem; resize: vertical; font-family: inherit;
         }
         .bulk-input-box .bulk-label { font-size: 0.78rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.35rem; display:block; }
         .bulk-apply-btn { margin-top: 0.5rem; width: 100%; height: 40px; font-size: 0.85rem; }
@@ -124,7 +124,7 @@
         .mark-row.row-correct { border-color: rgba(0,255,120,0.25); background: rgba(0,255,120,0.03); }
         .mark-row input[type="text"], .mark-row input[type="number"] {
             width: 100%; background: #000; border: 1px solid #222; color: #fff;
-            padding: 0.4rem; border-radius: 8px; font-size: 0.9rem; text-align: center; font-family: inherit;
+            padding: 0.4rem; border-radius: 8px; font-size: 1rem; text-align: center; font-family: inherit;
         }
         .mark-row .row-no { font-weight: 900; color: var(--text-bright-muted); font-size: 0.85rem; text-align: center; }
         .mark-row .row-judge { text-align: center; font-size: 1.1rem; }
@@ -163,7 +163,7 @@
         .history-item .h-meta { font-size: 0.8rem; color: var(--text-muted); }
         .history-item .h-score { font-weight: 900; color: var(--accent-cyan); font-size: 1.05rem; }
         .history-delete-btn { background: transparent; border: 1px solid #333; color: var(--text-muted); font-size: 0.75rem; padding: 0.3rem 0.6rem; border-radius: 8px; cursor: pointer; }
-        .history-delete-btn:hover { border-color: var(--accent-magenta); color: var(--accent-magenta); }
+@media (hover: hover) and (pointer: fine) { .history-delete-btn:hover { border-color: var(--accent-magenta); color: var(--accent-magenta); } }
 
         /* 詳しく記録モーダル */
         .modal-overlay {
@@ -176,7 +176,7 @@
         }
         .modal-textarea {
             width: 100%; min-height: 80px; background: #000; border: 1px solid #222;
-            color: #fff; padding: 0.8rem; border-radius: 12px; font-size: 0.95rem; margin-top: 0.4rem; resize: vertical; font-family: inherit;
+            color: #fff; padding: 0.8rem; border-radius: 12px; font-size: 1rem; margin-top: 0.4rem; resize: vertical; font-family: inherit;
         }
         .image-upload-zone {
             display: flex; align-items: center; justify-content: center; gap: 0.5rem;
@@ -197,7 +197,14 @@
             background: rgba(0,0,0,0.75); color: #fff; border: 1px solid rgba(255,255,255,0.35);
             font-size: 0.7rem; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 900;
         }
-        .modal-close-btn { position: absolute; top: 1rem; right: 1.2rem; background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
+        .modal-close-btn {
+            position: absolute; top: 0.6rem; right: 0.6rem;
+            background: none; border: none; color: var(--text-muted);
+            font-size: 1.4rem; cursor: pointer;
+            min-width: 44px; min-height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            touch-action: manipulation;
+        }
     </style>
 </head>
 <body>
@@ -223,6 +230,7 @@
         <div class="nav-drawer-overlay"></div>
         <script src="global-timer-sync.js"></script>
         <script src="mobile-nav.js"></script>
+        <script src="modal-scroll-lock.js"></script>
 
         <header>
             <div>
