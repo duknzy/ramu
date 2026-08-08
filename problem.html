@@ -129,6 +129,16 @@
             .bento-grid { grid-template-rows: auto; }
             .main-question-tile, .answer-formula-tile, .ai-sidebar-tile { grid-column: span 12; }
             .ai-sidebar-tile { height: 400px; }
+            /* 💡 サイドバー内部を縦のflexboxとして扱い、chat-historyだけを
+               伸縮させて独立スクロールさせる（これが無いと400pxを超えた分の
+               会話が表示上あふれるだけでスクロールできなくなる） */
+            .chat-history {
+                flex-grow: 1;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
         }
 
         /* 共通コンポーネント */
@@ -234,7 +244,21 @@
             border: 1px dashed #222; margin-top: 0.5rem;
         }
         
-        .model-answer-text { font-size: 1.05rem; color: var(--text-bright-muted); font-weight: 500; margin-bottom: 0.5rem; white-space: pre-wrap; line-height: 1.8; letter-spacing: 0.5px; }
+        .model-answer-text { font-size: 1.05rem; color: var(--text-bright-muted); font-weight: 500; margin-bottom: 0.5rem; white-space: pre-wrap; line-height: 1.8; letter-spacing: 0.5px; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+        .model-answer-text mjx-container {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            vertical-align: middle;
+            padding: 0.2em 0;
+        }
+        .model-answer-text mjx-container[jax="CHTML"][display="true"] {
+            display: block !important;
+            margin: 0.5em 0 !important;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.6rem;
+            border-radius: 8px;
+        }
         .judgment-buttons { display: flex; gap: 1.5rem; width: 100%; }
         .btn-correct { background: var(--accent-cyan) !important; box-shadow: 4px 4px 0px #008b94 !important; flex: 1; height: 54px; font-size: 1.1rem; }
         .btn-incorrect { background: var(--accent-magenta) !important; color: #000 !important; box-shadow: 4px 4px 0px #9e004f !important; flex: 1; height: 54px; font-size: 1.1rem; }
