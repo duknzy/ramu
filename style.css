@@ -1,6 +1,8 @@
 /* ==========================================================================
-   COMMON DESIGN SYSTEM (Tactile Brutalism 2.0) — スマホ専用版
+   COMMON DESIGN SYSTEM — Scrapbook / Sticker (Riso Print) — スマホ専用版
    ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap');
+
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -13,21 +15,30 @@ html {
 }
 
 :root {
-    --bg-color: #000000;
-    --card-bg: #050508;
-    --card-bg-glass: rgba(10, 10, 18, 0.5);
-    --border-color: #22222a;
-    --border-glow: #3a3a4a;
+    /* 紙とインクのベース */
+    --bg-color: #f3ede0;
+    --card-bg: #fffdf7;
+    --card-bg-glass: rgba(255, 253, 247, 0.85);
+    --border-color: #2a2420;
+    --border-glow: #2a2420;
+    --ink: #2a2420;
 
-    /* Neon Accents */
-    --accent-cyan: #00f3ff;
-    --accent-magenta: #ff007f;
-    --accent-yellow: #fff500;
+    /* リソ印刷風フラットアクセント（元の変数名を維持し、全ページに自動反映させる） */
+    --accent-cyan: #5fc6ff;      /* 旧：ネオンシアン → スカイブルー */
+    --accent-cyan-d: #1c86c9;
+    --accent-magenta: #ff7a9c;   /* 旧：ネオンマゼンタ → ステッカーピンク */
+    --accent-magenta-d: #c93e63;
+    --accent-yellow: #ffcf3f;    /* 旧：ネオンイエロー → クレヨンイエロー */
+    --accent-yellow-d: #c99400;
+    --accent-green: #7fd67f;
+    --accent-green-d: #2c9c4a;
+    --star: #ffb400;
+    --tape: repeating-linear-gradient(45deg, #ffcf3f, #ffcf3f 6px, #00000012 6px, #00000012 10px);
 
     /* Text */
-    --text-main: #ffffff;
-    --text-muted: #708590;
-    --text-bright-muted: #a0b5c0;
+    --text-main: #2a2420;
+    --text-muted: #797064;
+    --text-bright-muted: #4a423a;
 
     /* Fonts（スマホの画面幅基準に調整） */
     --fs-xl: clamp(2.1rem, 9vw, 3rem);
@@ -51,7 +62,7 @@ html, body {
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
-    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Kaku Gothic ProN', sans-serif;
     min-height: 100vh;
     min-height: 100dvh;
     padding: 1rem;
@@ -81,32 +92,46 @@ body.modal-scroll-locked {
     touch-action: manipulation;
 }
 
-/* 物理的なノイズテクスチャ */
+/* リソ印刷の紙目（ごく薄いグレイン。ネオン期のノイズより弱め） */
 body::before {
     content: "";
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
-    opacity: 0.04;
+    opacity: 0.035;
     pointer-events: none;
     z-index: 9999;
+    mix-blend-mode: multiply;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* スクワークル構造 */
+/* スクワークル構造 → ステッカー貼りシールカード
+   ぼかしなしのベタッとしたオフセット影＋太いインク枠＋わずかな傾きで
+   「紙のカードを貼った」立体感を出す。data-tilt属性で個別に傾きを変えられる。 */
 .squircle-card, .squircle-tile {
     background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 24px / 24px;
+    border: 2.5px solid var(--ink);
+    border-radius: 20px / 20px;
     padding: 1.4rem;
     position: relative;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
-    box-shadow: 4px 4px 0px rgba(0, 243, 255, 0.05);
+    box-shadow: 5px 5px 0px var(--ink);
+    transform: rotate(-0.6deg);
+}
+.squircle-card:nth-of-type(even), .squircle-tile:nth-of-type(even) {
+    transform: rotate(0.6deg);
+}
+@media (hover: hover) and (pointer: fine) {
+    .squircle-card:hover, .squircle-tile:hover {
+        transform: translate(-2px, -2px) rotate(0deg);
+        box-shadow: 7px 7px 0px var(--ink);
+    }
 }
 
-/* ボタンの150ms高速アクション（タップ領域はスマホ基準で最低44pxを確保） */
+/* ボタンの150ms高速アクション（タップ領域はスマホ基準で最低44pxを確保）
+   → 丸っこいステッカーボタン */
 .tactile-btn {
     display: inline-flex;
     align-items: center;
@@ -114,18 +139,18 @@ body::before {
     text-align: center;
     line-height: 1.3;
     background: var(--accent-cyan);
-    color: #000;
-    border: none;
-    border-radius: 14px / 14px;
+    color: var(--ink);
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
     padding: 0.85rem 1.5rem;
     min-height: 44px;
     font-weight: 900;
     cursor: pointer;
     touch-action: manipulation;
-    transition: transform 150ms cubic-bezier(0.1, 0.8, 0.2, 1);
-    box-shadow: 3px 3px 0px #008b94;
+    transition: transform 150ms cubic-bezier(0.1, 0.8, 0.2, 1), box-shadow 150ms cubic-bezier(0.1, 0.8, 0.2, 1);
+    box-shadow: 3px 3px 0px var(--ink);
 }
-.tactile-btn:active { transform: scale(0.94) translate(1px, 1px); }
+.tactile-btn:active { transform: scale(0.94) translate(2px, 2px); box-shadow: 1px 1px 0px var(--ink); }
 
 
 /* ==========================================================================
@@ -143,10 +168,13 @@ html body .physics-figure-box img {
     height: auto !important;
     margin: 0 auto !important;
     display: block !important;
+    border: 2.5px solid var(--ink);
+    border-radius: 12px;
 }
 
 /* ==========================================================================
    FLOATING HAMBURGER MENU（スマホ：右上固定ボタン＋スライドドロワー）
+   → マスキングテープで留めたステッカーメモ帳ドロワー
    ========================================================================== */
 
 /* 🍔 画面右上に常時浮かぶハンバーガーボタン */
@@ -162,22 +190,21 @@ html body .physics-figure-box img {
     width: 44px;
     height: 44px;
     flex-shrink: 0;
-    background: rgba(10, 10, 18, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 243, 255, 0.25);
+    background: var(--accent-yellow);
+    border: 2.5px solid var(--ink);
     border-radius: 12px;
     cursor: pointer;
     touch-action: manipulation;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    box-shadow: 3px 3px 0px var(--ink);
+    transform: rotate(-3deg);
     z-index: 1201;
 }
 
 .nav-hamburger-btn span {
     display: block;
     width: 20px;
-    height: 2px;
-    background: var(--accent-cyan);
+    height: 2.5px;
+    background: var(--ink);
     border-radius: 2px;
     transition: transform 0.2s ease, opacity 0.2s ease;
 }
@@ -196,8 +223,7 @@ html body .physics-figure-box img {
 .nav-drawer-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(2px);
+    background: rgba(42, 36, 32, 0.45);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s ease;
@@ -209,7 +235,7 @@ html body .physics-figure-box img {
     pointer-events: auto;
 }
 
-/* 📱 ドロワー本体（右からスライドイン） */
+/* 📱 ドロワー本体（右からスライドイン）→ 紙のメモ帳 */
 .nav-links {
     position: fixed;
     top: 0;
@@ -219,16 +245,31 @@ html body .physics-figure-box img {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 0.5rem;
-    background: #08080d;
-    border-left: 1px solid rgba(0, 243, 255, 0.25);
-    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.6);
-    padding: calc(1.2rem + var(--safe-top)) 1rem calc(1.2rem + var(--safe-bottom)) 1rem;
+    gap: 0.6rem;
+    background: var(--card-bg);
+    border-left: 2.5px solid var(--ink);
+    box-shadow: -6px 0 0 rgba(42, 36, 32, 0.08);
+    padding: calc(1.4rem + var(--safe-top)) 1rem calc(1.2rem + var(--safe-bottom)) 1rem;
     padding-right: calc(1rem + var(--safe-right));
     transform: translateX(100%);
     transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     overflow-y: auto;
     z-index: 1200;
+}
+
+/* 上端にマスキングテープ */
+.nav-links::before {
+    content: "";
+    position: absolute;
+    top: calc(var(--safe-top) + 6px);
+    left: 50%;
+    width: 90px;
+    height: 22px;
+    background: var(--tape);
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    opacity: 0.92;
+    transform: translateX(-50%) rotate(-3deg);
 }
 
 .nav-links.is-open {
@@ -239,41 +280,59 @@ html body .physics-figure-box img {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    color: #a0b5c0;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--ink);
+    background: #fff;
+    border: 2px solid var(--ink);
     padding: 0.9rem 1rem;
     min-height: 48px;
-    border-radius: 12px;
+    border-radius: 14px;
     font-size: 0.95rem;
     font-weight: 800;
     text-decoration: none;
     touch-action: manipulation;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    box-shadow: 3px 3px 0px var(--ink);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .nav-btn:active {
-    color: #ffffff;
-    background: rgba(0, 243, 255, 0.15);
-    border-color: #00f3ff;
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0px var(--ink);
+    background: #fff8e6;
 }
 
 .nav-btn.active {
-    color: #000000;
-    background: #00f3ff;
-    border-color: #00f3ff;
-    box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+    color: var(--ink);
+    background: var(--accent-cyan);
+    border-color: var(--ink);
+    box-shadow: 3px 3px 0px var(--ink);
 }
 
 .nav-btn.active-timer {
-    background: linear-gradient(135deg, rgba(255, 0, 127, 0.25), rgba(0, 243, 255, 0.25)) !important;
-    border-color: #ff007f !important;
-    color: #ffffff !important;
-    box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+    background: linear-gradient(135deg, var(--accent-magenta), var(--accent-yellow)) !important;
+    border-color: var(--ink) !important;
+    color: var(--ink) !important;
+    box-shadow: 3px 3px 0px var(--ink);
     animation: pulse-timer-btn 1.5s infinite alternate;
 }
 
+/* ⭐ 統計カードなどに貼るスターシール */
+.sticker-star {
+    position: absolute;
+    top: -10px;
+    right: -8px;
+    width: 30px;
+    height: 30px;
+    background: var(--star);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transform: rotate(12deg);
+}
+
 @keyframes pulse-timer-btn {
-    0% { box-shadow: 0 0 8px rgba(255, 0, 127, 0.4); }
-    100% { box-shadow: 0 0 18px rgba(0, 243, 255, 0.7); }
+    0% { box-shadow: 3px 3px 0px var(--ink); }
+    100% { box-shadow: 5px 5px 0px var(--ink); }
 }
