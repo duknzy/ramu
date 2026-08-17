@@ -1,0 +1,260 @@
+/* ==========================================================================
+   COMMON DESIGN SYSTEM (Tactile Brutalism 2.0)
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* ==========================================================================
+   スクロールバー完全非表示（スクロール操作・機能は維持）
+   ========================================================================== */
+html, body, * {
+    scrollbar-width: none !important;        /* Firefox */
+    -ms-overflow-style: none !important;     /* IE / Edge */
+}
+*::-webkit-scrollbar {
+    display: none !important;                /* Chrome / Safari / Opera */
+    width: 0 !important;
+    height: 0 !important;
+}
+
+:root {
+    --bg-color: #000000;
+    --bg-image: url('bg.avif'); 
+    
+    /* 💡 カードの黒塗りをさらに薄くして背景画像をもっと透けさせます */
+    --card-bg: rgba(6, 8, 14, 0.16);
+    --card-bg-glass: rgba(6, 8, 16, 0.12);
+    /* 💡 ガラスの輪郭（枠線）を少しだけ光らせて立体感をキープ */
+    --border-color: rgba(255, 255, 255, 0.12);
+    --border-glow: rgba(0, 243, 255, 0.35);
+    
+    /* Neon Accents */
+    --accent-cyan: #00f3ff;
+    --accent-magenta: #ff007f;
+    --accent-yellow: #fff500;
+    
+    /* Text */
+    --text-main: #ffffff;
+    --text-muted: #9bb2c0;
+    --text-bright-muted: #cce0ec;
+    
+    /* Fonts */
+    --fs-xl: clamp(2.5rem, 6vw + 1rem, 4.5rem);
+    --fs-lg: clamp(1.4rem, 2.5vw + 0.5rem, 2.2rem);
+    --fs-md: clamp(1.1rem, 1.5vw + 0.2rem, 1.4rem);
+    --fs-sm: 0.9rem;
+}
+
+body {
+    background-color: var(--bg-color);
+    /* 写真全体の暗幕を薄めにして背景がしっかり見えるように調整 */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.62)), var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    
+    color: var(--text-main);
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+    min-height: 100vh;
+    padding: 2rem;
+    overflow-x: hidden;
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 9999;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.squircle-card, .squircle-tile {
+    background-color: var(--card-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border-color);
+    border-radius: 32px / 32px;
+    padding: 1.8rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    box-shadow: 4px 4px 0px rgba(0, 243, 255, 0.05);
+}
+
+.tactile-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-cyan);
+    color: #000;
+    border: none;
+    border-radius: 14px / 14px;
+    padding: 0.8rem 1.5rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 150ms cubic-bezier(0.1, 0.8, 0.2, 1);
+    box-shadow: 3px 3px 0px #008b94;
+}
+.tactile-btn:active { transform: scale(0.94) translate(1px, 1px); }
+
+/* ==========================================================================
+   MathJax 数式オーバーフロー完全防止（全画面共通）
+   ========================================================================== */
+mjx-container {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    vertical-align: middle;
+}
+mjx-container[jax="CHTML"][display="true"] {
+    display: block !important;
+    margin: 0.5em 0 !important;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.6rem;
+    border-radius: 8px;
+}
+
+/* ==========================================================================
+   GLOBAL CYBER HUD NAVIGATION
+   ========================================================================== */
+.global-cyber-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10, 10, 18, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 243, 255, 0.25);
+    border-radius: 16px;
+    padding: 0.6rem 1.2rem;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    position: relative;
+}
+
+.nav-brand {
+    font-family: monospace;
+    font-weight: 900;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    color: var(--accent-cyan, #00f3ff);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-brand::before {
+    content: "●";
+    color: #00ff78;
+    font-size: 0.6rem;
+    animation: blink-dot 1.5s infinite;
+}
+
+@keyframes blink-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #a0b5c0;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.45rem 0.85rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.nav-btn:hover {
+    color: #ffffff;
+    background: rgba(0, 243, 255, 0.12);
+    border-color: #00f3ff;
+    transform: translateY(-1px);
+}
+
+.nav-btn.active {
+    color: #000000;
+    background: #00f3ff;
+    border-color: #00f3ff;
+    box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+}
+
+.nav-btn.active-timer {
+    background: linear-gradient(135deg, rgba(255, 0, 127, 0.25), rgba(0, 243, 255, 0.25)) !important;
+    border-color: #ff007f !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+    animation: pulse-timer-btn 1.5s infinite alternate;
+}
+
+@keyframes pulse-timer-btn {
+    0% { box-shadow: 0 0 8px rgba(255, 0, 127, 0.4); }
+    100% { box-shadow: 0 0 18px rgba(0, 243, 255, 0.7); }
+}
+
+/* 📱 モバイルハンバーガーメニュー対応 */
+.nav-hamburger-btn {
+    display: none;
+    background: transparent;
+    border: 1px solid rgba(0, 243, 255, 0.3);
+    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0;
+}
+.nav-hamburger-btn span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background-color: var(--accent-cyan);
+    transition: all 0.2s ease;
+}
+
+@media (max-width: 900px) {
+    body { padding: 1rem; }
+    .nav-hamburger-btn { display: flex; }
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        background: rgba(10, 10, 18, 0.98);
+        border: 1px solid var(--accent-cyan);
+        border-radius: 16px;
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.6rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    }
+    .nav-links.open { display: flex; }
+    .nav-btn { width: 100%; justify-content: flex-start; padding: 0.6rem 1rem; }
+}
