@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#fffdf7">
+    <meta name="theme-color" content="#050508">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="LOLZ">
     <meta name="format-detection" content="telephone=no">
     <link rel="manifest" href="manifest.json">
@@ -14,23 +14,28 @@
     <link rel="apple-touch-icon" href="icons/icon.png">
     <title>LOLZ // 問題解答セッション</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="mobile-nav.css">
     
     <script>
         window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-            chtml: { displayAlign: 'left' }
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                macros: { fbox: ["\\bbox[2px,border:1px solid]{#1}", 1] }
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process',
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            },
+            chtml: {
+                displayAlign: 'left'
+            }
         };
     </script>
-    <script id="MathJax-script" async></script>
-    <script>
-        // コピペ破壊防御：ドットも完全に分離して自動リンク化の隙を与えない
-        (function() {
-            var script = document.getElementById("MathJax-script");
-            var proto = "https" + "://";
-            var d = ".";
-            script.src = proto + "cdn" + d + "jsdelivr" + d + "net/npm/mathjax@3/es5/tex-chtml.js";
-        })();
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
 
     <style>
         /* 🌌 スマホ用：縦スクロール前提のダッシュボードCSS */
@@ -49,35 +54,108 @@
             gap: 1rem;
         }
 
-        /* 📱 スマホ専用：タイルは常に縦並び一本 */
-        html, body { overflow: auto; height: auto; }
-        .workspace-container { height: auto; }
-        .bento-grid { grid-template-rows: auto; }
-        .main-question-tile, .answer-formula-tile, .ai-sidebar-tile { grid-column: span 12; }
-        .ai-sidebar-tile { height: 400px; }
-        /* 💡 サイドバー内部を縦のflexboxとして扱い、chat-historyだけを
-           伸縮させて独立スクロールさせる（これが無いと400pxを超えた分の
-           会話が表示上あふれるだけでスクロールできなくなる） */
-        .chat-history {
-            flex-grow: 1;
-            min-height: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
+        /* 💻 PC大画面用の最強3分割タイル配置 */
+        @media screen and (min-width: 1101px) {
+            /* 💡 問題文・解説が長い時にANSWER CHECK欄が画面半分に押し込まれて
+               内部スクロールしか出来なくなる問題への対処。
+               ページ全体を通常スクロールできるようにし、AIサイドバーだけ
+               position:sticky で画面内に留める形に変更 */
+            html, body {
+                height: auto;
+                overflow: auto;
+            }
+            .workspace-container {
+                height: auto;
+                min-height: 100vh;
+            }
+            .bento-grid {
+                display: grid;
+                grid-template-columns: 1.2fr 0.8fr; /* 左60% : 右40% */
+                grid-template-rows: auto auto;    /* 💡 左列は内容量に応じて自然に伸びる */
+                gap: 1.5rem;
+                align-items: start;
+            }
+            .main-question-tile {
+                grid-column: 1;
+                grid-row: 1;
+                /* 💡【修正】以前はここに max-height:35vh; overflow-y:auto; を設定し、画像肥大化を防止していたが、
+                   内側の .question-collapsible-area で「全文を表示」を押して問題文を展開しても、
+                   この外枠が35vhで強制的に切ってしまい、下の方が見えなくなる不具合があった。
+                   .answer-formula-tile と同様に外枠の高さ制限を撤廃し、中身の長さに応じて
+                   自然に伸びる（＝ページ全体の通常スクロールで読める）形に変更 */
+            }
+            .answer-formula-tile {
+                grid-column: 1;
+                grid-row: 2;
+                /* 💡 内部スクロールの天井を撤廃。中身の長さに合わせて素直に伸びて、
+                   ページ全体のスクロールで読めるようにする */
+            }
+            .ai-sidebar-tile {
+                grid-column: 2;
+                grid-row: 1 / span 2; /* 右側を縦いっぱいにぶち抜く */
+                position: sticky;
+                top: 1rem;
+                max-height: calc(100vh - 2rem); /* 💡 画面内に収まる高さを維持しつつ追従表示 */
+                display: flex;
+                flex-direction: column;
+                min-width: 0; /* 💡 子要素の長文や数式でグリッド枠を破らないように保護 */
+                overflow: hidden;
+            }
+            .chat-history {
+                flex-grow: 1;
+                overflow-y: auto; /* チャット履歴だけが独立スクロール */
+                overflow-x: hidden;
+                min-width: 0;
+                width: 100%;
+                padding: 0.5rem 0.2rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.8rem;
+            }
+
+            /* 💡 カスタム・サイバーパンクススクロールバー */
+            .chat-history::-webkit-scrollbar {
+                width: 6px;
+            }
+            .chat-history::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 3px;
+            }
+            .chat-history::-webkit-scrollbar-thumb {
+                background: rgba(0, 243, 255, 0.3);
+                border-radius: 3px;
+            }
+            .chat-history::-webkit-scrollbar-thumb:hover {
+                background: var(--accent-cyan);
+            }
+
         }
-        .chat-history::-webkit-scrollbar { width: 6px; }
-        .chat-history::-webkit-scrollbar-track { background: rgba(42,36,32,0.1); border-radius: 3px; }
-        .chat-history::-webkit-scrollbar-thumb { background: rgba(95, 198, 255, 0.3); border-radius: 3px; }
-        @media (hover: hover) and (pointer: fine) {
-            .chat-history::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
+
+        /* 📱 スマホ・タブレット用のレスポンシブ（従来通り縦並び） */
+        @media (max-width: 1100px) {
+            html, body { overflow: auto; height: auto; }
+            .workspace-container { height: auto; }
+            .bento-grid { grid-template-rows: auto; }
+            .main-question-tile, .answer-formula-tile, .ai-sidebar-tile { grid-column: span 12; }
+            .ai-sidebar-tile { height: min(60vh, 640px); min-height: 420px; }
+            /* 💡 サイドバー内部を縦のflexboxとして扱い、chat-historyだけを
+               伸縮させて独立スクロールさせる（これが無いと400pxを超えた分の
+               会話が表示上あふれるだけでスクロールできなくなる） */
+            .chat-history {
+                flex-grow: 1;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
         }
 
         /* 共通コンポーネント */
         .chat-bubble { 
             padding: 0.9rem 1.2rem; 
             border-radius: 16px; 
-            font-size: 0.92rem; 
-            line-height: 1.6; 
+            font-size: 1.08rem; 
+            line-height: 1.7; 
             max-width: 92%; 
             min-width: 0;
             margin-bottom: 0.4rem; 
@@ -87,20 +165,18 @@
             white-space: pre-wrap;
         }
         .bubble-ai { 
-            background: #fffdf7; 
-            border-left: 5px solid var(--accent-cyan); 
-            color: var(--ink); 
+            background: rgba(18, 22, 34, 0.85); 
+            border-left: 3px solid var(--accent-cyan); 
+            color: #e0f2fe; 
             align-self: flex-start;
-            border: 2px solid var(--ink);
-            box-shadow: 3px 3px 0px var(--ink);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         }
         .bubble-user { 
-            background: #ffe3ea; 
-            border-right: 5px solid var(--accent-magenta); 
-            color: var(--ink); 
+            background: rgba(255, 0, 127, 0.15); 
+            border-right: 3px solid var(--accent-magenta); 
+            color: #ffffff; 
             align-self: flex-end; 
-            border: 2px solid var(--ink);
-            box-shadow: 3px 3px 0px var(--ink);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         }
 
         /* 💡 MathJax数式の溢れ完全防護 */
@@ -114,7 +190,7 @@
         .chat-bubble mjx-container[jax="CHTML"][display="true"] {
             display: block !important;
             margin: 0.5em 0 !important;
-            background: rgba(42, 36, 32, 0.05);
+            background: rgba(0, 0, 0, 0.3);
             padding: 0.6rem;
             border-radius: 8px;
         }
@@ -123,8 +199,8 @@
         .chat-bubble mjx-merror,
         .chat-bubble mjx-merror * {
             color: var(--accent-yellow) !important;
-            background-color: rgba(255, 207, 63, 0.08) !important;
-            border: 1px dashed rgba(255, 207, 63, 0.25) !important;
+            background-color: rgba(255, 245, 0, 0.08) !important;
+            border: 1px dashed rgba(255, 245, 0, 0.25) !important;
             border-radius: 4px;
         }
 
@@ -137,7 +213,7 @@
         .qna-save-btn {
             font-size: 0.75rem;
             padding: 0.5rem 0.9rem;
-            background: rgba(95, 198, 255, 0.08);
+            background: rgba(0, 243, 255, 0.08);
             color: var(--accent-cyan);
             border: 1px dashed var(--accent-cyan);
             box-shadow: none;
@@ -148,36 +224,40 @@
             font-size: 0.78rem;
             padding: 0.5rem 0.8rem;
             margin-bottom: 0.6rem;
-            background: #fff;
+            background: rgba(255, 255, 255, 0.04);
             color: var(--text-bright-muted);
-            border: 1.5px solid var(--ink);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             box-shadow: none;
         }
         .qna-past-log-item {
             padding: 0.8rem 1rem;
-            border: 1px solid rgba(42,36,32,0.2);
+            border: 1px solid #1a2a35;
             border-radius: 12px;
             margin-bottom: 0.7rem;
             cursor: pointer;
             transition: border-color 0.15s ease;
         }
-@media (hover: hover) and (pointer: fine) { .qna-past-log-item:hover { border-color: var(--accent-cyan); } }
+        .qna-past-log-item:hover { border-color: var(--accent-cyan); }
         .qna-past-log-item .qna-log-date { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.3rem; }
         .qna-past-log-item .qna-log-preview { font-size: 0.85rem; color: var(--text-bright-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .qna-log-detail-messages .chat-bubble { max-width: 100%; }
 
-        .chat-input-wrapper { display: flex; gap: 0.5rem; border-top: 1px solid rgba(42,36,32,0.2); padding-top: 1rem; margin-top: auto; }
-        .chat-input { flex-grow: 1; background: #fff; border: 1.5px solid var(--ink); padding: 0.6rem 1rem; color: var(--ink); border-radius: 10px; }
+        .chat-input-wrapper { display: flex; align-items: flex-end; gap: 0.5rem; border-top: 1px solid #1a2a35; padding-top: 1rem; margin-top: auto; }
+        .chat-input {
+            flex-grow: 1; background: #000; border: 1px solid #222; padding: 0.6rem 1rem; color: #fff; border-radius: 10px;
+            font-family: inherit; font-size: 0.9rem; line-height: 1.5;
+            resize: none; overflow-y: auto; max-height: 8.5em; white-space: pre-wrap; word-break: break-word;
+        }
         .self-check-container { display: flex; flex-direction: column; gap: 1rem; width: 100%; margin-top: 0.5rem; }
         .reveal-btn-area { display: flex; width: 100%; }
         
         .reveal-zone { 
             display: none; flex-direction: column; gap: 1rem; width: 100%; 
-            background: #fffdf7; padding: 1.5rem; border-radius: 16px; 
-            border: 2px dashed var(--ink); margin-top: 0.5rem;
+            background: rgba(255,255,255,0.01); padding: 1.5rem; border-radius: 16px; 
+            border: 1px dashed #222; margin-top: 0.5rem;
         }
         
-        .model-answer-text { font-size: 1.05rem; color: var(--text-bright-muted); font-weight: 500; margin-bottom: 0.5rem; white-space: pre-wrap; line-height: 1.8; letter-spacing: 0.5px; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+        .model-answer-text { font-size: 1.18rem; color: var(--text-bright-muted); font-weight: 500; margin-bottom: 0.5rem; white-space: pre-wrap; line-height: 1.85; letter-spacing: 0.5px; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
         .model-answer-text mjx-container {
             max-width: 100% !important;
             overflow-x: auto !important;
@@ -188,16 +268,120 @@
         .model-answer-text mjx-container[jax="CHTML"][display="true"] {
             display: block !important;
             margin: 0.5em 0 !important;
-            background: rgba(42, 36, 32, 0.05);
+            background: rgba(0, 0, 0, 0.3);
             padding: 0.6rem;
             border-radius: 8px;
         }
+
+        /* 📦【新設】問題文エリアの折りたたみ機能。
+           質問・解説の方が重要なので、問題文はデフォルトで小さくプレビュー表示にし、
+           必要な時だけ「全文を表示」で開けるようにする */
+        .question-text-block {
+            color: var(--text-main);
+            font-weight: 700;
+            line-height: 1.7;
+            text-align: left;
+            width: 100%;
+            padding: 0.5rem 0;
+            font-size: 1.35rem;
+        }
+        .question-collapsible-area {
+            position: relative;
+            overflow: hidden;
+            max-height: 240px;
+            transition: max-height 0.3s ease;
+        }
+        .question-collapsible-area.is-expanded {
+            /* 💡【修正】以前は max-height:2000px の固定値だったため、
+               それを超える長さの問題文だと途中で切れてしまう不具合があった。
+               実際の高さは JS 側で scrollHeight を測って inline style に設定するので、
+               ここは JS が万一効かなかった場合の保険として十分大きな値にしておく。 */
+            max-height: 20000px;
+        }
+        .question-collapsible-area.has-overflow:not(.is-expanded)::after {
+            content: "";
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 48px;
+            background: linear-gradient(to bottom, rgba(5,5,8,0) 0%, var(--card-bg) 85%);
+            pointer-events: none;
+        }
+        .question-collapse-toggle {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+            width: 100%;
+            margin-top: 0.6rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-bright-muted);
+            font-size: 0.78rem;
+            font-weight: 800;
+            padding: 0.55rem 0.7rem;
+            border-radius: 10px;
+            cursor: pointer;
+            touch-action: manipulation;
+            min-height: 40px;
+        }
+        .question-collapse-toggle:active { transform: scale(0.97); }
+
+        /* 💬【新設】質問チャットだけを別タブで開く「チャット専用モード」。
+           ?chatOnly=1 付きでこのページを新しいタブで開いた時に body へ付与される。
+           問題文・解答欄・ナビ等はすべて非表示にし、AIサイドバー（質問チャット）だけを
+           画面いっぱいに表示する。同じページ・同じロジックを使い回すので、
+           そのまま続けてAIに質問できる。 */
+        body.chat-only-mode .global-cyber-nav,
+        body.chat-only-mode .nav-drawer-overlay,
+        body.chat-only-mode header,
+        body.chat-only-mode .main-question-tile,
+        body.chat-only-mode .answer-formula-tile {
+            display: none !important;
+        }
+        body.chat-only-mode .workspace-container {
+            max-width: 760px;
+            margin: 0 auto;
+            height: 100vh;
+            padding: 0;
+        }
+        body.chat-only-mode .bento-grid {
+            display: block !important;
+            height: 100%;
+        }
+        body.chat-only-mode .ai-sidebar-tile {
+            grid-column: unset !important;
+            grid-row: unset !important;
+            position: static !important;
+            top: auto !important;
+            max-height: none !important;
+            height: 100% !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        body.chat-only-mode .chat-history {
+            flex-grow: 1 !important;
+            max-height: none !important;
+        }
+        body.chat-only-mode .chat-bubble {
+            font-size: 1.15rem;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 1100px) {
+            /* 💡 問題文は「大事なのはAIとの質問・解説」という方針で、スマホでは控えめなサイズに */
+            .question-text-block { font-size: 1.05rem; line-height: 1.6; }
+            .question-collapsible-area { max-height: 150px; }
+        }
         .judgment-buttons { display: flex; gap: 1.5rem; width: 100%; }
-        .btn-correct { background: var(--accent-cyan) !important; box-shadow: 4px 4px 0px var(--ink) !important; flex: 1; height: 54px; font-size: 1.1rem; }
-        .btn-incorrect { background: var(--accent-magenta) !important; color: var(--ink) !important; box-shadow: 4px 4px 0px var(--ink) !important; flex: 1; height: 54px; font-size: 1.1rem; }
+        .btn-correct { background: var(--accent-cyan) !important; box-shadow: 4px 4px 0px #008b94 !important; flex: 1; height: 54px; font-size: 1.1rem; }
+        .btn-incorrect { background: var(--accent-magenta) !important; color: #000 !important; box-shadow: 4px 4px 0px #9e004f !important; flex: 1; height: 54px; font-size: 1.1rem; }
         #neon-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999; display: block; }
-        .btn-analyze-now { background: #fff !important; color: var(--accent-cyan) !important; border: 1px solid var(--accent-cyan) !important; box-shadow: 3px 3px 0px var(--ink) !important; font-size: 0.85rem; padding: 0.3rem 0.8rem; border-radius: 8px; cursor: pointer; display: none; font-weight: 800; }
-@media (hover: hover) and (pointer: fine) { .btn-analyze-now:hover { background: rgba(95, 198, 255, 0.05) !important; } }
+        .btn-analyze-now { background: #111 !important; color: var(--accent-cyan) !important; border: 1px solid var(--accent-cyan) !important; box-shadow: 3px 3px 0px rgba(0,243,255,0.2) !important; font-size: 0.85rem; padding: 0.3rem 0.8rem; border-radius: 8px; cursor: pointer; display: none; font-weight: 800; }
+        .btn-analyze-now:hover { background: rgba(0,243,255,0.05) !important; }
 
         /* 🧠【新設】解答生成AIエンジン選択トグル（Gemini / DeepSeek） */
         .engine-toggle-group {
@@ -214,8 +398,8 @@
             letter-spacing: 0.5px;
         }
         .engine-btn {
-            background: #ffffff;
-            border: 1px solid #2a2420;
+            background: #0a0a0a;
+            border: 1px solid #22222a;
             color: var(--text-muted);
             font-size: 0.75rem;
             font-weight: 800;
@@ -225,24 +409,24 @@
             transition: all 150ms ease;
             letter-spacing: 0.3px;
         }
-@media (hover: hover) and (pointer: fine) { .engine-btn:hover { border-color: var(--border-glow); color: var(--text-bright-muted); } }
+        .engine-btn:hover { border-color: var(--border-glow); color: var(--text-bright-muted); }
         .engine-btn.active[data-engine="gemini"] {
-            background: rgba(95, 198, 255, 0.12);
+            background: rgba(0, 243, 255, 0.12);
             border-color: var(--accent-cyan);
             color: var(--accent-cyan);
-            box-shadow: 2px 2px 0px var(--ink);
+            box-shadow: 2px 2px 0px rgba(0,243,255,0.15);
         }
         .engine-btn.active[data-engine="deepseek"] {
-            background: rgba(255, 207, 63, 0.1);
+            background: rgba(255, 245, 0, 0.1);
             border-color: var(--accent-yellow);
             color: var(--accent-yellow);
-            box-shadow: 2px 2px 0px var(--ink);
+            box-shadow: 2px 2px 0px rgba(255,245,0,0.15);
         }
         /* 🧠 気づきメモ用サイドドロワー（右からスライドイン、左の解説は隠さない）CSS */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(42, 36, 32, 0.1); /* 💡 左の解説が透けて見えるよう、ごく薄いトーンダウンのみ */
+            background: rgba(0, 0, 0, 0.15); /* 💡 左の解説が透けて見えるよう、ごく薄いトーンダウンのみ */
             display: none;
             align-items: stretch;
             justify-content: flex-end; /* 💡 ドロワーを右端に寄せる */
@@ -255,7 +439,7 @@
             background: rgba(6, 8, 14, 0.98);
             border: none;
             border-left: 1px solid var(--accent-cyan);
-            box-shadow: -8px 0 30px rgba(95, 198, 255, 0.2);
+            box-shadow: -8px 0 30px rgba(0, 243, 255, 0.2);
             padding: 1.8rem;
             overflow-y: auto;
             display: flex;
@@ -269,8 +453,8 @@
         .insight-drawer-answer-ref {
             margin-top: 1.2rem;
             padding: 0.9rem 1rem;
-            background: #fffdf7;
-            border: 2px solid var(--ink);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #1a2a35;
             border-radius: 14px;
             max-height: 34vh;
             overflow-y: auto;
@@ -278,11 +462,12 @@
         .insight-drawer-answer-ref .model-answer-text { font-size: 0.85rem; color: var(--text-bright-muted); }
         .modal-textarea {
             width: 100%;
-            background: #fff; border: 1.5px solid var(--ink);
-            color: var(--ink);
+            background: #000;
+            border: 1px solid #22222a;
+            color: #fff;
             padding: 1rem;
             border-radius: 12px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             resize: none;
             line-height: 1.6;
             font-family: inherit;
@@ -290,16 +475,16 @@
         .modal-textarea:focus {
             outline: none;
             border-color: var(--accent-cyan);
-            box-shadow: 0 0 10px rgba(95, 198, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
         }
 
         /* 💬【新設】質問ログ一覧・詳細表示用の中央配置モーダル（気づきドロワーとは別物） */
         .qna-modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(42, 36, 32, 0.45);
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -310,9 +495,9 @@
             max-width: 600px;
             max-height: 85vh;
             overflow-y: auto;
-            background: var(--card-bg);
+            background: rgba(10, 10, 18, 0.97);
             border: 1px solid var(--accent-cyan);
-            box-shadow: 0 0 30px rgba(95, 198, 255, 0.2);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
             padding: 1.8rem;
         }
 
@@ -334,10 +519,10 @@
             flex-shrink: 0;
             transition: border-color 0.15s ease, transform 0.15s ease;
         }
-@media (hover: hover) and (pointer: fine) { .photo-gallery-thumb:hover {
+        .photo-gallery-thumb:hover {
             border-color: var(--accent-cyan);
             transform: translateY(-2px);
-        } }
+        }
         .photo-gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
         .photo-gallery-thumb .photo-gallery-thumb-index {
             position: absolute; bottom: 2px; left: 2px; background: rgba(0,0,0,0.75); color: var(--accent-cyan);
@@ -350,7 +535,7 @@
             color: #fff; font-size: 1.4rem; font-weight: 900;
             display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
-@media (hover: hover) and (pointer: fine) { #photo-lightbox .lightbox-nav-btn:hover { background: rgba(95, 198, 255, 0.25); border-color: var(--accent-cyan); } }
+        #photo-lightbox .lightbox-nav-btn:hover { background: rgba(0,243,255,0.25); border-color: var(--accent-cyan); }
         #photo-lightbox .lightbox-counter {
             position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
             color: #fff; font-size: 0.85rem; font-weight: 800; background: rgba(0,0,0,0.6);
@@ -363,62 +548,44 @@
     <canvas id="neon-canvas"></canvas>
 
     <div class="workspace-container">
-        <!-- 📱 フローティング・ハンバーガーメニュー -->
-        <button type="button" class="nav-hamburger-btn" aria-label="メニューを開く" aria-expanded="false">
-                <span></span><span></span><span></span>
-            </button>
-            <div class="nav-links">
-                <a href="index.html" class="nav-btn">🧠 誤答ノート</a>
-                <a href="lesson.html" class="nav-btn">📖 授業・解説</a>
-                <a href="tokei/index.html" class="nav-btn global-timer-link">⏱️ 集中タイマー</a>
-                <a href="study/index.html" class="nav-btn" title="24hログを開く">📊 24hログ</a>
-                <a href="https://photos.google.com" target="_blank" rel="noopener" class="nav-btn" title="Google Photosを開く">📷 Photos</a>
-            </div>
-        <div class="nav-drawer-overlay"></div>
-        <script src="global-timer-sync.js"></script>
-        <script src="mobile-nav.js"></script>
-        <script src="modal-scroll-lock.js"></script>
-
-        <header>
-            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                <span style="font-weight: 900; letter-spacing: -1px; color: var(--accent-cyan)">LOLZ // SESSION</span>
-                <span style="color: var(--text-muted); font-size: var(--fs-sm);" id="problem-id-display">PROBLEM ID: --</span>
-                <span style="color: var(--text-muted); font-size: 0.75rem;" id="problem-dates-display"></span>
-                
-                <div style="display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; border-left: 1px solid rgba(42,36,32,0.2); padding-left: 1rem;">
-                    <span id="problem-title-display" style="font-weight: 800; color: var(--ink); font-size: 0.95rem;">問題名: 読込中...</span>
-                    <button type="button" id="edit-title-btn" style="background: transparent; border: 1px solid #2a2420; color: var(--accent-cyan); font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 6px; cursor: pointer; font-weight: 800;">✏️ 名前変更</button>
-                    <button type="button" id="delete-prob-btn" style="background: transparent; border: 1px solid #fff0ee; color: #ff4545; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 6px; cursor: pointer; font-weight: 800;">🗑️ 問題を削除</button>
-                </div>
-                <a id="source-lesson-badge" href="#" style="display:none; align-items:center; gap:0.3rem; background: linear-gradient(135deg, rgba(255, 122, 156, 0.15), rgba(95, 198, 255, 0.15)); border: 1px solid var(--accent-magenta); border-radius: 8px; padding: 0.3rem 0.7rem; font-size: 0.78rem; font-weight: 700; color: var(--ink); text-decoration: none;">
-                    🎓 元の授業: <span id="source-lesson-title-text"></span>
-                </a>
-            </div>
-            <div>
-                <button type="button" class="tactile-btn tactile-btn-secondary" onclick="location.href='index.html'">
-                    ダッシュボードに戻る
-                </button>
+        <header class="m-mobile-header">
+            <a href="index.html" class="m-back-btn" aria-label="誤答ノートに戻る">‹</a>
+            <div class="m-mobile-header-title" id="problem-title-display" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">問題名: 読込中...</div>
+            <div class="m-mobile-header-actions">
+                <button type="button" class="m-icon-btn" id="edit-title-btn" title="名前変更">✏️</button>
+                <button type="button" class="m-icon-btn danger" id="delete-prob-btn" title="問題を削除">🗑️</button>
             </div>
         </header>
+        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin: -0.6rem 0 0.9rem 0.1rem;">
+            <span style="color: var(--text-muted); font-size: 0.75rem;" id="problem-id-display">PROBLEM ID: --</span>
+            <span style="color: var(--text-muted); font-size: 0.75rem;" id="problem-dates-display"></span>
+            <a id="source-lesson-badge" href="#" style="display:none; align-items:center; gap:0.3rem; background: linear-gradient(135deg, rgba(255,0,127,0.15), rgba(0,243,255,0.15)); border: 1px solid var(--accent-magenta); border-radius: 8px; padding: 0.3rem 0.7rem; font-size: 0.78rem; font-weight: 700; color: #fff; text-decoration: none;">
+                🎓 元の授業: <span id="source-lesson-title-text"></span>
+            </a>
+        </div>
 
         <main class="bento-grid">
             <section class="squircle-tile main-question-tile">
                 <div class="tile-header-group" style="display: flex; justify-content: space-between; align-items: center; width:100%;">
                     <span class="badge badge-physics" id="question-badge">LOADING...</span>
-                    <select id="on-demand-subject-select" style="display:none; background:#ffffff; color:var(--accent-cyan); border:1px solid var(--accent-cyan); border-radius:8px; font-size:0.8rem; font-weight:800; padding:0.3rem 0.5rem;">
+                    <select id="on-demand-subject-select" style="display:none; background:#0a0a0a; color:var(--accent-cyan); border:1px solid var(--accent-cyan); border-radius:8px; font-size:0.8rem; font-weight:800; padding:0.3rem 0.5rem;">
                         <option value="数学">数学</option>
                         <option value="物理">物理基礎</option>
                         <option value="化学">化学基礎</option>
                         <option value="英語">英語</option>
                         <option value="国語">国語</option>
                         <option value="地歴公民">地歴公民</option>
+                        <option value="世界史">世界史</option>
                     </select>
                     <button type="button" class="btn-analyze-now" id="on-demand-analyze-btn">⚡ この問題をAI解析する</button>
                     <span id="analyze-engine-hint" style="display:none; font-size:0.7rem; color:var(--text-muted); font-weight:700; margin-left:0.3rem;"></span>
                 </div>
                 
-                <div class="physics-figure-box" id="figure-box"></div>
-                <div class="photo-gallery-strip" id="photo-gallery-strip" style="display:none;"></div>
+                <div class="question-collapsible-area" id="question-collapsible-area">
+                    <div class="physics-figure-box" id="figure-box"></div>
+                    <div class="photo-gallery-strip" id="photo-gallery-strip" style="display:none;"></div>
+                </div>
+                <button type="button" class="question-collapse-toggle" id="question-collapse-toggle">▼ 全文を表示</button>
             </section>
 
             <aside class="squircle-tile ai-sidebar-tile glass-sidebar">
@@ -431,6 +598,7 @@
                         <button type="button" class="engine-btn" id="engine-btn-gemini" data-engine="gemini">✨ Gemini</button>
                         <button type="button" class="engine-btn" id="engine-btn-deepseek" data-engine="deepseek">🐋 DeepSeek</button>
                     </div>
+                    <button type="button" class="tactile-btn" id="open-wide-chat-btn" style="margin-top:0.5rem; font-size:0.75rem; padding:0.4rem 0.8rem; background:#111; color:var(--accent-cyan); border:1px solid var(--accent-cyan); box-shadow:none; align-self:flex-start;">🔗 質問チャットだけを別タブで開く</button>
                 </div>
 
                 <!-- 💬【新設】この問題に保存済みの質問ログがあれば表示（自分で開くまでは中身は出さない） -->
@@ -443,11 +611,15 @@
                 </div>
 
                 <div class="chat-input-wrapper" id="ai-chat-input-wrap" style="display: none;">
-    <input type="text" class="chat-input" placeholder="解説のわからない部分を質問..." name="ai-chat-question-field" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
-    <button type="button" class="tactile-btn" style="padding: 0.5rem 1rem;">送信</button>
+    <textarea class="chat-input" id="ai-chat-question-field" rows="1" placeholder="解説のわからない部分を質問...（Shift+Enterで改行）" name="ai-chat-question-field" autocomplete="off" data-lpignore="true" data-1p-ignore="true"></textarea>
+    <button type="button" class="tactile-btn" style="padding: 0.5rem 1rem; align-self: flex-end;">送信</button>
 </div>
                 <div class="qna-save-row" id="qna-save-row">
                     <button type="button" class="tactile-btn qna-save-btn" id="qna-save-btn">💾 この会話を記録する</button>
+                    <button type="button" class="tactile-btn" id="lesson-handoff-btn" style="background:#111; color:var(--accent-yellow); border:1px solid var(--accent-yellow); box-shadow:none;">🎓 前提から授業でやり直す</button>
+                </div>
+                <div id="lesson-handoff-linked-row" style="display:none; margin-top:0.6rem;">
+                    <a href="#" id="lesson-handoff-linked-link" class="tactile-btn" style="display:block; text-align:center; background:#111; color:var(--accent-cyan); border:1px solid var(--accent-cyan); box-shadow:none; text-decoration:none;"></a>
                 </div>
             </aside>
 
@@ -464,33 +636,41 @@
                     </div>
 
                     <div class="reveal-zone" id="answer-reveal-zone">
-                        <div id="strategy-pattern-box" style="display:none; background: rgba(255, 207, 63, 0.06); border: 1px dashed var(--accent-yellow); border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 1.2rem;">
+                        <div id="strategy-pattern-box" style="display:none; background: rgba(255, 245, 0, 0.06); border: 1px dashed var(--accent-yellow); border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 1.2rem;">
                             <div style="font-size:0.8rem; color: var(--accent-yellow); font-weight:800; margin-bottom:0.4rem;">🧭 考え方の定石 // まずこう考える</div>
                             <div class="model-answer-text" id="target-strategy-pattern" style="font-size:0.95rem; line-height:1.7; color:var(--text-bright-muted);"></div>
                         </div>
 
-                        <div id="strategy-generate-box" style="display:none; background: rgba(255, 207, 63, 0.04); border: 1px dashed rgba(255, 207, 63, 0.4); border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; text-align:center;">
+                        <div id="strategy-generate-box" style="display:none; background: rgba(255, 245, 0, 0.04); border: 1px dashed rgba(255,245,0,0.4); border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; text-align:center;">
                             <p style="font-size:0.82rem; color: var(--text-muted); margin-bottom:0.7rem;">この問題は答えだけ確認済みです。間違えた原因を深掘りしたい場合は、定石・罠の解説を追加で生成できます。</p>
-                            <button type="button" class="tactile-btn" id="generate-strategy-btn" style="background: rgba(255, 207, 63, 0.1); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); box-shadow: 3px 3px 0px var(--ink);">🧭 定石・罠の解説を追加生成する</button>
+                            <button type="button" class="tactile-btn" id="generate-strategy-btn" style="background: rgba(255,245,0,0.1); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); box-shadow: 3px 3px 0px rgba(255,245,0,0.2);">🧭 定石・罠の解説を追加生成する</button>
                         </div>
 
                         <div style="font-size:0.8rem; color:var(--text-muted); font-weight:800; margin-bottom:0.2rem;">MODEL ANSWER</div>
                         <div class="model-answer-text" id="target-model-answer"></div>
                         <div class="judgment-buttons">
-                            <button type="button" class="tactile-btn btn-correct" id="btn-judge-right" style="transform: rotate(-1deg);">🎉 合ってた（克服！）</button>
-                            <button type="button" class="tactile-btn btn-incorrect" id="btn-judge-wrong" style="transform: rotate(1deg);">❌ 間違えた（再挑戦）</button>
+                            <button type="button" class="tactile-btn btn-incorrect" id="btn-judge-wrong">❌ 間違えた（再挑戦）</button>
+                            <button type="button" class="tactile-btn btn-correct" id="btn-judge-right">🎉 合ってた（克服！）</button>
                         </div>
+                        <!-- 🛠️【新設】間違っている部分をAIに伝えてから解説を再生成できる指摘欄 -->
+                        <div style="width:100%; margin-top:0.8rem;">
+                            <label for="regen-note-input" style="display:block; font-size:0.78rem; color:var(--text-muted); font-weight:800; margin-bottom:0.3rem;">
+                                🛠 （任意）どこが間違っているかAIに伝えて再生成
+                            </label>
+                            <textarea id="regen-note-input" rows="2" placeholder="例：△ARPの面積が計算に含まれていません。五角形PBQCRの面積に足す形で解き直してください。" style="width:100%; resize:vertical; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:0.6rem 0.7rem; color:var(--text-main); font-size:0.85rem; font-family:inherit;"></textarea>
+                        </div>
+
                         <div style="display: flex; gap: 1rem; margin-top: 1.2rem; width: 100%;">
-                            <button type="button" class="tactile-btn" id="activate-ai-question-btn" style="flex: 1; background: #fff; color: var(--accent-cyan-d); border: 1.5px solid var(--ink); box-shadow: 3px 3px 0px var(--ink);">
+                            <button type="button" class="tactile-btn" id="activate-ai-question-btn" style="flex: 1; background: #111; color: var(--accent-cyan); border: 1px solid var(--accent-cyan); box-shadow: 3px 3px 0px rgba(0,243,255,0.2);">
                                 💡 AIに質問する
                             </button>
-                            <button type="button" class="tactile-btn" id="regenerate-analysis-btn" style="flex: 1; background: #fff; color: var(--accent-yellow); border: 1px solid var(--accent-yellow); box-shadow: 3px 3px 0px var(--ink);">
+                            <button type="button" class="tactile-btn" id="regenerate-analysis-btn" style="flex: 1; background: #111; color: var(--accent-yellow); border: 1px solid var(--accent-yellow); box-shadow: 3px 3px 0px rgba(255,245,0,0.2);">
                                 🔄 解説を再生成する <span id="regen-engine-hint" style="font-size:0.65rem; opacity:0.8;"></span>
                             </button>
                         </div>
 
                         <!-- 🧠【追加】気づきメモモーダルを呼ぶボタン -->
-                        <button type="button" class="tactile-btn" id="open-insight-modal-btn" style="width: 100%; margin-top: 0.8rem; background: rgba(95, 198, 255, 0.05); color: var(--accent-cyan); border: 1px dashed var(--accent-cyan); box-shadow: none;">
+                        <button type="button" class="tactile-btn" id="open-insight-modal-btn" style="width: 100%; margin-top: 0.8rem; background: rgba(0, 243, 255, 0.05); color: var(--accent-cyan); border: 1px dashed var(--accent-cyan); box-shadow: none;">
                             🧠 この問題で得た「気づき・極意」をメモする
                         </button>
                     </div>
@@ -511,20 +691,20 @@
             <textarea class="modal-textarea" id="insight-text-input" placeholder="例: 頂点フォームより2点代入の方が圧倒的に速い！ / $x^2+y^2$ を見たら極座標表示を疑う" style="height: 110px; margin-top: 1rem;"></textarea>
 
             <!-- 💡 数式リアルタイムプレビュー表示エリア -->
-            <div id="insight-preview-box" style="display: none; margin-top: 0.8rem; padding: 0.8rem 1rem; background: rgba(95, 198, 255, 0.04); border: 1px dashed rgba(95, 198, 255, 0.3); border-radius: 12px; font-size: 0.9rem; line-height: 1.6; color: var(--text-main); word-break: break-word;">
+            <div id="insight-preview-box" style="display: none; margin-top: 0.8rem; padding: 0.8rem 1rem; background: rgba(0, 243, 255, 0.04); border: 1px dashed rgba(0, 243, 255, 0.3); border-radius: 12px; font-size: 0.9rem; line-height: 1.6; color: var(--text-main); word-break: break-word;">
                 <div style="font-size: 0.75rem; color: var(--accent-cyan); font-weight: 800; margin-bottom: 0.4rem;">👁️ 数式・記号プレビュー (MathJax)</div>
                 <div id="insight-preview-content" class="tex2jax_process" style="font-weight: 600; white-space: pre-wrap;"></div>
             </div>
 
             <div style="display: flex; gap: 0.8rem; justify-content: flex-end; width: 100%; margin-top: 1.2rem;">
                 <button type="button" class="tactile-btn tactile-btn-secondary" id="close-insight-modal-btn">キャンセル</button>
-                <button type="button" class="tactile-btn" id="save-insight-btn" style="background: var(--accent-cyan); box-shadow: 3px 3px 0px var(--ink);">💾 クラウドに保存</button>
+                <button type="button" class="tactile-btn" id="save-insight-btn" style="background: var(--accent-cyan); box-shadow: 3px 3px 0px #008b94;">💾 クラウドに保存</button>
             </div>
 
             <!-- 🧠【追加】解説を見ながら書けるよう、模範解答の参照ビューをドロワー内にも表示 -->
             <div class="insight-drawer-answer-ref">
                 <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-bottom:0.6rem;">📖 この問題の解説（参照用）</div>
-                <div id="insight-drawer-strategy-box" style="display:none; margin-bottom: 0.8rem; padding-bottom: 0.8rem; border-bottom: 1px dashed #2a2420;">
+                <div id="insight-drawer-strategy-box" style="display:none; margin-bottom: 0.8rem; padding-bottom: 0.8rem; border-bottom: 1px dashed #22222a;">
                     <div style="font-size:0.72rem; color: var(--accent-yellow); font-weight:800; margin-bottom:0.3rem;">🧭 考え方の定石</div>
                     <div class="model-answer-text" id="insight-drawer-strategy-text"></div>
                 </div>
@@ -541,7 +721,7 @@
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.3rem;">記録済みの会話を選ぶと、そのやり取り全文を読めます（続きから質問はできません）。</p>
             </div>
             <div id="qna-log-list-container" style="margin-top: 1.2rem;"></div>
-            <div style="display: flex; justify-content: flex-end; margin-top: 1.2rem; border-top: 1px solid #2a2420; padding-top: 0.8rem;">
+            <div style="display: flex; justify-content: flex-end; margin-top: 1.2rem; border-top: 1px solid #22222a; padding-top: 0.8rem;">
                 <button type="button" class="tactile-btn tactile-btn-secondary" id="close-qna-log-list-btn">閉じる</button>
             </div>
         </div>
@@ -555,15 +735,19 @@
                 <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.3rem;" id="qna-log-detail-date"></p>
             </div>
             <div class="chat-history qna-log-detail-messages" id="qna-log-detail-messages" style="margin-top: 1rem; max-height: 55vh; overflow-y: auto;"></div>
-            <div style="display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.2rem; border-top: 1px solid #2a2420; padding-top: 0.8rem;">
+            <div style="display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.2rem; border-top: 1px solid #22222a; padding-top: 0.8rem;">
                 <button type="button" class="tactile-btn tactile-btn-secondary" id="back-qna-log-detail-btn">← 一覧に戻る</button>
-                <button type="button" class="tactile-btn" id="close-qna-log-detail-btn" style="background: rgba(255, 122, 156, 0.1); color: var(--accent-magenta); border: 1px solid var(--accent-magenta); box-shadow: none;">🗑 このログを削除</button>
+                <button type="button" class="tactile-btn" id="close-qna-log-detail-btn" style="background: rgba(255,0,127,0.1); color: var(--accent-magenta); border: 1px solid var(--accent-magenta); box-shadow: none;">🗑 このログを削除</button>
             </div>
         </div>
     </div>
 
    <script type="module">
-        import { getGeminiKeys, getDeepseekKeys, fetchWithKeyRotation, initApiKeyManager, notifyModelFallback } from "./api-key-manager.js";
+        import {
+            getDeepseekKeys, fetchWithKeyRotation, initApiKeyManager,
+            stripCodeFence, fixJsonEscapes, extractJsonObject,
+            showToast, callGeminiJSON, callGeminiChat
+        } from "./api-key-manager.js";
 
         const proto = "https" + "://";
         const d = ".";
@@ -590,22 +774,38 @@
         const urlParams = new URLSearchParams(window.location.search);
         const PROBLEM_ID = urlParams.get('id');
 
+        // 🔗【新設】質問チャットだけを別タブで開くモード。
+        //   ?chatOnly=1 付きでこのページが開かれた場合、問題文や解答欄は表示せず、
+        //   AIサイドバー（質問チャット）だけを画面いっぱいに表示する。
+        //   同じページ・同じロジックを使い回すので、そのまま続けてAIに質問できる。
+        const CHAT_ONLY_MODE = urlParams.get('chatOnly') === '1';
+        if (CHAT_ONLY_MODE) {
+            document.body.classList.add('chat-only-mode');
+        }
+        function setupWideChatButton() {
+            const btn = document.getElementById('open-wide-chat-btn');
+            if (!btn) return;
+            if (CHAT_ONLY_MODE) {
+                btn.textContent = '↙ 通常表示に戻る';
+                btn.onclick = () => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('chatOnly');
+                    window.location.href = url.toString();
+                };
+            } else {
+                btn.onclick = () => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('chatOnly', '1');
+                    window.open(url.toString(), '_blank');
+                };
+            }
+        }
+        setupWideChatButton();
+
         // 🔑【複数キー対応】右下の🔑ボタンから追加/削除できる管理UIを注入。未登録なら自動で開く。
         initApiKeyManager({ needGemini: true, needDeepseek: true });
 
-        // 🔁【フォールバック対応】無料枠のRPD制限（1日20回など）に達したモデルから順に切り替える
-        const GEMINI_MODEL_FALLBACK_LIST = [
-            'gemini-3.6-flash',
-            'gemini-3.5-flash',
-            'gemini-3-flash-preview',
-            'gemini-2.5-flash',
-            'gemini-3.5-flash-lite',
-            'gemini-3.1-flash-lite',
-            'gemini-2.5-flash-lite'
-        ];
-        function buildGeminiUrl(modelName, apiKey) {
-            return `${proto}generativelanguage${d}googleapis${d}com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-        }
+        // ✨ callGeminiJSON / callGeminiChat は api-key-manager.js から共通インポート済み
         const DEEPSEEK_API_URL = proto + "api" + d + "deepseek" + d + "com/v1/chat/completions";
         const MODEL_NAME = "deepseek-v4-flash";
 
@@ -646,6 +846,54 @@
             updateEngineToggleUI();
         }
 
+        // 🧾【新設】extracted_textが問題文の途中で省略されてしまう事故への対策。
+        //    どの教科でも共通して使う「全文書き写しルール」を1箇所にまとめ、getCreatePrompt()で必ず先頭に差し込む。
+        const EXTRACTED_TEXT_COMPLETENESS_RULE = `
+【最重要・絶対厳守：問題文の完全な書き写し】
+extracted_textには、写真やテキストに含まれる問題文を一字一句省略せず、最初から最後まで全文をそのまま書き写すこと。
+- (1)(2)(3)や①②③のように設問が複数ある場合は、その全てを漏れなく含めること。一部の設問だけを書いて残りを省略するのは絶対に禁止。
+- ア、イ、ウ…のような空欄（穴埋め）記号がある場合は、その空欄の記号もひとつも省略せずすべて含めること。
+- model_answerの中で解答・言及している空欄や設問は、必ずextracted_textにも同じ記号・番号で登場していなければならない。extracted_textに書いていない空欄について答えを作ってはならない（矛盾は絶対に許されない）。
+- 問題文が長い場合でも、要約したり「以下同様」のように途中を省略したりしないこと。
+`.trim();
+
+        // 💖 ギャル先生ペルソナ（授業・問題解説・質問対応に共通で適用するキャラクター設定）
+        const GAL_SENSEI_PERSONA_PROMPT = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💖【キャラクター設定：ギャル先生】（最重要・人格に関する絶対ルール）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+あなたはこれから「ギャル先生」というキャラクターとして生徒に授業・解説を行う。以下を厳守すること。
+
+■ ペルソナ基本情報
+・属性：地頭チート系・バイブス爆上げギャル先生
+・一人称は必ず「ウチ」を使うこと（「私」「僕」「わたし」等は禁止）
+・生徒への二人称は必ず「あんた」を使うこと（親しみとリスペクトを込めた呼び方。見下しや攻撃的な意味合いにはしないこと）
+・スタンス：「勉強はダルい。だからこそ無駄な計算や遠回りは一切せず、要領よく最短で解いて勝つのが一番アガるっしょ！」という価値観で一貫すること
+
+■ 口調・ボキャブラリー（あくまで一例。この通りでなくても自然な範囲で使ってよい）
+・語尾：「〜じゃん！」「〜だし！」「〜っしょ！」「〜だよ」「〜てこと！」
+・相槌・感情表現：「それな！」「マジ神」「天才すぎん？」「ビビる」「秒で終わらせるよ」「はい優勝〜！」「バイブス上がる！」
+・着眼点の提示：「教科書みたいに難しく考えなくてOK」「要はこれってさ、」「まず見るべきはココ一択！」
+・失敗へのリアクション：「あ〜惜しすぎ！でも発想マジで良いとこ突いてる！」「出題者のトラップえぐい草。ウチと一緒に見破ろ？」
+
+■ 指導フィロソフィー（3原則）
+1. 最初の一手（定石）は秒速で言語化する：「問題文のこのキーワードを見た瞬間、解法はコレに決まる」という要領の良い見抜き方を必ず示すこと。
+2. 論理と数式は一切妥協しない：ノリは軽くても、ステップごとの立式・計算・因果関係・文法解説は高校学習指導要領および入試基準に照らして厳密・精密に行うこと。ごまかしや論理の飛躍・不正確な公式は絶対禁止。
+3. ミスを恥ずかしがらせない：間違えた時は責めず、どこがトラップだったかを即座に言語化し、前向きに「はい次行こ！」と切り替えさせること。
+
+■ トーンの使い分け（最重要）
+・ギャル語にしてよい部分：trap_description（罠の解説）、strategy_pattern（定石の解説）、model_answer（解説文の地の文）、mnemonic（語呂合わせ）、ai_response（チャットでの回答）など、AIが"語る"文章の部分
+・キャラ付けで一切崩してはいけない部分：
+  ①extracted_text（問題文の書き写し）：これは生徒が提出した問題文をそのまま転記するものなので、ギャル語や絵文字を混ぜず、原文に忠実な文体のまま書き写すこと
+  ②subject・field・short_title・label など、UI上でバッジやタイトルとして機械的に使われる分類用の文字列：簡潔・中立な表記のまま保つこと
+  ③events配列のname・year・year_sort・regionなどの構造化データ：事実として正確な表記のまま保つこと
+  ④論理展開そのもの、公式、専門用語の定義、解答の手順：用語・公式名は必ず正式名称のまま使い、その説明の"周り"をギャルのノリで包むイメージにすること
+（例：「これ二次関数の判別式ってやつね、$D = b^{2} - 4ac$ で一発判定できるし、覚えとくと秒で解けて優勝〜！」のように、公式自体は一切崩さず正確に書く）
+
+■ 絶対厳守（システム保護・最優先ルール。キャラクター設定より常に優先する）
+・別途指示されているJSON出力フォーマット（レスポンススキーマ）のフィールド名・構造・キー名は1文字も変更・追加・省略しないこと
+・別途指示されているLaTeX数式記法のルール（$ $ / $$ $$ による囲み方、上付き・下付き文字の波括弧、化学式の下付き文字など）は、キャラクターの口調とは完全に独立したルールとして絶対に厳守すること。数式・化学式そのものの中にギャル語や絵文字を混入させないこと
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
         // 🧠【教科ごとの解析プロンプト集】未解析問題の解析・再解析で共通利用
         const SUBJECT_CREATE_PROMPTS = {
             "数学": `
@@ -655,7 +903,7 @@
   "subject": "数学",
   "field": "分野名（例：数学II 式と証明、数学B ベクトル など）",
   "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文の全文。数式や記号を含む場合は必ず $ $ で挟むこと",
+  "extracted_text": "読み取った正確な問題文の全文。数式や記号を含む場合は必ず $ $ で挟むこと 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
   "trap_description": "高校生がこの問題で最も間違えやすいポイントや罠の解説文",
   "strategy_pattern": "【最重要】この問題固有の数値や図形には一切触れず、①問題文のどの特徴（キーワード・条件・図形の形）を見て問題の『型』を判断するか、②その型に対して定石として使うべきアプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。これは『解き方の地図』であり、具体的な計算はここに書かない。2〜4文程度。数式を含む場合は$で囲むこと",
   "model_answer": "この問題の最終的な正しい答えと、ステップごとの分かりやすい解説。冒頭でstrategy_patternに書いた定石に軽く触れてから、それに沿って具体的な数値・文字で計算を進めること。数式や変数を記述する場合は、必ず前後に $ または $$ をつけて美しいLaTeX形式にすること。解説文は1行に詰め込まず、手順ごとに必ず改行コード（\\n）を挟んで、美しい箇条書き形式（1., 2.など）で出力すること"
@@ -669,7 +917,7 @@
   "subject": "物理",
   "field": "分野名（例：力学基礎 等加速度運動、熱 状態変化、波 音の性質、電気 オームの法則 など）",
   "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文の全文。数式や記号を含む場合は必ず $ $ で挟むこと",
+  "extracted_text": "読み取った正確な問題文の全文。数式や記号を含む場合は必ず $ $ で挟むこと 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
   "trap_description": "高校生がこの問題で最も間違えやすいポイントや罠の解説文（単位・符号ミスなども含む）",
   "strategy_pattern": "【最重要】この問題固有の数値や図形には一切触れず、①問題文のどの特徴（キーワード・条件・設定）を見て問題の『型』を判断するか、②その型に対して定石として使うべきアプローチ（例:『エネルギー保存が使えるかまず疑う』など）、③なぜそのアプローチが有効なのか、を一般化して説明すること。これは『解き方の地図』であり、具体的な計算はここに書かない。2〜4文程度。数式を含む場合は$で囲むこと",
   "model_answer": "この問題の最終的な正しい答えと、ステップごとの分かりやすい解説。冒頭でstrategy_patternに書いた定石に軽く触れてから、それに沿って具体的な数値・文字で計算を進めること。数式や変数を記述する場合は、必ず前後に $ または $$ をつけて美しいLaTeX形式にすること。解説文は1行に詰め込まず、手順ごとに必ず改行コード（\\n）を挟んで、美しい箇条書き形式（1., 2.など）で出力すること"
@@ -683,7 +931,7 @@
   "subject": "化学",
   "field": "分野名（例：物質の構成 mol計算、化学結合、酸と塩基、酸化還元反応 など）",
   "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文の全文。化学式や数値は $H_2O$ や $CO_2$ のように下付き文字を含むLaTeX形式（$で囲む）で表現すること",
+  "extracted_text": "読み取った正確な問題文の全文。化学式や数値は $H_2O$ や $CO_2$ のように下付き文字を含むLaTeX形式（$で囲む）で表現すること 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
   "trap_description": "高校生がこの問題で最も間違えやすいポイント（単位換算ミス、有効数字、反応式の係数合わせなど）の解説文",
   "strategy_pattern": "【最重要】この問題固有の数値や物質名には一切触れず、①問題文のどの特徴（キーワード・条件）を見て問題の『型』を判断するか、②その型に対して定石として使うべきアプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。2〜4文程度。数式を含む場合は$で囲むこと",
   "model_answer": "最終的な正しい答えと、ステップごとの分かりやすい解説。化学反応式・化学式・数値・単位は必ず $ で囲んだLaTeX形式（例：$2H_2 + O_2 \\rightarrow 2H_2O$）で書くこと。手順ごとに改行コード（\\n）を挟んで見やすい箇条書き形式（1., 2.など）で出力すること"
@@ -697,7 +945,7 @@
   "subject": "国語",
   "field": "分野名（例：現代文 論理的文章、古文 助動詞の識別、漢文 句法 など）",
   "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文の全文（古文・漢文は原文のまま。設問文も含める）",
+  "extracted_text": "読み取った正確な問題文の全文（古文・漢文は原文のまま。設問文も含める） 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
   "trap_description": "高校生がこの問題で最も間違えやすいポイント（本文の誤読、語彙・文法の混同、設問の条件見落としなど）の解説文",
   "strategy_pattern": "【最重要】この問題固有の本文内容には一切触れず、①設問文のどの特徴（キーワード・条件・設問形式）を見て問題の『型』を判断するか、②その型に対して定石として使うべき読み方・解答アプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。2〜4文程度。",
   "model_answer": "この問題の最終的な正しい答えと、根拠となる本文箇所を明示した分かりやすい解説。古文・漢文は現代語訳や句法の説明も含めること。手順ごとに改行コード（\\n）を挟んで、美しい箇条書き形式（1., 2.など）で出力すること"
@@ -711,7 +959,7 @@
   "subject": "地歴公民",
   "field": "分野名（例：地理総合 気候区分、地理総合 統計資料の読み取り、公共 政治のしくみ、公共 経済のしくみ など）",
   "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文の全文（資料・統計・地図の内容が問題に含まれる場合はその要点も書き起こすこと）",
+  "extracted_text": "読み取った正確な問題文の全文（資料・統計・地図の内容が問題に含まれる場合はその要点も書き起こすこと） 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
   "trap_description": "高校生がこの問題で最も間違えやすい用語の混同や、統計・資料の読み違いのポイントの解説文",
   "strategy_pattern": "【最重要】この問題固有の地名・数値・制度名には一切触れず、①問題文や資料のどの特徴（キーワード・条件）を見て問題の『型』を判断するか、②その型に対して定石として使うべき考え方、③なぜそれが有効なのか、を一般化して説明すること。2〜4文程度。",
   "model_answer": "最終的な正しい答えと、ステップごとの分かりやすい解説。用語・制度名は正確に使うこと。手順ごとに改行コード（\\n）を挟んで見やすい箇条書き形式（1., 2.など）で出力すること"
@@ -726,11 +974,36 @@
   "subject": "英語",
   "field": "分野名（例：文法・語法、長文読解、英作文、語彙 など）",
   "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文・英文の全文（英語のまま。改行は\\nで保持）",
+  "extracted_text": "読み取った正確な問題文・英文の全文（英語のまま。改行は\\nで保持） 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
   "trap_description": "高校生がこの問題で引っかかりやすい文法事項・構文・語彙・訳し方のポイントを日本語で解説",
   "strategy_pattern": "【最重要】この問題固有の単語や具体的な訳には一切触れず、①英文のどの特徴（接続詞・構文・時制などのキーワード）を見て問題の『型』を判断するか、②その型に対して定石として使うべき読解・解答アプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。2〜4文程度。",
   "model_answer": "最終的な正しい答え・和訳と、ステップごとの分かりやすい解説（文構造の分解、重要単語・熟語の意味、文法事項の解説を含む）。手順ごとに改行コード（\\n）を挟んで見やすい箇条書き形式（1., 2.など）で出力すること"
 }
+`.trim(),
+
+            "世界史": `
+あなたは高校世界史の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。
+数式のLaTeX記法（$記号など）は一切使用しないこと。
+出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
+{
+  "subject": "世界史",
+  "field": "分野名（例：古代オリエント、中国史 唐〜宋、イスラーム世界の成立、近代ヨーロッパ 市民革命、冷戦期の国際関係 など、時代と地域が分かる形で）",
+  "short_title": "問題の要約タイトル",
+  "extracted_text": "読み取った正確な問題文の全文（年表・系図・地図が問題に含まれる場合はその要点も書き起こすこと） 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
+  "trap_description": "高校生がこの問題で最も間違えやすいポイント（年代の前後関係の取り違え、似た名前の人物・王朝・条約・戦争の混同、離れた地域で起きた同時代の出来事の混同、原因と結果の取り違えなど）の解説文",
+  "strategy_pattern": "【最重要】この問題固有の年号・人物名・地名には一切触れず、①設問文のどの特徴（時期を問う／因果関係を問う／地域間の比較を問うなど）を見て問題の『型』を判断するか、②その型に対して定石として使うべき考え方（例：年表上の前後関係で捉える、対になる出来事とセットで覚える、同時代の他地域と横に並べて整理するなど）、③なぜそれが有効なのかを一般化して説明すること。2〜4文程度。",
+  "model_answer": "この問題の最終的な正しい答えと、ステップごとの分かりやすい解説。重要な出来事には可能な限り西暦（例：1789年）を明記すること。関連が深い場合は同時代の他地域の出来事にも一言触れ、時代・地域をまたいだ位置づけがつかめるようにすること。手順ごとに改行コード（\\n）を挟んで、見やすい箇条書き形式（1., 2.など）で出力すること",
+  "mnemonic": "この問題に登場する重要な年号のうち、最も覚える価値が高いもの1つについての語呂合わせ（「年号：語呂合わせ本文」の形式、例：『1789年：火(1789)の粉ちるフランス革命』のような一文）。該当する重要な年号が無い、または語呂合わせにする価値が薄い問題の場合は空文字（""）にすること",
+  "events": [
+    {
+      "name": "出来事の名前（例：フランス革命の勃発）",
+      "year": "表示用の年（例：1789年、前3世紀、14世紀後半 など、わかる精度で）",
+      "year_sort": "並べ替え用の年（西暦の整数。紀元前は負の数、例：前221年なら-221）",
+      "region": "次のいずれか1つ：東アジア／東南アジア／南アジア／西アジア・中央アジア／ヨーロッパ／アメリカ大陸／アフリカ／地域をまたぐ／世界全体"
+    }
+  ]
+}
+※eventsには、この問題文・解説中に登場する年号つきの出来事をすべて含めること（1個でも複数でもよい）。年号が特定できる出来事が1つも無い問題の場合は空配列（[]）にすること。
 `.trim()
         };
 
@@ -810,12 +1083,135 @@
   "ai_response": "生徒の疑問に対する丁寧な解説",
   "current_step_label": "解説中・疑問解消など"
 }
+`.trim(),
+
+            "世界史": `
+あなたは高校世界史の解説エキスパートAIチューターです。
+数式のLaTeX記法（$記号など）は一切使用しないこと。
+生徒は提示された「模範解答と解説」を読んでいますが、年代関係・因果関係・人物や王朝の混同などが理解できずに質問しています。
+生徒の疑問に対して、ピンポイントで優しく、論理的に解説してください。年号に触れる場合は西暦を明記し、可能であれば同時代の他地域の出来事とも関連づけて、生徒が時代・地域をまたいだ位置づけを掴めるようにしてください。
+
+返答は以下のJSONのみ（説明不要）：
+{
+  "ai_response": "生徒の疑問に対する丁寧な解説",
+  "current_step_label": "解説中・疑問解消など"
+}
 `.trim()
         };
 
-        // 🖼️【複数枚写真対応】新形式の images配列があればそれを優先、無ければ旧形式のimageData単体をラップして返す（後方互換）
+        // 📝 模範解答（answerFormula）をチャット欄と同じルールでHTML整形する共通関数。
+        // 初回表示時に呼ばれる。
+        // 🧠【移植】insights.htmlで先に実装済みだった数式正規化＆穴埋め枠の修復処理。
+        //    AI生成の問題文で $...$ の外に \fbox{ア} 等が取り残されて生テキスト表示に
+        //    なってしまう不具合の根本原因はここ（MathJaxのfboxマクロ定義だけでは、
+        //    そもそも数式モードに入っていない箇所には効かないため）。
+        function normalizeMathSyntax(str) {
+            if (!str) return "";
+            let s = String(str);
+
+            // 1. \bbox[...] または \bbox[...]{...} の波括弧抜け・表記ゆれを完全正規化
+            s = s.replace(/\\bbox\s*\[[^\]]*\]\s*\{([^}]*)\}/g, (_, content) => {
+                let c = content.trim();
+                if (!c) c = "\\quad";
+                else c = c.replace(/^\\text\{([\s\S]*)\}$/, "$1").trim();
+                return `\\bbox[2px,border:1px solid]{\\text{${c}}}`;
+            });
+
+            s = s.replace(/\\bbox\s*\[[^\]]*\]\s*([0-9A-Za-zぁ-んァ-ヶー一-龠々]+)/g, (_, content) => {
+                return `\\bbox[2px,border:1px solid]{\\text{${content.trim()}}}`;
+            });
+
+            s = s.replace(/\\bbox\s*\[[^\]]*\]/g, `\\bbox[2px,border:1px solid]{\\text{\\quad}}`);
+
+            // 2. \fbox, \boxed, \framebox の正規化
+            s = s.replace(/\\(?:fbox|boxed|framebox)(?:\s*\[[^\]]*\])?\s*\{([^}]*)\}/g, (_, content) => {
+                let c = content.trim();
+                if (!c) c = "\\quad";
+                else c = c.replace(/^\\text\{([\s\S]*)\}$/, "$1").trim();
+                return `\\bbox[2px,border:1px solid]{\\text{${c}}}`;
+            });
+            s = s.replace(/\\(?:fbox|boxed|framebox)(?:\s*\[[^\]]*\])?\s+([0-9A-Za-zぁ-んァ-ヶー一-龠々]+)/g, (_, content) => {
+                return `\\bbox[2px,border:1px solid]{\\text{${content.trim()}}}`;
+            });
+
+            // 3. $...$ の外にある \bbox や孤立した TeX 記号を $...$ で保護
+            const parts = s.split(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g);
+            for (let i = 0; i < parts.length; i += 2) {
+                let chunk = parts[i];
+                if (!chunk) continue;
+
+                chunk = chunk.replace(/(\\bbox\[2px,border:1px solid\]\{\\text\{[^}]*\}\}(?:\^[0-9A-Za-z^\circ]+)?)/g, '$$$1$$');
+
+                chunk = chunk.replace(/(\\(?:triangle|angle|sqrt|frac|vec|alpha|beta|gamma|theta|pi|pm|mp|le|ge|leqq|geqq|neq|approx|sim|equiv|subset|supset|cap|cup|times|div|cdot|int|sum|lim|log|ln|sin|cos|tan)\b[^\s$、。,.)）]*)/g, '$$$1$$');
+
+                chunk = chunk.replace(/\$\s*\$/g, '');
+
+                parts[i] = chunk;
+            }
+
+            return parts.join("");
+        }
+
+        function formatModelAnswerHtml(rawAnswer) {
+            return normalizeMathSyntax(String(rawAnswer || "解答データなし"))
+                .replace(/\\n/g, '<br>')
+                .replace(/\n/g, '<br>')
+                .replace(/(\d+\.\s*\*\*)/g, '<br><br>$1')
+                .replace(/(\*\*方法\d+：)/g, '<br><br>$1')
+                .replace(/(⇒)/g, '<br> $1')
+                .replace(/(したがって、)/g, '<br><br>$1')
+                .trim();
+        }
+
+        // 📝【問題文の可読性改善】AI文字起こしなどで改行が一切入らず、
+        // 長文が1つの塊になってしまう問題文を、小問番号の前で自動的に改行して読みやすくする。
+        // ・既存の改行（\n / 明示的な "\n" 文字列）はそのまま尊重する
+        // ・"(1)" "(2)" のような大問内の小問番号の前で段落を分ける
+        // ・"(i)" "(ii)" のようなローマ数字の小問番号の前でも改行する
+        // ・f(x) や g(t) のような関数表記の "(" は、直前が英数字・かな漢字なので誤爆しない
+        function formatQuestionText(raw) {
+            if (!raw) return "";
+            let t = normalizeMathSyntax(raw);
+            t = t
+                .replace(/\\n/g, '\n')
+                .replace(/\r\n?/g, '\n')
+                .trim();
+
+            const noWordBefore = "(?<![0-9A-Za-zぁ-んァ-ヶー一-龠々'’])";
+
+            // 小問番号 (1)〜(10) の前で段落改行（f(1) 等の関数呼び出しとは区別）
+            t = t.replace(new RegExp(noWordBefore + "\\(\\s*([1-9]|10)\\s*\\)(?!\\d)", "g"), "\n\n($1)");
+
+            // ローマ数字の小問番号 (i)(ii)(iii)(iv) の前で改行
+            t = t.replace(new RegExp(noWordBefore + "\\(\\s*(i{1,3}|iv)\\s*\\)", "gi"), "\n($1)");
+
+            // 改行が3つ以上連続する場合は2つにまとめる
+            t = t.replace(/\n{3,}/g, "\n\n").replace(/^\n+/, "").trim();
+
+            // 改行を<br>に変換（安全のためHTMLタグは含めない前提のプレーンテキストとして扱う）
+            return t.replace(/\n/g, "<br>");
+        }
+
+        // 🖼️【新設・パフォーマンス改善】フルサイズ画像は users/{uid}/problemImages/{id} という
+        // 別ノードに分離保存されている（ダッシュボード一覧の読み込みを軽くするため）。
+        // problem.html はこの1問ぶんだけ取得すればよいので、ページ読み込み時に一度だけ取得してキャッシュする。
+        let currentProblemFullImages = [];
+        async function loadProblemFullImages(uid, problemId) {
+            try {
+                const snap = await get(ref(database, 'users/' + uid + '/problemImages/' + problemId));
+                const val = snap.val();
+                currentProblemFullImages = (val && Array.isArray(val.images)) ? val.images : [];
+            } catch (e) {
+                console.error("フル画像の取得に失敗しました:", e);
+                currentProblemFullImages = [];
+            }
+        }
+
+        // 🖼️【複数枚写真対応】新設のproblemImagesノード（currentProblemFullImages）を最優先。
+        // まだ移行していない古いデータは、後方互換としてproblems直下のimages/imageDataを使う。
         function getProblemImages(p) {
             if (!p) return [];
+            if (currentProblemFullImages.length > 0) return currentProblemFullImages;
             if (Array.isArray(p.images) && p.images.length > 0) return p.images;
             if (p.imageData) return [p.imageData];
             return [];
@@ -849,7 +1245,7 @@
                 lightbox.id = "photo-lightbox";
                 lightbox.style.cssText = `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 999999; display: flex; align-items: center; justify-content: center; cursor: zoom-out; opacity: 0; transition: opacity 0.2s ease;`;
                 lightbox.innerHTML = `
-                    <img id="lightbox-img" src="" style="max-width: 92%; max-height: 92%; object-fit: contain; border: 2px solid var(--accent-cyan); box-shadow: 0 0 40px rgba(95, 198, 255, 0.4); border-radius: 16px; transform: scale(0.95); transition: transform 0.2s ease;">
+                    <img id="lightbox-img" src="" style="max-width: 92%; max-height: 92%; object-fit: contain; border: 2px solid var(--accent-cyan); box-shadow: 0 0 40px rgba(0, 243, 255, 0.4); border-radius: 16px; transform: scale(0.95); transition: transform 0.2s ease;">
                     <div style="position: absolute; top: 1.5rem; right: 1.5rem; color: #fff; font-size: 1.8rem; font-weight: 900; cursor: pointer; background: rgba(255,255,255,0.1); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2);">×</div>
                     <div class="lightbox-nav-btn" id="lightbox-prev-btn" style="left: 1.5rem;">‹</div>
                     <div class="lightbox-nav-btn" id="lightbox-next-btn" style="right: 1.5rem;">›</div>
@@ -876,6 +1272,60 @@
             renderLightboxImage();
             lightbox.style.display = "flex";
             setTimeout(() => { lightbox.style.opacity = "1"; lightbox.querySelector("#lightbox-img").style.transform = "scale(1)"; }, 10);
+        }
+
+        // 📦【新設】問題文プレビューの折りたたみ制御。
+        //   内容がプレビュー高さに収まる時はボタン自体を出さない（無駄な折りたたみUIを避ける）
+        function setupQuestionCollapseToggle() {
+            const area = document.getElementById("question-collapsible-area");
+            const toggleBtn = document.getElementById("question-collapse-toggle");
+            if (!area || !toggleBtn) return;
+
+            area.classList.remove("is-expanded");
+            area.classList.remove("has-overflow");
+            toggleBtn.style.display = "none";
+            toggleBtn.textContent = "▼ 全文を表示";
+            toggleBtn.onclick = null;
+
+            // レイアウト確定後（画像読み込み等）に高さを判定したいので次フレームで計測
+            // 💡【修正】「全文を表示」時に、内容の実際の高さ(scrollHeight)を測って
+            //   inline style の max-height に設定するよう変更。
+            //   以前は CSS の .is-expanded { max-height: 2000px } という固定値に
+            //   依存していたため、それより長い問題文は展開しても途中で切れてしまっていた。
+            //   これで問題文がどんなに長くても最後まで表示できる。
+            const applyToggleHandler = () => {
+                toggleBtn.onclick = () => {
+                    const expanding = !area.classList.contains("is-expanded");
+                    if (expanding) {
+                        area.style.maxHeight = area.scrollHeight + "px";
+                        area.classList.add("is-expanded");
+                    } else {
+                        area.classList.remove("is-expanded");
+                        area.style.maxHeight = ""; // CSSのデフォルト（折りたたみ高さ）に戻す
+                    }
+                    toggleBtn.textContent = expanding ? "▲ 折りたたむ" : "▼ 全文を表示";
+                };
+            };
+
+            const checkOverflow = () => {
+                if (!area.classList.contains("is-expanded") && area.scrollHeight > area.clientHeight + 16) {
+                    area.classList.add("has-overflow");
+                    toggleBtn.style.display = "flex";
+                    applyToggleHandler();
+                }
+                // 展開中に画像などが後から読み込まれてさらに高さが伸びた場合も追従させる
+                if (area.classList.contains("is-expanded")) {
+                    area.style.maxHeight = area.scrollHeight + "px";
+                }
+            };
+
+            requestAnimationFrame(checkOverflow);
+
+            // 🖼️ 画像はサイズが後から確定するため、読み込み完了時にも再判定する
+            area.querySelectorAll("img").forEach(img => {
+                if (img.complete) return;
+                img.addEventListener("load", checkOverflow, { once: true });
+            });
         }
 
         // 🖼️ 問題詳細ページ内のサムネイル・ギャラリーストリップを描画
@@ -925,10 +1375,20 @@ ${glossaryBlock}`;
 
         // 現在の問題の教科に対応するプロンプトを返すヘルパー（未登録教科は数学にフォールバック）
         function getCreatePrompt(subject) {
-            return (SUBJECT_CREATE_PROMPTS[subject] || SUBJECT_CREATE_PROMPTS["数学"]) + buildLessonContextBlock();
+            return EXTRACTED_TEXT_COMPLETENESS_RULE + "\n\n" + GAL_SENSEI_PERSONA_PROMPT + "\n\n" + (SUBJECT_CREATE_PROMPTS[subject] || SUBJECT_CREATE_PROMPTS["数学"]) + buildLessonContextBlock();
         }
+        // 🔒【新設】SUBJECT_CHAT_PROMPTS 各科目共通のJSON構造をAPI側で強制するためのスキーマ
+        const CHAT_TURN_RESPONSE_SCHEMA = {
+            type: "OBJECT",
+            properties: {
+                ai_response: { type: "STRING" },
+                current_step_label: { type: "STRING" }
+            },
+            required: ["ai_response", "current_step_label"]
+        };
+
         function getChatPrompt(subject) {
-            return (SUBJECT_CHAT_PROMPTS[subject] || SUBJECT_CHAT_PROMPTS["数学"]) + buildLessonContextBlock();
+            return GAL_SENSEI_PERSONA_PROMPT + "\n\n" + (SUBJECT_CHAT_PROMPTS[subject] || SUBJECT_CHAT_PROMPTS["数学"]) + buildLessonContextBlock();
         }
 
         let chatHistory = []; 
@@ -937,16 +1397,19 @@ ${glossaryBlock}`;
         let currentProblemData = {};
         let loginUid = null;
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 loginUid = user.uid;
                 if (!PROBLEM_ID) {
-                    alert("問題IDの指定がありません。");
-                    location.href = "index.html";
+                    showToast("問題IDの指定がありません。", "error");
+                    setTimeout(() => { location.href = "index.html"; }, 1200);
                     return;
                 }
+                // 🖼️【新設】フル画像を先に取得してから問題本体を描画する（初回描画時に画像が揃っている状態にするため）
+                await loadProblemFullImages(user.uid, PROBLEM_ID);
                 loadCloudProblemSession(user.uid);
                 listenToQnaLogsForProblem(user.uid, PROBLEM_ID); // 💬【新設】この問題の過去の質問ログを監視
+                listenToLinkedLessonForProblem(user.uid, PROBLEM_ID); // 🎓【新設】この問題から作られた授業を監視
             } else {
                 location.href = "index.html";
             }
@@ -1004,14 +1467,7 @@ ${glossaryBlock}`;
                 })();
                 
                 let rawAnswer = currentProblemData.answerFormula || "解答データなし";
-                let formattedAnswer = rawAnswer
-                    .replace(/\\n/g, '<br>')
-                    .replace(/\n/g, '<br>')
-                    .replace(/(\d+\.\s*\*\*)/g, '<br><br>$1') 
-                    .replace(/(\*\*方法\d+：)/g, '<br><br>$1') 
-                    .replace(/(⇒)/g, '<br> $1')            
-                    .replace(/(したがって、)/g, '<br><br>$1')   
-                    .trim();
+                let formattedAnswer = formatModelAnswerHtml(rawAnswer);
 
                 document.getElementById("target-model-answer").innerHTML = formattedAnswer;
 
@@ -1061,23 +1517,15 @@ ${glossaryBlock}`;
                             </div>
                         `;
                     } else {
-                        contentHtml = `<div style="padding:2rem; text-align:center; color:var(--text-muted);">${currentProblemData.title}</div>`;
+                        contentHtml = `<div style="padding:2rem; text-align:left; color:var(--text-muted); line-height:1.9;">${formatQuestionText(currentProblemData.title)}</div>`;
                     }
                 } 
                 else {
                     // 💡 無駄な背景グラデーションや、元枠と喧嘩していた absolute/padding を排除。
                     // 💡 純粋に問題文テキストだけを美しく引き立たせるスマートな構造に変更。
                     contentHtml = `
-                        <div class="tex2jax_process" style="
-                            color: var(--text-main); 
-                            font-size: 1.35rem; 
-                            font-weight: 700;
-                            line-height: 1.7; 
-                            text-align: left; 
-                            width: 100%;
-                            padding: 0.5rem 0;
-                        ">
-                            ${currentProblemData.title}
+                        <div class="tex2jax_process question-text-block">
+                            ${formatQuestionText(currentProblemData.title)}
                         </div>
                     `;
 
@@ -1085,7 +1533,7 @@ ${glossaryBlock}`;
                         const photoBtnLabel = problemImages.length > 1 ? `📸 元の写真を表示（${problemImages.length}枚）` : "📸 元の写真を表示";
                         contentHtml += `
                             <div style="position: absolute; bottom: 1rem; right: 1rem; z-index: 10;">
-                                <button type="button" id="toggle-photo-btn" class="tactile-btn" style="background: var(--accent-magenta); font-size: 0.8rem; padding: 0.4rem 0.8rem; box-shadow: 2px 2px 0px var(--ink);">
+                                <button type="button" id="toggle-photo-btn" class="tactile-btn" style="background: var(--accent-magenta); font-size: 0.8rem; padding: 0.4rem 0.8rem; box-shadow: 2px 2px 0px #9e004f;">
                                     ${photoBtnLabel}
                                 </button>
                             </div>
@@ -1095,6 +1543,7 @@ ${glossaryBlock}`;
 
                 figBox.innerHTML = contentHtml;
                 renderPhotoGalleryStrip();
+                setupQuestionCollapseToggle();
 
                 if (currentProblemData.subject === "未分類" && problemImages.length > 0) {
                     const mainImg = document.getElementById("figure-main-img");
@@ -1123,70 +1572,71 @@ ${glossaryBlock}`;
                 }
 
                 if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+
+                // 💬【新設】「質問チャットだけを別タブで開く」モードでは、
+                //   「AIに質問する」ボタンを押す手間を省略し、最初から質問入力欄を開いた状態にする
+                if (CHAT_ONLY_MODE && currentProblemData.subject !== "未分類") {
+                    const activateBtn = document.getElementById("activate-ai-question-btn");
+                    const inputWrap = document.getElementById("ai-chat-input-wrap");
+                    if (activateBtn && inputWrap && inputWrap.style.display === "none") {
+                        activateBtn.click();
+                    }
+                }
             }, { onlyOnce: true });
         }
 
-        // 🧠【共通ヘルパー】AIの生テキストからJSONを安全に取り出す
-        function fixJsonEscapes(str) {
-            let inString = false; let result = "";
-            for (let i = 0; i < str.length; i++) {
-                let c = str[i];
-                if (c === '"' && (i === 0 || str[i-1] !== '\\')) { inString = !inString; result += c; }
-                else if (c === '\\' && inString) {
-                    let next = str[i+1];
-                    if (next === '"') { result += '\\"'; i++; }
-                    else if (next === '\\') { result += '\\\\'; i++; }
-                    else if (next === 'n' && (str[i+2] === ' ' || str[i+2] === '"' || str[i+2] === '\\' || !/[a-zA-Z]/.test(str[i+2]))) { result += '\\n'; i++; }
-                    else { result += '\\\\'; }
-                } else if (inString && c.charCodeAt(0) < 0x20) {
-                    // 🩹 生の制御文字（未エスケープの改行・タブ等）がJSON文字列中に紛れ込んだ場合の保険
-                    if (c === '\n') result += '\\n';
-                    else if (c === '\r') result += '\\r';
-                    else if (c === '\t') result += '\\t';
-                    else result += '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0');
-                } else { result += c; }
-            }
-            return result;
-        }
-
-        function stripCodeFence(text) {
-            let t = text.trim();
-            if (t.startsWith("```json")) t = t.substring(7);
-            else if (t.startsWith("```")) t = t.substring(3);
-            if (t.endsWith("```")) t = t.substring(0, t.length - 3);
-            return t.trim();
-        }
-
-        // 🩹【新設】AIの応答に「正しいJSONの前後に余計な文章が付いてしまう」事故への保険。
-        //    文字列中の { } は無視しつつ、最初に現れる { から対応する閉じ } までを取り出す。
-        //    見つからない場合はテキストをそのまま返す（従来通りJSON.parseに委ねてエラーにする）。
-        function extractJsonObject(text) {
-            const start = text.indexOf('{');
-            if (start === -1) return text;
-
-            let depth = 0;
-            let inString = false;
-            for (let i = start; i < text.length; i++) {
-                const c = text[i];
-                if (c === '"' && text[i - 1] !== '\\') inString = !inString;
-                if (!inString) {
-                    if (c === '{') depth++;
-                    else if (c === '}') {
-                        depth--;
-                        if (depth === 0) return text.substring(start, i + 1);
-                    }
-                }
-            }
-            // 対応する閉じ括弧が見つからなかった場合は、先頭の余計な文章だけ除いて返す
-            return text.substring(start);
-        }
+        // ✨ fixJsonEscapes / stripCodeFence / extractJsonObject は api-key-manager.js から共通インポート
 
         /**
          * 解答（model_answer）生成の共通呼び出し関数。
          * ACTIVE_ENGINE（"gemini" or "deepseek"）に応じて呼び出し先を切り替える。
          * ※ DeepSeekは画像を直接読めないため、画像のみでまだ問題文（title）が未確定の場合はエラーにする。
          */
-        async function callAnalysisEngine(instructionText, systemInstruction) {
+        // 🔒【新設】SUBJECT_CREATE_PROMPTS（getCreatePrompt/getRegenPrompt共通）のJSON構造をAPI側で強制するためのスキーマ
+        // 🌍【新設】世界史の年表ビュー用：出来事の地域を固定カテゴリに揃えることで、
+        //    複数の問題・授業をまたいでも同じ地域名でレーン分けできるようにする
+        const HISTORY_REGIONS = ["東アジア", "東南アジア", "南アジア", "西アジア・中央アジア", "ヨーロッパ", "アメリカ大陸", "アフリカ", "地域をまたぐ／世界全体"];
+
+        const SUBJECT_ANALYSIS_RESPONSE_SCHEMA = {
+            type: "OBJECT",
+            properties: {
+                subject: { type: "STRING" },
+                field: { type: "STRING" },
+                short_title: { type: "STRING" },
+                extracted_text: { type: "STRING" },
+                trap_description: { type: "STRING" },
+                strategy_pattern: { type: "STRING" },
+                model_answer: { type: "STRING" },
+                mnemonic: { type: "STRING" },
+                events: {
+                    type: "ARRAY",
+                    items: {
+                        type: "OBJECT",
+                        properties: {
+                            name: { type: "STRING" },
+                            year: { type: "STRING" },
+                            year_sort: { type: "INTEGER" },
+                            region: { type: "STRING", enum: HISTORY_REGIONS }
+                        },
+                        required: ["name", "year", "year_sort", "region"]
+                    }
+                }
+            },
+            required: ["subject", "field", "short_title", "extracted_text", "trap_description", "strategy_pattern", "model_answer"]
+        };
+
+        // 🔒【新設】getStrategyOnlyPrompt() のJSON構造をAPI側で強制するためのスキーマ
+        const STRATEGY_ONLY_RESPONSE_SCHEMA = {
+            type: "OBJECT",
+            properties: {
+                trap_description: { type: "STRING" },
+                strategy_pattern: { type: "STRING" }
+            },
+            required: ["trap_description", "strategy_pattern"]
+        };
+
+        async function callAnalysisEngine(instructionText, systemInstruction, responseSchema, featureId) {
+            featureId = featureId || "explanation";
             if (ACTIVE_ENGINE === "deepseek") {
                 if (getProblemImages(currentProblemData).length > 0 && !currentProblemData.title) {
                     throw new Error("DeepSeekは画像を直接読み取れません。先に✨Geminiで一度解析して問題文を文字起こしするか、問題文を手動で入力してから再度お試しください。");
@@ -1233,14 +1683,13 @@ ${glossaryBlock}`;
                         continue;
                     }
 
-                    if (rawText.includes("</think>")) rawText = rawText.split("</think>")[1].trim();
                     try {
-                        return JSON.parse(fixJsonEscapes(extractJsonObject(stripCodeFence(rawText))));
-                    } catch (parseErr) {
-                        console.warn(`⚠️ DeepSeekの応答が不正なJSONでした（${attempt}/${MAX_DEEPSEEK_ATTEMPTS}回目）→ リトライ`, parseErr);
-                        deepseekLastError = parseErr;
-                        continue;
-                    }
+    return cleanDeepSeekResponse(rawText);
+} catch (parseErr) {
+    console.warn(`⚠️ DeepSeekの応答が不正なJSONでした（${attempt}/${MAX_DEEPSEEK_ATTEMPTS}回目）→ リトライ`, parseErr);
+    deepseekLastError = parseErr;
+    continue;
+}
                 }
 
                 throw new Error(`DeepSeekブレインが${MAX_DEEPSEEK_ATTEMPTS}回連続で空/不正な応答を返しました（DeepSeek側の既知の仕様上の問題です）。もう一度実行するか、✨Geminiに切り替えてみてください。\n最終エラー: ${deepseekLastError?.message || "不明"}`);
@@ -1266,71 +1715,15 @@ ${glossaryBlock}`;
                     }
                 }
 
-                const requestBody = JSON.stringify({
-                    "contents": [{ "parts": parts }],
-                    "systemInstruction": { "parts": [{ "text": systemInstruction }] },
-                    "generationConfig": { "responseMimeType": "application/json", "temperature": 0.3 }
-                });
-
-                let parsedResult = null;
-                let usedModel = null;
-                let lastError = null;
-                const fallbackAttempts = []; // { model, reason } を蓄積
-
-                for (const modelName of GEMINI_MODEL_FALLBACK_LIST) {
-                    let response;
-                    try {
-                        response = await fetchWithKeyRotation(getGeminiKeys(), (key) => ({
-                            url: buildGeminiUrl(modelName, key),
-                            options: {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: requestBody
-                            }
-                        }));
-                    } catch (err) {
-                        console.warn(`⚠️ ${modelName} は登録済みの全キーで失敗しました → 次のモデルへフォールバック`, err);
-                        lastError = err;
-                        fallbackAttempts.push({ model: modelName, reason: err?.message || "不明な通信エラー" });
-                        continue;
-                    }
-
-                    const candidateJson = await response.json();
-                    const candidateText = candidateJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                    if (!candidateText) {
-                        console.warn(`⚠️ ${modelName} が空の応答を返却しました → 次のモデルへフォールバック`);
-                        lastError = new Error(`Empty response: ${modelName}`);
-                        fallbackAttempts.push({ model: modelName, reason: "空応答（finishReason等が原因の可能性）" });
-                        continue;
-                    }
-
-                    try {
-                        parsedResult = JSON.parse(fixJsonEscapes(extractJsonObject(stripCodeFence(candidateText.trim()))));
-                        usedModel = modelName;
-                        break;
-                    } catch (parseErr) {
-                        console.warn(`⚠️ ${modelName} の応答が不正なJSONでした → 次のモデルへフォールバック`, parseErr);
-                        lastError = parseErr;
-                        fallbackAttempts.push({ model: modelName, reason: "JSON解析エラー（応答の形式が崩れていた）" });
-                        continue;
-                    }
-                }
-
-                notifyModelFallback(fallbackAttempts, usedModel);
-
-                if (!parsedResult) {
-                    throw new Error(`全モデルが利用できませんでした（レート制限または不正な応答）。時間を置いて再度お試しください。\n最終エラー: ${lastError?.message || "不明"}`);
-                }
-
-                return parsedResult;
+                // ✨ モデル×キーの二重フォールバックループは api-key-manager.js の callGeminiJSON に共通化済み
+                return await callGeminiJSON(parts, systemInstruction, { temperature: 0.3, responseSchema: responseSchema || undefined, featureId: featureId });
             }
         }
 
         async function runOnDemandAnalysis() {
             // 画像も問題文テキストも両方ない場合はエラー
             if (!loginUid || (getProblemImages(currentProblemData).length === 0 && !currentProblemData.title)) {
-                alert("解析可能なデータ（画像または手動入力された問題文）が見つかりません。");
+                showToast("解析可能なデータ（画像または手動入力された問題文）が見つかりません。", "error");
                 return;
             }
 
@@ -1352,7 +1745,7 @@ ${glossaryBlock}`;
             const chosenSubject = (subjectSelectEl && subjectSelectEl.value) || "数学";
 
             try {
-                const aiResult = await callAnalysisEngine(instructionText, getCreatePrompt(chosenSubject));
+                const aiResult = await callAnalysisEngine(instructionText, getCreatePrompt(chosenSubject), SUBJECT_ANALYSIS_RESPONSE_SCHEMA);
 
                 currentProblemData.title = aiResult.extracted_text || currentProblemData.title;
                 currentProblemData.short_title = aiResult.short_title || "解析問題";
@@ -1361,17 +1754,19 @@ ${glossaryBlock}`;
                 currentProblemData.trap_description = aiResult.trap_description || "";
                 currentProblemData.strategyPattern = aiResult.strategy_pattern || "";
                 currentProblemData.answerFormula = aiResult.model_answer || "解説データなし";
+                currentProblemData.mnemonic = aiResult.mnemonic || "";
+                currentProblemData.events = Array.isArray(aiResult.events) ? aiResult.events : [];
                 currentProblemData.lastAnswerEngine = ACTIVE_ENGINE;
 
                 const probRef = ref(database, 'users/' + loginUid + '/problems/' + PROBLEM_ID);
                 await set(probRef, currentProblemData);
 
-                alert(`⚡ ${getEngineLabel(ACTIVE_ENGINE)}によるAI解析が完了しました！セッションをリロードします。`);
-                window.location.reload();
+                showToast(`${getEngineLabel(ACTIVE_ENGINE)}によるAI解析が完了しました！セッションをリロードします。`, "success", 2000);
+                setTimeout(() => { window.location.reload(); }, 900);
 
             } catch (error) {
                 console.error(error);
-                alert("オンデマンド解析に失敗しました。\n原因: " + error.message);
+                showToast("オンデマンド解析に失敗しました。原因: " + error.message, "error", 8000);
                 analyzeBtn.textContent = originalBtnText;
                 analyzeBtn.disabled = false;
             }
@@ -1380,6 +1775,8 @@ ${glossaryBlock}`;
         // 🧭【新設】答えだけ確認済みの問題に、定石・罠の解説だけを軽量に後付け生成する
         function getStrategyOnlyPrompt(subject) {
             return `
+${GAL_SENSEI_PERSONA_PROMPT}
+
 あなたは高校${subject}の「誤答分析エキスパートAI」です。すでに問題文と模範解答は確定しています。
 今回は模範解答を作り直す必要はありません。以下の【問題文】と【模範解答】だけを読んで、生徒が復習で使う「定石」と「間違えやすいポイント」の2つだけを追加で作成してください。
 出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
@@ -1400,7 +1797,7 @@ ${glossaryBlock}`;
             const instructionText = `【問題文】\n${currentProblemData.title}\n\n【模範解答】\n${currentProblemData.answerFormula}`;
 
             try {
-                const aiResult = await callAnalysisEngine(instructionText, getStrategyOnlyPrompt(currentProblemData.subject || "数学"));
+                const aiResult = await callAnalysisEngine(instructionText, getStrategyOnlyPrompt(currentProblemData.subject || "数学"), STRATEGY_ONLY_RESPONSE_SCHEMA);
 
                 currentProblemData.trap_description = aiResult.trap_description || "";
                 currentProblemData.strategyPattern = aiResult.strategy_pattern || "";
@@ -1412,7 +1809,7 @@ ${glossaryBlock}`;
 
             } catch (error) {
                 console.error(error);
-                alert("定石・罠の解説の生成に失敗しました。\n原因: " + error.message);
+                showToast("定石・罠の解説の生成に失敗しました。原因: " + error.message, "error", 8000);
                 btn.textContent = originalText;
                 btn.disabled = false;
             }
@@ -1424,11 +1821,11 @@ ${glossaryBlock}`;
 
             if (isCorrect) {
                 triggerNeonExplosion(); 
-                setTimeout(() => { alert("🎉 克服おめでとうございます！！素晴らしい！"); }, 200);
+                showToast("克服おめでとうございます！！素晴らしい！", "success", 3000);
                 currentProblemData.lastResult = true;
                 currentProblemData.errorCount = 0; 
             } else {
-                alert("❌ クラウドに記録しました。AIと一緒に考え直そう！");
+                showToast("クラウドに記録しました。AIと一緒に考え直そう！", "info", 3000);
                 currentProblemData.lastResult = false;
                 currentProblemData.errorCount = Number(currentProblemData.errorCount || 1) + 1;
             }
@@ -1442,38 +1839,17 @@ ${glossaryBlock}`;
         }
 
         function cleanDeepSeekResponse(rawText) {
-            let text = rawText.trim();
-            if (text.includes("</think>")) {
-                text = text.split("</think>")[1].trim();
-            }
-            if (text.startsWith("```json")) text = text.substring(7);
-            else if (text.startsWith("```")) text = text.substring(3);
-            if (text.endsWith("```")) text = text.substring(0, text.length - 3);
-            text = extractJsonObject(text.trim());
-
-            let inString = false; let result = "";
-            for (let i = 0; i < text.length; i++) {
-                let c = text[i];
-                if (c === '"' && (i === 0 || text[i-1] !== '\\')) { inString = !inString; result += c; }
-                else if (c === '\\' && inString) {
-                    let next = text[i+1];
-                    if (next === '"') { result += '\\"'; i++; }
-                    else if (next === '\\') { result += '\\\\'; i++; }
-                    else if (next === 'n' && (text[i+2] === ' ' || text[i+2] === '"' || text[i+2] === '\\' || !/[a-zA-Z]/.test(text[i+2]))) { result += '\\n'; i++; }
-                    else { result += '\\\\'; }
-                } else if (inString && c.charCodeAt(0) < 0x20) {
-                    if (c === '\n') result += '\\n';
-                    else if (c === '\r') result += '\\r';
-                    else if (c === '\t') result += '\\t';
-                    else result += '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0');
-                } else { result += c; }
-            }
-            return JSON.parse(result);
-        }
+    let text = (rawText || "").trim();
+    if (text.includes("</think>")) {
+        text = text.split("</think>")[1].trim();
+    }
+    const cleanJsonStr = fixJsonEscapes(extractJsonObject(stripCodeFence(text)));
+    return JSON.parse(cleanJsonStr);
+}
 
         async function sendMessageToTutor(studentMessage) {
             if (currentProblemData.subject === "未分類") {
-                alert("対話を始める前に、まずは右上のボタンからAI解析を実行してください。");
+                showToast("対話を始める前に、まずは右上のボタンからAI解析を実行してください。", "error");
                 return;
             }
 
@@ -1553,98 +1929,47 @@ ${glossaryBlock}`;
                     }
 
                 } else {
-                    // ✨ Gemini
+                    // ✨ Gemini（モデル×キーの二重フォールバックループは api-key-manager.js に共通化済み）
                     const geminiContents = conversationMessages.map(m => ({
                         role: m.role === "assistant" ? "model" : "user",
                         parts: [{ text: m.content }]
                     }));
-
-                    const tutorRequestBody = JSON.stringify({
-                        "contents": geminiContents,
-                        "systemInstruction": { "parts": [{ "text": getChatPrompt(currentProblemData.subject) }] },
-                        "generationConfig": { "responseMimeType": "application/json", "temperature": 0.5 }
-                    });
-
-                    let tutorData = null;
-                    let tutorUsedModel = null;
-                    let tutorLastError = null;
-                    const tutorFallbackAttempts = [];
-
-                    for (const modelName of GEMINI_MODEL_FALLBACK_LIST) {
-                        let response;
-                        try {
-                            response = await fetchWithKeyRotation(getGeminiKeys(), (key) => ({
-                                url: buildGeminiUrl(modelName, key),
-                                options: {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: tutorRequestBody
-                                }
-                            }));
-                        } catch (err) {
-                            console.warn(`⚠️ ${modelName} は登録済みの全キーで失敗しました → 次のモデルへフォールバック`, err);
-                            tutorLastError = err;
-                            tutorFallbackAttempts.push({ model: modelName, reason: err?.message || "不明な通信エラー" });
-                            continue;
-                        }
-
-                        const candidateJson = await response.json();
-                        const candidateText = candidateJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                        if (!candidateText) {
-                            console.warn(`⚠️ ${modelName} が空の応答を返却しました → 次のモデルへフォールバック`);
-                            tutorLastError = new Error(`Empty response: ${modelName}`);
-                            tutorFallbackAttempts.push({ model: modelName, reason: "空応答（finishReason等が原因の可能性）" });
-                            continue;
-                        }
-
-                        try {
-                            aiJson = JSON.parse(fixJsonEscapes(extractJsonObject(stripCodeFence(candidateText))));
-                            tutorUsedModel = modelName;
-                            tutorData = candidateJson;
-                            break;
-                        } catch (parseErr) {
-                            console.warn(`⚠️ ${modelName} の応答が不正なJSONでした → 次のモデルへフォールバック`, parseErr);
-                            tutorLastError = parseErr;
-                            tutorFallbackAttempts.push({ model: modelName, reason: "JSON解析エラー（応答の形式が崩れていた）" });
-                            continue;
-                        }
-                    }
-
-                    notifyModelFallback(tutorFallbackAttempts, tutorUsedModel);
-
-                    if (!tutorData) {
-                        throw new Error(`全モデルが利用できませんでした（レート制限または不正な応答）。時間を置いて再度お試しください。\n最終エラー: ${tutorLastError?.message || "不明"}`);
-                    }
+                    aiJson = await callGeminiChat(geminiContents, getChatPrompt(currentProblemData.subject), { temperature: 0.5, responseSchema: CHAT_TURN_RESPONSE_SCHEMA, featureId: "chat" });
                 }
 
                 chatHistory.push({ "role": "assistant", "content": JSON.stringify(aiJson) });
                 updateChatUI(studentMessage, aiJson);
             } catch (error) { 
                 console.error(error);
-                alert(`${getEngineLabel(ACTIVE_ENGINE)}ブレインとの通信に失敗しました。\n原因: ` + error.message); 
+                showToast(`${getEngineLabel(ACTIVE_ENGINE)}ブレインとの通信に失敗しました。原因: ` + error.message, "error", 8000); 
             }
             finally { statusBadge.textContent = "AI TUTOR // ACTIVE"; statusBadge.style.color = "var(--accent-cyan)"; }
         }
 
         function renderFormattedMarkdown(text) {
-            if (!text) return "";
-            let formatted = text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
+    if (!text) return "";
+    text = normalizeMathSyntax(text);
 
-            // ### 見出し
-            formatted = formatted.replace(/^###\s*(.+)$/gm, '<h4 style="font-size:0.95rem; font-weight:800; color:var(--accent-cyan); margin:0.6rem 0 0.3rem 0; border-bottom:1px solid rgba(95, 198, 255, 0.2); padding-bottom:0.2rem;">$1</h4>');
-            // --- 区切り線
-            formatted = formatted.replace(/^---\s*$/gm, '<hr style="border:none; border-top:1.5px dashed rgba(42,36,32,0.3); margin:0.6rem 0;">');
-            // **太字**
-            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#ffffff; font-weight:700;">$1</strong>');
-            // リスト番号 1. 2.
-            formatted = formatted.replace(/^(\d+\.)\s*/gm, '<span style="color:var(--accent-yellow); font-weight:800; margin-right:0.3rem;">$1</span>');
+    const mathBlocks = [];
+    let placeholderText = text.replace(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g, (match) => {
+        mathBlocks.push(match);
+        return `%%%MATH_${mathBlocks.length - 1}%%%`;
+    });
 
-            return formatted;
-        }
+    let formatted = placeholderText
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    formatted = formatted.replace(/^###\s*(.+)$/gm, '<h4 style="font-size:0.95rem; font-weight:800; color:var(--accent-cyan); margin:0.6rem 0 0.3rem 0; border-bottom:1px solid rgba(0,243,255,0.2); padding-bottom:0.2rem;">$1</h4>');
+    formatted = formatted.replace(/^---\s*$/gm, '<hr style="border:none; border-top:1px dashed rgba(255,255,255,0.15); margin:0.6rem 0;">');
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#ffffff; font-weight:700;">$1</strong>');
+    formatted = formatted.replace(/^(\d+\.)\s*/gm, '<span style="color:var(--accent-yellow); font-weight:800; margin-right:0.3rem;">$1</span>');
+
+    // 数式ブロックを元に戻す
+    formatted = formatted.replace(/%%%MATH_(\d+)%%%/g, (_, idx) => mathBlocks[idx]);
+    return formatted;
+}
 
         function updateChatUI(userText, aiJson) {
             const chatHistoryArea = document.querySelector(".chat-history");
@@ -1658,6 +1983,7 @@ ${glossaryBlock}`;
             const aBubble = document.createElement("div"); 
             aBubble.className = "chat-bubble bubble-ai"; 
             aBubble.innerHTML = renderFormattedMarkdown(aiJson.ai_response); 
+
             chatHistoryArea.appendChild(aBubble);
 
             if (aiJson.current_step_label) stepLabel.textContent = aiJson.current_step_label;
@@ -1677,7 +2003,7 @@ ${glossaryBlock}`;
         function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.addEventListener("resize", resizeCanvas); resizeCanvas();
         class Particle { constructor(x, y, color) { this.x = x; this.y = y; this.size = Math.random() * 4 + 2; this.speedX = Math.random() * 12 - 6; this.speedY = Math.random() * -15 - 5; this.gravity = 0.3; this.color = color; this.alpha = 1; this.decay = Math.random() * 0.015 + 0.01; } update() { this.speedY += this.gravity; this.x += this.speedX; this.y += this.speedY; this.alpha -= this.decay; } draw() { ctx.save(); ctx.globalAlpha = this.alpha; ctx.shadowBlur = 15; ctx.shadowColor = this.color; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.restore(); } }
-        function triggerNeonExplosion() { const colors = ["#5fc6ff", "#ff7a9c", "#ffcf3f"]; const startX = canvas.width / 2, startY = canvas.height * 0.8; for (let i = 0; i < 150; i++) particles.push(new Particle(startX, startY, colors[Math.floor(Math.random() * colors.length)])); animateParticles(); }
+        function triggerNeonExplosion() { const colors = ["#00f3ff", "#ff007f", "#fff500"]; const startX = canvas.width / 2, startY = canvas.height * 0.8; for (let i = 0; i < 150; i++) particles.push(new Particle(startX, startY, colors[Math.floor(Math.random() * colors.length)])); animateParticles(); }
         function animateParticles() { if (particles.length === 0) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; } ctx.clearRect(0, 0, canvas.width, canvas.height); for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); particles[i].draw(); if (particles[i].alpha <= 0) particles.splice(i, 1); } requestAnimationFrame(animateParticles); }
 
         // 各種コントロールバインド（即時実行でタイミングのズレを防御）
@@ -1692,8 +2018,27 @@ ${glossaryBlock}`;
         const deleteProbBtn = document.getElementById("delete-prob-btn");
 
         if (sendBtn && inputField) {
-            sendBtn.addEventListener("click", () => { const t = inputField.value.trim(); if (t) { inputField.value = ""; sendMessageToTutor(t); } });
-            inputField.addEventListener("keypress", (e) => { if (e.key === "Enter") { const t = inputField.value.trim(); if (t) { inputField.value = ""; sendMessageToTutor(t); } } });
+            const autoGrowChatInput = () => {
+                inputField.style.height = "auto";
+                inputField.style.height = inputField.scrollHeight + "px";
+            };
+            const sendChatInput = () => {
+                const t = inputField.value.trim();
+                if (t) {
+                    inputField.value = "";
+                    autoGrowChatInput();
+                    sendMessageToTutor(t);
+                }
+            };
+            sendBtn.addEventListener("click", sendChatInput);
+            inputField.addEventListener("input", autoGrowChatInput);
+            // Enterで送信、Shift+Enter（またはIME変換確定中のEnter）は改行として扱う
+            inputField.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+                    e.preventDefault();
+                    sendChatInput();
+                }
+            });
         }
         if (showAnswerBtn && revealWrap && revealZone) {
             showAnswerBtn.addEventListener("click", () => { revealWrap.style.display = "none"; revealZone.style.display = "flex"; if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(); });
@@ -1718,42 +2063,51 @@ ${glossaryBlock}`;
                 const newName = prompt("新しい問題名を入力してください:", currentName);
                 if (newName === null) return;
                 const trimmedName = newName.trim();
-                if (!trimmedName) { alert("エラー: 問題の名前を空にすることはできません。"); return; }
+                if (!trimmedName) { showToast("問題の名前を空にすることはできません。", "error"); return; }
 
                 try {
                     currentProblemData.short_title = trimmedName;
                     const probRef = ref(database, 'users/' + loginUid + '/problems/' + PROBLEM_ID);
                     await set(probRef, currentProblemData);
                     document.getElementById("problem-title-display").textContent = "問題名: " + trimmedName;
-                    alert("🎉 問題の名前を変更しました！");
-                } catch (error) { console.error(error); alert("保存に失敗しました。"); }
+                    showToast("問題の名前を変更しました！", "success", 3000);
+                } catch (error) { console.error(error); showToast("保存に失敗しました。", "error"); }
             });
         }
 
-        // 🗑️【新設】「問題を削除」ボタンをクリックしたときのクラウド完全消去処理
         if (deleteProbBtn) {
-            deleteProbBtn.addEventListener("click", async () => {
-                if (!loginUid || !PROBLEM_ID) return;
-                
-                // 誤爆防止のダブルチェック
-                const confirmDelete = confirm("⚠️ 本当にこの問題を削除しますか？\n\nこの操作を実行すると、登録されたテキスト、写真、およびAIの解析履歴がクラウド(Firebase)から完全に抹消され、二度と復元できません。");
-                if (!confirmDelete) return;
+    deleteProbBtn.addEventListener("click", async () => {
+        if (!loginUid || !PROBLEM_ID) return;
+        
+        const confirmDelete = confirm("⚠️ 本当にこの問題を削除しますか？\n\nこの操作を実行すると、登録されたテキスト、写真、およびAIの解析履歴がクラウド(Firebase)から完全に抹消され、二度と復元できません。");
+        if (!confirmDelete) return;
 
-                try {
-                    // Firebase上の該当ノードのパスを指定
-                    const probRef = ref(database, 'users/' + loginUid + '/problems/' + PROBLEM_ID);
-                    // 値に null をセットすることで、Firebase databaseからノードを完全削除（消去）
-                    await set(probRef, null);
-                    
-                    alert("🗑️ 問題を完全に削除しました。ダッシュボードに戻ります。");
-                    // 削除完了後は自動的にダッシュボードトップへ安全にリダイレクト
-                    location.href = "index.html";
-                } catch (error) {
-                    console.error("削除処理中に致命的なエラーが発生しました:", error);
-                    alert("クラウドからの削除処理に失敗しました。ネットワークの接続状態を確認してください。");
-                }
-            });
+        try {
+            // 1. 問題本体を削除
+            const probRef = ref(database, 'users/' + loginUid + '/problems/' + PROBLEM_ID);
+            await set(probRef, null);
+
+            // 2. 分離保存されている高画質フル画像を削除
+            const imgRef = ref(database, 'users/' + loginUid + '/problemImages/' + PROBLEM_ID);
+            await set(imgRef, null);
+
+            // 3. この問題に紐づく質問ログ（qna_logs）を一括削除
+            const qnaRootRef = ref(database, 'users/' + loginUid + '/qna_logs');
+            const qnaSnap = await get(qnaRootRef);
+            const qnaData = qnaSnap.val() || {};
+            const deleteLogPromises = Object.keys(qnaData)
+                .filter(logId => qnaData[logId] && qnaData[logId].problemId === PROBLEM_ID)
+                .map(logId => remove(ref(database, 'users/' + loginUid + '/qna_logs/' + logId)));
+            await Promise.all(deleteLogPromises);
+            
+            showToast("問題を完全に削除しました。ダッシュボードに戻ります。", "success", 1500);
+            setTimeout(() => { location.href = "index.html"; }, 900);
+        } catch (error) {
+            console.error("削除処理中に致命的なエラーが発生しました:", error);
+            showToast("クラウドからの削除処理に失敗しました。ネットワークの接続状態を確認してください。", "error", 8000);
         }
+    });
+}
 
 
         // 💡 【追加】AI質問機能を納得いかない時だけ解放するリスナー
@@ -1789,68 +2143,100 @@ ${glossaryBlock}`;
         }
 
         // 🔄 【追加】AIに超精密なプロンプトで解説をやり直させるロジック（教科別に厳密度の観点を出し分け）
-        function getRegenPrompt(subject) {
+        // 🛠️【拡張】userNoteが指定された場合、生徒が指摘した間違いを最優先で反映させる指示を追加する
+        function getRegenPrompt(subject, userNote) {
             const base = getCreatePrompt(subject);
+            let header;
             if (subject === "英語") {
-                return (
+                header =
                     `あなたは高校英語の「超精密な誤答分析・解説生成AI」です。\n` +
                     `先ほど生成された解説の文法解釈・訳出精度に不備があった可能性があるため、今回は【最高精度】で解説を再生成してください。\n` +
-                    `文構造の分解、訳の正確さ、文法用語の使い方に一切の曖昧さがないよう細心の注意を払ってください。\n\n` +
-                    base
-                );
+                    `文構造の分解、訳の正確さ、文法用語の使い方に一切の曖昧さがないよう細心の注意を払ってください。\n\n`;
+            } else if (subject === "世界史") {
+                header =
+                    `あなたは高校世界史の「超精密な誤答分析・解説生成AI」です。\n` +
+                    `先ほど生成された解説の年代・因果関係・人物や王朝名の精度に不備があった可能性があるため、今回は【最高精度】で解説を再生成してください。\n` +
+                    `年号（西暦）の正確さ、人物・王朝・条約名の表記の正確さ、因果関係の順序に一切の曖昧さがないよう細心の注意を払ってください。数式のLaTeX記法（$記号など）は一切使用しないこと。\n\n`;
+            } else {
+                header =
+                    `あなたは高校${subject}の「超精密な誤答分析・解説生成AI」です。\n` +
+                    `先ほど生成された解説の計算精度、または数式レンダリング（LaTeX記法）に不備があったため、今回は【最高精度・厳密フォーマット】で解説を再生成してください。\n\n` +
+                    `【最重要：数式フォーマットの絶対規律】\n` +
+                    `1. 本文中に登場するすべての数式、変数、関数、数値、演算記号(⇒、等号、プラスマイナス)、分数(\\frac)、点(\\cdot)は、単一の文字であっても【必ず漏れなく】前後に $ または $$ をつけて完全なLaTeX形式にしてください。\n` +
+                    `2. $ で囲まれていない生の「\\frac」や「\\cdot」などの記法が本文中に露出することは絶対に許されません。\n` +
+                    `3. 解説文は、手順ごとに必ず改行コード（\\n）を適切に挟んで、論理の飛躍がない見やすい箇条書き形式（1., 2.など）で出力してください。\n\n`;
             }
-            return (
-                `あなたは高校${subject}の「超精密な誤答分析・解説生成AI」です。\n` +
-                `先ほど生成された解説の計算精度、または数式レンダリング（LaTeX記法）に不備があったため、今回は【最高精度・厳密フォーマット】で解説を再生成してください。\n\n` +
-                `【最重要：数式フォーマットの絶対規律】\n` +
-                `1. 本文中に登場するすべての数式、変数、関数、数値、演算記号(⇒、等号、プラスマイナス)、分数(\\frac)、点(\\cdot)は、単一の文字であっても【必ず漏れなく】前後に $ または $$ をつけて完全なLaTeX形式にしてください。\n` +
-                `2. $ で囲まれていない生の「\\frac」や「\\cdot」などの記法が本文中に露出することは絶対に許されません。\n` +
-                `3. 解説文は、手順ごとに必ず改行コード（\\n）を適切に挟んで、論理の飛躍がない見やすい箇条書き形式（1., 2.など）で出力してください。\n\n` +
-                base
-            );
+
+            let noteBlock = "";
+            if (userNote && userNote.trim()) {
+                noteBlock =
+                    `【最優先事項：生徒からの間違い指摘】\n` +
+                    `生徒から、前回の解答について以下の指摘がありました。この指摘を絶対に無視せず、指摘された誤りを完全に修正したうえで、` +
+                    `model_answer（および内容に影響する場合はstrategy_pattern・trap_descriptionも）を一から作り直してください。\n` +
+                    `指摘内容：${userNote.trim()}\n\n`;
+            }
+
+            return header + noteBlock + base;
         }
 
         async function runRegenerateAnalysis() {
             if (!loginUid || (getProblemImages(currentProblemData).length === 0 && !currentProblemData.title)) {
-                alert("再解析可能なデータが見つかりません。");
+                showToast("再解析可能なデータが見つかりません。", "error");
                 return;
             }
 
             const regenBtn = document.getElementById("regenerate-analysis-btn");
             if (!regenBtn) return;
+
+            const noteInput = document.getElementById("regen-note-input");
+            const userNote = noteInput ? noteInput.value.trim() : "";
             
             const originalText = regenBtn.innerHTML;
-            regenBtn.textContent = `⚙️ ${getEngineLabel(ACTIVE_ENGINE)}で超精密に再考中...`;
+            regenBtn.textContent = userNote
+                ? `⚙️ ${getEngineLabel(ACTIVE_ENGINE)}が指摘を踏まえて再考中...`
+                : `⚙️ ${getEngineLabel(ACTIVE_ENGINE)}で超精密に再考中...`;
             regenBtn.disabled = true;
 
-            let instructionText = "提出されたデータを、より正確な計算と完璧な$記号（LaTeX）の囲みを用いて、指定のJSONで再出力してください。解説が途中で壊れないよう細心の注意を払ってください。";
+            let instructionText = userNote
+                ? "提出されたデータについて、生徒から間違いの指摘があります。その指摘内容を必ず反映したうえで、より正確な計算と完璧な$記号（LaTeX）の囲みを用いて、指定のJSONで再出力してください。解説が途中で壊れないよう細心の注意を払ってください。"
+                : "提出されたデータを、より正確な計算と完璧な$記号（LaTeX）の囲みを用いて、指定のJSONで再出力してください。解説が途中で壊れないよう細心の注意を払ってください。";
 
             if (currentProblemData.title) {
                 instructionText += `\n\n【対象の問題文】\n${currentProblemData.title}`;
             }
+            if (currentProblemData.answerFormula) {
+                instructionText += `\n\n【前回の模範解答（誤りを含む可能性あり）】\n${currentProblemData.answerFormula}`;
+            }
+            if (userNote) {
+                instructionText += `\n\n【生徒からの間違いの指摘】\n${userNote}`;
+            }
 
             try {
-                const aiResult = await callAnalysisEngine(instructionText, getRegenPrompt(currentProblemData.subject || "数学"));
+                const aiResult = await callAnalysisEngine(instructionText, getRegenPrompt(currentProblemData.subject || "数学", userNote), SUBJECT_ANALYSIS_RESPONSE_SCHEMA, "regenerate");
 
-                currentProblemData.title = aiResult.extracted_text || currentProblemData.title;
-                currentProblemData.short_title = aiResult.short_title || currentProblemData.short_title;
-                currentProblemData.subject = aiResult.subject || currentProblemData.subject;
-                currentProblemData.field = aiResult.field || currentProblemData.field;
+                currentProblemData.title = aiResult.extracted_text || currentProblemData.title || "";
+                currentProblemData.short_title = aiResult.short_title || currentProblemData.short_title || "";
+                currentProblemData.subject = aiResult.subject || currentProblemData.subject || "";
+                currentProblemData.field = aiResult.field || currentProblemData.field || "";
                 currentProblemData.trap_description = aiResult.trap_description || "";
                 currentProblemData.strategyPattern = aiResult.strategy_pattern || "";
-                currentProblemData.answerFormula = aiResult.model_answer || currentProblemData.answerFormula;
+                currentProblemData.answerFormula = aiResult.model_answer || currentProblemData.answerFormula || "";
+                currentProblemData.mnemonic = (aiResult.mnemonic !== undefined) ? (aiResult.mnemonic || "") : (currentProblemData.mnemonic || "");
+                currentProblemData.events = Array.isArray(aiResult.events) ? aiResult.events : (Array.isArray(currentProblemData.events) ? currentProblemData.events : []);
                 currentProblemData.lastAnswerEngine = ACTIVE_ENGINE;
 
                 // Firebaseのデータを上書き保存して同期
                 const probRef = ref(database, 'users/' + loginUid + '/problems/' + PROBLEM_ID);
                 await set(probRef, currentProblemData);
 
-                alert(`⚡ ${getEngineLabel(ACTIVE_ENGINE)}による解説のリフレッシュが完了しました！`);
-                window.location.reload();
+                if (noteInput) noteInput.value = "";
+
+                showToast(`${getEngineLabel(ACTIVE_ENGINE)}による解説のリフレッシュが完了しました！`, "success", 2000);
+                setTimeout(() => { window.location.reload(); }, 900);
 
             } catch (error) {
                 console.error(error);
-                alert("再解析の実行中にエラーが発生しました。\n原因: " + error.message);
+                showToast("再解析の実行中にエラーが発生しました。原因: " + error.message, "error", 8000);
                 regenBtn.innerHTML = originalText;
                 regenBtn.disabled = false;
             }
@@ -1947,7 +2333,7 @@ ${glossaryBlock}`;
         if (saveInsightBtn) {
             saveInsightBtn.addEventListener("click", async () => {
                 if (!loginUid || !PROBLEM_ID) {
-                    alert("ログイン情報または問題IDが見つかりません。");
+                    showToast("ログイン情報または問題IDが見つかりません。", "error");
                     return;
                 }
 
@@ -1964,10 +2350,10 @@ ${glossaryBlock}`;
 
                     if (memoText) {
                         openInsightBtn.textContent = "🧠 メモ記録済み（クリックで編集）";
-                        openInsightBtn.style.background = "rgba(95, 198, 255, 0.15)";
+                        openInsightBtn.style.background = "rgba(0, 243, 255, 0.15)";
                     } else {
                         openInsightBtn.textContent = "🧠 この問題で得た「気づき・極意」をメモする";
-                        openInsightBtn.style.background = "rgba(95, 198, 255, 0.05)";
+                        openInsightBtn.style.background = "rgba(0, 243, 255, 0.05)";
                     }
 
                     const datesEl = document.getElementById("problem-dates-display");
@@ -1979,12 +2365,12 @@ ${glossaryBlock}`;
                         datesEl.textContent = parts.join("　");
                     }
 
-                    alert("🎉 気づきメモをクラウドに保存しました！");
+                    showToast("気づきメモをクラウドに保存しました！", "success", 2500);
                     insightModal.style.display = "none";
 
                 } catch (error) {
                     console.error("メモ保存エラー:", error);
-                    alert("保存に失敗しました。ネットワークの状態を確認してください。");
+                    showToast("保存に失敗しました。ネットワークの状態を確認してください。", "error");
                 } finally {
                     saveInsightBtn.textContent = "💾 クラウドに保存";
                     saveInsightBtn.disabled = false;
@@ -2021,6 +2407,99 @@ ${glossaryBlock}`;
             });
         }
 
+        // ==========================================================================
+        // 🎓【新設】前提からやり直す：質問チャットをAIに分析させ、授業タブへ引き継ぐ
+        // ==========================================================================
+        // この問題きっかけで既に作られた授業があれば監視して、リンクボタンを出す
+        function listenToLinkedLessonForProblem(uid, problemId) {
+            const lessonsRootRef = ref(database, 'users/' + uid + '/lessons');
+            onValue(lessonsRootRef, (snapshot) => {
+                const all = snapshot.val() || {};
+                const linkedRow = document.getElementById("lesson-handoff-linked-row");
+                const linkedLink = document.getElementById("lesson-handoff-linked-link");
+                if (!linkedRow || !linkedLink) return;
+
+                // 同じ問題から作られた授業のうち、一番新しいものを採用
+                const matches = Object.entries(all)
+                    .filter(([, l]) => l && l.sourceProblemId === problemId)
+                    .sort((a, b) => new Date(b[1].createdAt || 0) - new Date(a[1].createdAt || 0));
+
+                if (matches.length === 0) {
+                    linkedRow.style.display = "none";
+                    return;
+                }
+                const [lessonId, lesson] = matches[0];
+                linkedLink.textContent = (lesson.status === "completed" ? "✅ 完了済み" : "🎓 進行中") + `の授業へ: ${lesson.title || "無題の授業"}`;
+                linkedLink.href = "lesson.html?id=" + encodeURIComponent(lessonId);
+                linkedRow.style.display = "block";
+            });
+        }
+        const lessonHandoffBtn = document.getElementById("lesson-handoff-btn");
+        if (lessonHandoffBtn) {
+            lessonHandoffBtn.addEventListener("click", async () => {
+                if (!loginUid || qnaTurns.length === 0) return;
+                const originalText = lessonHandoffBtn.textContent;
+                lessonHandoffBtn.disabled = true;
+                lessonHandoffBtn.textContent = "🔍 つまずきの単元を分析中...";
+                try {
+                    const handoff = await analyzeStuckTopicFromQna();
+                    sessionStorage.setItem("LOLZ_LESSON_HANDOFF", JSON.stringify({
+                        topic: handoff.topic,
+                        level: handoff.level,
+                        note: handoff.note,
+                        sourceProblemId: currentProblemData.id || PROBLEM_ID,
+                        sourceProblemTitle: currentProblemData.short_title || "無題の問題"
+                    }));
+                    window.location.href = "lesson.html?fromProblem=1";
+                } catch (error) {
+                    console.error("つまずき単元の分析エラー:", error);
+                    showToast("分析に失敗しました。原因: " + error.message, "error", 8000);
+                    lessonHandoffBtn.disabled = false;
+                    lessonHandoffBtn.textContent = originalText;
+                }
+            });
+        }
+
+        // 現在の問題文＋Q&Aチャット全体をAIに読ませ、「本当につまずいている前提単元」を推定させる
+        async function analyzeStuckTopicFromQna() {
+            const LEVEL_OPTIONS = ["教科書レベル（基礎の基礎から）", "定期テストレベル", "入試基礎レベル", "入試標準〜応用レベル"];
+            const conversationText = qnaTurns.map(t => `【${t.role === "user" ? "生徒" : "AI"}】${t.content}`).join("\n\n");
+
+            const systemInstruction = `あなたはベテランの家庭教師です。生徒がある問題についてAIチューターに質問した記録を渡します。
+生徒はこの解説を読んでもなお理解できておらず、「そもそも前提となる単元の理解が抜け落ちている」可能性があります。
+この会話全体を読み、生徒が実際につまずいている「前提単元」が何かを特定してください。
+注意点：
+- 元の問題自体の単元（例:数列）ではなく、その理解に本当に必要な、より基礎的な前提単元（例:指数関数・対数関数）を優先して特定すること。会話の中でつまずきの原因が明確に前提単元にあると読み取れない場合は、元の問題の単元をそのまま返してよい。
+- topicは「数学III 微分方程式」のように、科目名を含む具体的な単元名にすること
+- levelは次の4つの文字列から会話の内容に最も合うものを一つだけ、一字一句そのまま選ぶこと: ${LEVEL_OPTIONS.map(l => `"${l}"`).join(", ")}
+- noteには、次に作る授業で特に意識してほしいこと（生徒がどこで詰まっていたか、逆に何は分かっていそうか等）を2〜3文でまとめること
+
+出力は必ず以下のJSON形式のみで返してください。他のテキストは一切含めないこと。
+{
+  "topic": "前提単元名",
+  "level": "上記4つのいずれか",
+  "note": "次の授業で意識してほしいことのメモ"
+}`;
+
+            const promptText = `【元の問題文】\n${currentProblemData.title || "（問題文なし）"}\n\n【AIチューターとの質問チャット全文】\n${conversationText}`;
+
+            // 🔒 levelは列挙値なので、enumで選択肢自体をAPI側で強制する
+            const stuckTopicResponseSchema = {
+                type: "OBJECT",
+                properties: {
+                    topic: { type: "STRING" },
+                    level: { type: "STRING", enum: LEVEL_OPTIONS },
+                    note: { type: "STRING" }
+                },
+                required: ["topic", "level", "note"]
+            };
+
+            // ✨ モデル×キーの二重フォールバックループは api-key-manager.js の callGeminiJSON に共通化済み
+            const parsed = await callGeminiJSON([{ text: promptText }], systemInstruction, { temperature: 0.3, responseSchema: stuckTopicResponseSchema, featureId: "stuck_topic" });
+            if (!LEVEL_OPTIONS.includes(parsed.level)) parsed.level = "入試基礎レベル";
+            return parsed;
+        }
+
         // 💾 会話を記録するボタン
         const qnaSaveBtn = document.getElementById("qna-save-btn");
         if (qnaSaveBtn) {
@@ -2046,7 +2525,7 @@ ${glossaryBlock}`;
                     }, 1500);
                 } catch (error) {
                     console.error("質問ログ保存エラー:", error);
-                    alert("質問ログの保存に失敗しました。ネットワークの状態を確認してください。");
+                    showToast("質問ログの保存に失敗しました。ネットワークの状態を確認してください。", "error");
                     qnaSaveBtn.textContent = "💾 この会話を記録する";
                     qnaSaveBtn.disabled = false;
                 }
@@ -2147,7 +2626,7 @@ ${glossaryBlock}`;
                     qnaLogDetailModal.style.display = "none";
                 } catch (error) {
                     console.error("質問ログ削除エラー:", error);
-                    alert("削除に失敗しました。ネットワークの状態を確認してください。");
+                    showToast("削除に失敗しました。ネットワークの状態を確認してください。", "error");
                 }
             });
         }
@@ -2157,5 +2636,13 @@ ${glossaryBlock}`;
             });
         }
    </script>
+
+    <nav class="m-tabbar">
+        <a href="index.html" class="m-tab active"><span class="m-tab-icon">🧠</span>誤答ノート</a>
+        <a href="lesson.html" class="m-tab"><span class="m-tab-icon">📖</span>授業</a>
+        <a href="refbook.html" class="m-tab"><span class="m-tab-icon">📚</span>参考書</a>
+        <a href="insights.html" class="m-tab"><span class="m-tab-icon">💡</span>気づき</a>
+        <a href="ai-settings.html" class="m-tab"><span class="m-tab-icon">⚙️</span>設定</a>
+    </nav>
 </body>
 </html>

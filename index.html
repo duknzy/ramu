@@ -1,2161 +1,515 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#fffdf7">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="LOLZ">
-    <meta name="format-detection" content="telephone=no">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="icons/icon.png">
-    <link rel="apple-touch-icon" href="icons/icon.png">
-    <title>LOLZ // 誤答克服ダッシュボード</title>
-    <link rel="stylesheet" href="style.css">
-    
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            },
-            options: {
-                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-            }
-        };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#08080d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LOLZ">
+<title>LOLZ // 誤答ノート</title>
+<link rel="stylesheet" href="mobile-style.css">
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            macros: { fbox: ["\\bbox[2px,border:1px solid]{#1}", 1] }
+        },
+        options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
+    };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 
-    <style>
-        .squircle-card {
-            border: 2.5px solid var(--ink);
-            box-shadow: 5px 5px 0px var(--ink);
-        }
-@media (hover: hover) and (pointer: fine) { .squircle-card:hover {
-            transform: translate(-2px, -2px);
-            border-color: var(--ink);
-            box-shadow: 7px 7px 0px var(--ink);
-        } }
-        .glass-card {
-            background: var(--card-bg-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1.5px solid var(--ink);
-        }
+<style>
+    /* --- スコアカード --- */
+    .m-score-card { border-color: rgba(0, 243, 255, 0.3); }
+    .m-score-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.7rem; }
+    .m-score-title { font-weight: 900; font-size: var(--fs-md); color: var(--accent-cyan); }
+    .m-score-row { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--text-bright-muted); margin-bottom: 0.35rem; }
+    .m-score-bar-track { width: 100%; height: 7px; background: #000; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color); }
+    .m-score-bar-fill { height: 100%; background: var(--accent-cyan); width: 0%; transition: width 0.6s ease; }
+    .m-score-due { margin-top: 0.7rem; padding-top: 0.6rem; border-top: 1px solid var(--border-color); font-size: var(--fs-xs); color: var(--text-muted); }
 
-        .dashboard-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
+    /* --- ミニ統計 --- */
+    .m-mini-stats { display: flex; gap: 0.7rem; margin: 0.8rem 0; }
+    .m-mini-stat { flex: 1; border-radius: 16px; padding: 0.85rem 1rem; }
+    .m-mini-stat.errors { background: linear-gradient(135deg, rgba(255,46,136,0.12), rgba(10,2,6,0.4)); border: 1px solid rgba(255,46,136,0.3); }
+    .m-mini-stat.solved { background: linear-gradient(135deg, rgba(0,243,255,0.1), rgba(0,10,12,0.4)); border: 1px solid rgba(0,243,255,0.3); }
+    .m-mini-label { font-size: 0.65rem; font-weight: 800; opacity: 0.85; }
+    .m-mini-value { font-size: 1.9rem; font-weight: 900; line-height: 1.25; }
+    .m-mini-stat.errors .m-mini-label, .m-mini-stat.errors .m-mini-value { color: var(--accent-magenta); }
+    .m-mini-stat.solved .m-mini-label, .m-mini-stat.solved .m-mini-value { color: var(--accent-cyan); }
+    .m-mini-sub { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.15rem; }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-            border-bottom: 1px solid #2a2420;
-            padding-bottom: 1.5rem;
-        }
+    /* --- フィルタ --- */
+    .m-filter-panel { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.7rem; }
+    .m-search-row { display: flex; gap: 0.5rem; align-items: center; }
+    .m-search-input {
+        flex: 1; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff;
+        padding: 0.65rem 0.9rem; border-radius: 12px; font-size: var(--fs-sm); min-height: 42px;
+    }
+    .m-search-input:focus { outline: none; border-color: var(--accent-cyan); }
+    .m-search-clear { display: none; background: none; border: none; color: var(--text-muted); font-weight: 900; font-size: 1.1rem; padding: 0.3rem 0.4rem; }
+    .m-sort-select {
+        width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: var(--text-bright-muted);
+        padding: 0.6rem 0.7rem; border-radius: 12px; font-size: var(--fs-sm); font-weight: 700; min-height: 42px;
+    }
+    .m-subject-scroll { display: flex; gap: 0.45rem; overflow-x: auto; padding-bottom: 0.2rem; -webkit-overflow-scrolling: touch; }
+    .m-subject-chip {
+        flex-shrink: 0; padding: 0.5rem 0.9rem; border-radius: 20px; font-size: var(--fs-xs); font-weight: 800;
+        background: rgba(255,255,255,0.05); color: var(--text-bright-muted); border: 1px solid var(--border-color);
+        white-space: nowrap;
+    }
+    .m-subject-chip.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); }
+    .m-field-select {
+        width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: var(--text-bright-muted);
+        padding: 0.55rem 0.7rem; border-radius: 10px; font-size: var(--fs-xs); min-height: 40px;
+    }
 
-        .logo {
-            font-size: var(--fs-xl);
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: -1px;
-            line-height: 0.9;
-            color: var(--ink);
-            text-shadow: 4px 4px 0 var(--accent-yellow);
-            display: inline-block;
-            transform: rotate(-1.5deg);
-        }
+    /* --- 問題一覧 --- */
+    .m-section-list { margin-top: 1.1rem; }
+    .m-section-header {
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: var(--fs-xs); font-weight: 800; color: var(--text-bright-muted);
+        padding: 0.55rem 0.2rem; margin-top: 0.7rem; border-bottom: 1px solid var(--border-color);
+    }
+    .m-section-header:first-child { margin-top: 0; }
+    .m-section-header-left { display: flex; align-items: center; gap: 0.4rem; }
+    .m-chevron { font-size: 0.65rem; color: var(--text-muted); transition: transform 0.15s ease; }
+    .m-section-header.collapsed .m-chevron { transform: rotate(-90deg); }
+    .m-section-count { background: rgba(255,255,255,0.06); color: var(--text-muted); font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.55rem; border-radius: 10px; }
+    .m-section-rows { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.6rem; }
+    .m-section-rows.collapsed { display: none; }
 
-        /* 🎀 ヘッダー上に貼ったマスキングテープ */
-        header { position: relative; }
-        header::before {
-            content: "";
-            position: absolute;
-            top: -14px;
-            left: 4px;
-            width: 96px;
-            height: 24px;
-            background: var(--tape);
-            border: 2px solid var(--ink);
-            border-radius: 2px;
-            opacity: 0.92;
-            transform: rotate(-4deg);
-        }
+    .m-row {
+        display: flex; gap: 0.75rem; align-items: center; background: var(--panel-bg);
+        border-radius: 16px; padding: 0.7rem; border: 1px solid var(--border-color);
+    }
+    .m-row:active { background: var(--panel-bg-raised); }
+    .m-row-thumb { width: 54px; height: 54px; min-width: 54px; border-radius: 12px; overflow: hidden; position: relative; background: #020204; display: flex; align-items: center; justify-content: center; }
+    .m-row-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .m-row-thumb span { font-size: 0.95rem; font-weight: 900; font-style: italic; }
+    .m-row-thumb-count { position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.85); color: var(--accent-cyan); font-size: 0.55rem; font-weight: 900; padding: 0 0.25rem; border-radius: 5px; }
+    .m-row-main { flex: 1; min-width: 0; }
+    .m-row-badges { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.3rem; }
+    .m-row-title { font-size: 0.85rem; font-weight: 800; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .m-row-date { font-size: 0.62rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .m-row-stat { text-align: center; min-width: 34px; }
+    .m-row-stat-num { font-size: 1.05rem; font-weight: 900; }
+    .m-row-stat-label { font-size: 0.55rem; color: var(--text-muted); font-weight: 700; }
 
-        .bento-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .size-high, .size-medium, .size-mini {
-            width: 100%;
-        }
-        .size-mini {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-height: 0;
-        }
-
-        .card-title {
-            font-weight: 800;
-            line-height: 1.25;
-            letter-spacing: -0.5px;
-            margin: 0;
-            font-size: clamp(1.1rem, 1.6vw, 1.3rem);
-        }
-
-        .card-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1.5rem;
-            padding-top: 0.5rem;
-            color: var(--text-bright-muted);
-            font-size: var(--fs-sm);
-        }
-
-        .error-count { font-size: var(--fs-md); font-weight: 900; }
-        .warning-text { color: var(--accent-cyan); }
-
-        .mini-label { font-size: 0.75rem; font-weight: 800; margin-bottom: 0.2rem; }
-        .mini-value { font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 900; line-height: 1; }
-        .mini-sub   { font-size: 0.75rem; color: var(--text-bright-muted); font-weight: 600; margin-top: 0.2rem; }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.7);
-            display: none; align-items: center; justify-content: center;
-            z-index: 10000;
-        }
-        .modal-content {
-            width: 90%; max-width: 600px;
-            border: 1px solid var(--accent-cyan);
-            box-shadow: 0 0 30px rgba(95, 198, 255, 0.2);
-            max-height: 95vh;
-            overflow-y: auto;
-        }
-        .modal-textarea {
-            width: 100%; height: 100px; background: #fff; border: 1.5px solid var(--ink);
-            color: var(--ink); padding: 1rem; border-radius: 12px; font-size: 1rem; margin-top: 0.5rem;
-            resize: none;
-        }
-
-        /* 数学キーボードのスタイル */
-        .math-keyboard {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 0.4rem;
-            margin-top: 0.8rem;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 0.5rem;
-            border-radius: 12px;
-            border: 1px solid #2a2420;
-        }
-        .math-key {
-            background: #fffdf7;
-            border: 1px solid #2a2420;
-            color: var(--text-bright-muted);
-            padding: 0.5rem 0.2rem;
-            font-size: 0.85rem;
-            font-weight: 700;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            text-align: center;
-        }
-@media (hover: hover) and (pointer: fine) { .math-key:hover {
-            background: #e3f4ff;
-            border-color: var(--accent-cyan);
-            color: var(--text-main);
-            box-shadow: 0 0 8px rgba(95, 198, 255, 0.3);
-        } }
-        .math-key.btn-accent {
-            border-color: var(--accent-magenta);
-            color: var(--accent-magenta);
-        }
-@media (hover: hover) and (pointer: fine) { .math-key.btn-accent:hover {
-            background: rgba(255, 122, 156, 0.1);
-            box-shadow: 0 0 8px rgba(255, 122, 156, 0.4);
-        } }
-
-        /* 💬【新設】質問履歴アーカイブ用のチャットバブル・一覧項目CSS */
-        .qna-archive-chat-history { display: flex; flex-direction: column; gap: 0.6rem; }
-        .chat-bubble {
-            padding: 0.9rem 1.2rem;
-            border-radius: 16px;
-            font-size: 0.92rem;
-            line-height: 1.6;
-            max-width: 100%;
-            min-width: 0;
-            box-sizing: border-box;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            white-space: pre-wrap;
-        }
-        .bubble-ai {
-            background: #fffdf7;
-            border: 2px solid var(--ink);
-            border-left: 5px solid var(--accent-cyan);
-            color: var(--ink);
-            align-self: flex-start;
-        }
-        .bubble-user {
-            background: rgba(255, 122, 156, 0.15);
-            border-right: 3px solid var(--accent-magenta);
-            color: #ffffff;
-            align-self: flex-end;
-        }
-        .qna-archive-item {
-            padding: 0.9rem 1.1rem;
-            border: 1px solid rgba(42,36,32,0.2);
-            border-radius: 14px;
-            margin-bottom: 0.7rem;
-            cursor: pointer;
-            transition: border-color 0.15s ease;
-        }
-@media (hover: hover) and (pointer: fine) { .qna-archive-item:hover { border-color: var(--accent-yellow); } }
-        .qna-archive-item .qna-archive-date { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem; }
-        .qna-archive-item .qna-archive-preview { font-size: 0.9rem; color: var(--text-bright-muted); margin-top: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        /* リアルタイムプレビュー領域 */
-        .math-preview {
-            margin-top: 0.6rem;
-            padding: 0.8rem;
-            background: #ffffff;
-            border: 1px dashed #2a2420;
-            border-radius: 12px;
-            min-height: 45px;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            word-break: break-all;
-        }
-
-        .image-upload-zone {
-            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-            width: 100%; padding: 0.8rem; margin: 0.8rem 0 0 0;
-            border: 1px dashed rgba(95, 198, 255, 0.4); border-radius: 12px;
-            background: rgba(95, 198, 255, 0.02); cursor: pointer;
-            font-size: 0.9rem; font-weight: 700; color: var(--accent-cyan);
-        }
-        .preview-box {
-            width: 100%; display: none; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem;
-        }
-        .preview-box.has-images { display: flex; }
-        .photo-thumb-wrap {
-            position: relative; width: 92px; height: 92px; border-radius: 10px; overflow: hidden;
-            border: 1px solid #222; background: #ffffff; flex-shrink: 0;
-        }
-        .photo-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
-        .photo-thumb-remove {
-            position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 50%;
-            background: rgba(0,0,0,0.75); color: #fff; border: 1px solid rgba(255,255,255,0.35);
-            font-size: 0.75rem; line-height: 1; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-weight: 900;
-        }
-        .photo-thumb-index {
-            position: absolute; bottom: 3px; left: 3px; background: rgba(0,0,0,0.75); color: var(--accent-cyan);
-            font-size: 0.65rem; font-weight: 900; padding: 0.05rem 0.35rem; border-radius: 6px;
-        }
-        .row-thumb-count-badge {
-            position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.85); color: var(--accent-cyan);
-            font-size: 0.6rem; font-weight: 900; padding: 0 0.3rem; border-radius: 6px; line-height: 1.4;
-            border: 1px solid rgba(95, 198, 255, 0.4);
-        }
-        
-        .auth-status-container {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.6rem;
-            width: 100%;
-        }
-        .header-action-btn {
-            flex: 1 1 calc(50% - 0.3rem);
-            min-width: 0;
-            font-size: 0.85rem;
-            padding: 0.75rem 0.6rem;
-            white-space: normal;
-        }
-        .header-action-btn--full {
-            flex-basis: 100%;
-        }
-        #auth-panel {
-            flex: 1 1 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .user-profile { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700; min-width: 0; width: 100%; }
-        .user-profile span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1 1 auto; }
-        .user-profile #logout-btn { flex-shrink: 0; }
-        .user-avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--accent-cyan); }
-        #logout-btn { background: transparent; border: 1px solid #222; color: var(--text-muted); font-size: 0.8rem; padding: 0.3rem 0.6rem; border-radius: 8px; cursor: pointer; }
-@media (hover: hover) and (pointer: fine) { #logout-btn:hover { border-color: var(--accent-magenta); color: var(--accent-magenta); } }
-        .login-overlay-box { grid-column: span 12; padding: 4rem; text-align: center; background: rgba(5,5,8,0.6); border: 1px dashed #2a2420; border-radius: 16px; }
-
-        .card-inner-layout {
-            display: flex;
-            gap: 1.2rem;
-            width: 100%;
-            height: 100%;
-            align-items: stretch;
-        }
-        .card-thumbnail-wrapper {
-            width: 105px;
-            height: 105px;
-            min-width: 105px;
-            background: #ffffff;
-            border: 1px dashed rgba(95, 198, 255, 0.25);
-            border-radius: 16px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            align-self: center;
-        }
-        .card-thumbnail-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* 🌌【新設】画像がない問題用の近未来的ネオンエンブレム */
-        .card-thumbnail-neon-preview {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            background: #ffffff;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            position: relative;
-            overflow: hidden;
-        }
-        .card-thumbnail-neon-preview span {
-            font-size: 1.3rem;
-            position: relative;
-            z-index: 2;
-            font-style: italic;
-        }
-        /* 数学（グリーンのステッカー） */
-        .glow-math {
-            background: var(--accent-green) !important;
-            border: 2px solid var(--ink) !important;
-        }
-        .glow-math span {
-            color: var(--ink);
-        }
-        /* 物理（ブルーのステッカー） */
-        .glow-physics {
-            background: var(--accent-cyan) !important;
-            border: 2px solid var(--ink) !important;
-        }
-        .glow-physics span {
-            color: var(--ink);
-        }
-        /* 未分類（ピンクのステッカー） */
-        .glow-purple {
-            background: var(--accent-magenta) !important;
-            border: 2px solid var(--ink) !important;
-        }
-        .glow-purple span {
-            color: var(--ink);
-        }
-
-        /* 全バッジ共通スタイル：丸ピル型のステッカーチップに */
-        .badge {
-            display: inline-flex !important;
-            align-items: center !important;
-            border: 2px solid var(--ink) !important;
-            box-shadow: none !important;
-            padding: 0.3rem 0.75rem !important;
-            border-radius: 999px !important;
-            font-weight: 800 !important;
-            font-size: 0.72rem !important;
-            letter-spacing: 0.5px;
-        }
-
-        /* 各種ステータス色のブラッシュアップ → ベタ塗りのステッカー色に */
-        .badge-critical { background: var(--accent-magenta) !important; color: var(--ink) !important; }
-        .badge-overdue  { background: var(--accent-yellow) !important; color: var(--ink) !important; }
-        .badge-safe     { background: var(--accent-cyan) !important; color: var(--ink) !important; }
-        .badge-new      { background: #fff !important; color: var(--ink) !important; }
-        .badge-pending  { background: #d9baf5 !important; color: var(--ink) !important; }
-        .badge-physics  { background: var(--accent-cyan) !important; color: var(--ink) !important; }
-        .badge-math     { background: var(--accent-green) !important; color: var(--ink) !important; }
-
-        /* 🧩 分野バッジをチップ分割表示するための軽量スタイル */
-        .field-chip {
-            background: #fff !important;
-            color: var(--text-bright-muted) !important;
-            font-weight: 700 !important;
-            font-size: 0.68rem !important;
-            padding: 0.3rem 0.6rem !important;
-            border: 1.5px solid var(--ink) !important;
-            border-radius: 999px !important;
-        }
-
-        /* 📋【新設】問題一覧：緊急度セクション見出し */
-        .problem-section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            font-weight: 800;
-            color: var(--text-bright-muted);
-            letter-spacing: 0.5px;
-            padding: 0.5rem 0.2rem;
-            margin-top: 0.6rem;
-            border-bottom: 1.5px solid var(--ink);
-            cursor: pointer;
-            user-select: none;
-        }
-@media (hover: hover) and (pointer: fine) { .problem-section-header:hover { color: var(--accent-cyan-d); } }
-        .problem-section-header:first-child { margin-top: 0; }
-        .problem-section-header-left { display: flex; align-items: center; gap: 0.5rem; }
-        .problem-section-chevron {
-            display: inline-block;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            transition: transform 0.15s ease;
-        }
-        .problem-section-header.collapsed .problem-section-chevron { transform: rotate(-90deg); }
-        .problem-section-rows { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.6rem; }
-        .problem-section-rows.collapsed { display: none; }
-        .problem-section-count {
-            background: rgba(42, 36, 32, 0.05);
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            font-weight: 800;
-            padding: 0.15rem 0.55rem;
-            border-radius: 10px;
-        }
-
-        /* 🔎【新設】問題検索ボックス */
-        .problem-search-row { display: flex; gap: 0.5rem; align-items: center; }
-        .problem-search-input {
-            flex-grow: 1;
-            background: #fff;
-            border: 1.5px solid var(--ink);
-            color: var(--ink);
-            padding: 0.55rem 0.9rem;
-            border-radius: 10px;
-            font-size: 1rem;
-        }
-        .problem-search-input:focus { outline: none; border-color: var(--accent-cyan); }
-        .problem-search-clear-btn {
-            background: rgba(42, 36, 32, 0.05);
-            border: 1.5px solid var(--ink);
-            color: var(--text-muted);
-            border-radius: 8px;
-            padding: 0.4rem 0.9rem;
-            min-height: 44px;
-            font-size: 0.75rem;
-            font-weight: 800;
-            cursor: pointer;
-            touch-action: manipulation;
-            display: none;
-            align-items: center;
-        }
-
-        /* 🗓️【新設】追加日・気づき更新日メタ表示 */
-        .row-date-meta {
-            font-size: 0.68rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
-            display: flex;
-            gap: 0.7rem;
-            flex-wrap: wrap;
-        }
-        .row-date-meta span.insight-date { color: var(--accent-cyan); }
-
-        /* 📋【新設】問題一覧：コンパクトなリスト行表示 */
-        .problem-row {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            background: var(--card-bg-glass);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 0.7rem 1rem;
-            cursor: pointer;
-            transition: all 150ms ease;
-        }
-@media (hover: hover) and (pointer: fine) { .problem-row:hover {
-            background: rgba(255, 255, 255, 0.03);
-            transform: translateX(3px);
-        } }
-        .row-thumb {
-            position: relative;
-            width: 44px;
-            height: 44px;
-            min-width: 44px;
-            border-radius: 10px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #ffffff;
-        }
-        .row-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .row-thumb-icon span { font-size: 0.9rem; font-style: italic; font-weight: 900; }
-        .row-main { flex-grow: 1; min-width: 0; }
-        .row-badges { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.3rem; }
-        .row-title {
-            font-weight: 800;
-            font-size: 0.95rem;
-            color: var(--text-main);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .row-preview {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 0.2rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .row-stat {
-            flex-shrink: 0;
-            text-align: center;
-            min-width: 52px;
-        }
-        .row-stat-number { font-size: 1.5rem; font-weight: 900; line-height: 1; }
-        .row-stat-label { font-size: 0.65rem; color: var(--text-muted); font-weight: 700; margin-top: 0.2rem; }
-
-        @media (max-width: 640px) {
-            .row-preview { display: none; }
-            .row-thumb { width: 36px; height: 36px; min-width: 36px; }
-        }
-
-        /* ✨【新設】分野フィルターボタンの近未来的フラットデザインスタイル */
-        .filter-btn {
-            background: rgba(255, 255, 255, 0.03);
-            color: var(--text-bright-muted);
-            border: none;
-            padding: 0.45rem 0.9rem;
-            border-radius: 6px;
-            font-size: 0.72rem;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-@media (hover: hover) and (pointer: fine) { .filter-btn:hover {
-            background: rgba(42, 36, 32, 0.06);
-            color: var(--ink);
-        } }
-        .filter-btn.active {
-            background: rgba(95, 198, 255, 0.14) !important;
-            color: var(--accent-cyan) !important;
-            box-shadow: 0 0 12px rgba(95, 198, 255, 0.15);
-        }
-
-        /* 🧠 気づき一覧モーダル用CSS */
-        .insight-card-item {
-            background: rgba(5, 5, 8, 0.8);
-            border: 1px solid rgba(95, 198, 255, 0.2);
-            border-left: 4px solid var(--accent-cyan);
-            border-radius: 12px;
-            padding: 1.2rem;
-            margin-bottom: 0.8rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-@media (hover: hover) and (pointer: fine) { .insight-card-item:hover {
-            border-color: var(--accent-cyan);
-            background: rgba(95, 198, 255, 0.05);
-            transform: translateX(3px);
-        } }
-        .badge-insight {
-            background: rgba(95, 198, 255, 0.15) !important;
-            color: var(--accent-cyan) !important;
-        }
-
-        /* 🎨【追加】2段階スマートフィルターバーCSS */
-        .filter-section-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            padding: 1.2rem 1.6rem;
-            border-radius: 16px;
-            margin-bottom: 0.5rem;
-        }
-        .filter-row {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-        }
-        .filter-label {
-            font-size: 0.75rem;
-            font-weight: 900;
-            color: var(--text-muted);
-            letter-spacing: 1px;
-            min-width: 70px;
-        }
-        .subject-tab-btn {
-            background: rgba(255, 255, 255, 0.03);
-            color: var(--text-bright-muted);
-            border: 1px solid #2a2420;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.1, 0.8, 0.2, 1);
-        }
-@media (hover: hover) and (pointer: fine) { .subject-tab-btn:hover {
-            background: rgba(95, 198, 255, 0.08);
-            border-color: var(--accent-cyan);
-            color: var(--ink);
-        } }
-        .subject-tab-btn.active {
-            background: var(--accent-cyan) !important;
-            color: #000 !important;
-            font-weight: 900;
-            box-shadow: 0 0 15px rgba(95, 198, 255, 0.3);
-            border-color: var(--accent-cyan) !important;
-        }
-        .field-select {
-            background: #fff;
-            color: var(--accent-cyan);
-            border: 1px solid var(--accent-cyan);
-            padding: 0.4rem 0.8rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 800;
-            cursor: pointer;
-            outline: none;
-            box-shadow: 0 0 8px rgba(95, 198, 255, 0.15);
-        }
-
-        @media (max-width: 640px) { header { flex-direction: column; align-items: flex-start; gap: 1rem; } .card-thumbnail-wrapper { width: 85px; height: 85px; min-width: 85px; } }
-    </style>
+    /* 色付きグロー（教科アイコン） */
+    .glow-math { background: radial-gradient(circle at center, rgba(0,255,120,0.18) 0%, #030a05 100%); } .glow-math span { color: #00ff78; }
+    .glow-physics { background: radial-gradient(circle at center, rgba(0,243,255,0.18) 0%, #02080a 100%); } .glow-physics span { color: var(--accent-cyan); }
+    .glow-history { background: radial-gradient(circle at center, rgba(255,230,0,0.18) 0%, #0a0802 100%); } .glow-history span { color: var(--accent-yellow); }
+    .glow-chemistry { background: radial-gradient(circle at center, rgba(177,110,255,0.18) 0%, #06020a 100%); } .glow-chemistry span { color: #b16eff; }
+    .glow-english { background: radial-gradient(circle at center, rgba(255,140,0,0.18) 0%, #0a0502 100%); } .glow-english span { color: #ff8c00; }
+    .glow-japanese { background: radial-gradient(circle at center, rgba(255,105,180,0.18) 0%, #0a0206 100%); } .glow-japanese span { color: #ff69b4; }
+    .glow-civics { background: radial-gradient(circle at center, rgba(0,255,200,0.18) 0%, #020a08 100%); } .glow-civics span { color: #00ffc8; }
+    .glow-purple { background: radial-gradient(circle at center, rgba(255,46,136,0.18) 0%, #0a0206 100%); } .glow-purple span { color: var(--accent-magenta); }
+</style>
 </head>
 <body>
 
-    <div class="dashboard-container">
-        <!-- 📱 フローティング・ハンバーガーメニュー -->
-        <button type="button" class="nav-hamburger-btn" aria-label="メニューを開く" aria-expanded="false">
-                <span></span><span></span><span></span>
-            </button>
-            <div class="nav-links">
-                <a href="index.html" class="nav-btn active">🧠 誤答ノート</a>
-                <a href="lesson.html" class="nav-btn">📖 授業・解説</a>
-                <a href="tokei/index.html" class="nav-btn global-timer-link">⏱️ 集中タイマー</a>
-                <a href="study/index.html" class="nav-btn" title="24hログを開く">📊 24hログ</a>
-                <a href="https://photos.google.com" target="_blank" rel="noopener" class="nav-btn" title="Google Photosを開く">📷 Photos</a>
-            </div>
-        <div class="nav-drawer-overlay"></div>
-        <script src="global-timer-sync.js"></script>
-        <script src="mobile-nav.js"></script>
-        <script src="modal-scroll-lock.js"></script>
+<header class="m-header">
+    <div class="m-logo">LOLZ</div>
+    <div class="m-auth-chip" id="auth-chip">読込中…</div>
+</header>
 
-        <header>
-            <div>
-                <h1 class="logo">LOLZ</h1>
-            </div>
-            <div class="auth-status-container">
-                <button type="button" class="tactile-btn header-action-btn header-action-btn--full" id="open-modal-btn" style="background: var(--accent-magenta); box-shadow: 3px 3px 0px var(--ink); display:none;">
-    ＋ 誤答問題を登録
-</button>
+<div id="login-required-notice" class="m-login-gate" style="display:none;">
+    <h2>クラウド未接続</h2>
+    <p>Googleアカウントでログインすると、誤答ノートを閲覧できます。</p>
+    <button type="button" class="m-btn" id="main-login-btn" style="width:100%;">Googleでサインイン</button>
+</div>
 
-<!-- 🧠【追加】全問題の気づき一覧モーダルを開くボタン -->
-<button type="button" class="tactile-btn header-action-btn" id="open-insight-list-btn" style="background: rgba(95, 198, 255, 0.1); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); box-shadow: 3px 3px 0px var(--ink); display:none;">
-    🧠 気づき一覧
-</button>
+<main id="main-content" style="display:none;">
 
-<!-- 💬【追加】全問題横断の質問履歴アーカイブモーダルを開くボタン -->
-<button type="button" class="tactile-btn header-action-btn" id="open-qna-archive-btn" style="background: rgba(255, 207, 63, 0.08); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); box-shadow: 3px 3px 0px var(--ink); display:none;">
-    💬 質問履歴アーカイブ
-</button>
-                <div id="auth-panel" style="font-weight: 800; border: 1px solid #2a2420; padding: 0.5rem 1rem; border-radius: 12px;" class="glass-card">
-                    LOADING...
-                </div>
-            </div>
-        </header>
-
-        <div id="login-required-notice" class="login-overlay-box" style="display: none;">
-            <h2 style="font-size: 1.5rem; font-weight: 900; color: var(--accent-cyan); margin-bottom: 1rem;">CLOUD SYNC // クラウド同期未接続</h2>
-            <p style="color: var(--text-muted); margin-bottom: 2rem;">どの端末からでも誤答ノートを自動同期して復習するために、Googleアカウントでログインしてください。</p>
-            <button type="button" class="tactile-btn" id="main-login-btn" style="padding: 1rem 2rem; font-size: 1.1rem; background:var(--accent-cyan); box-shadow: 4px 4px 0px var(--ink);">
-                Googleアカウントでサインイン
-            </button>
+    <div class="m-panel m-score-card">
+        <div class="m-score-top">
+            <span class="m-score-title">記憶安定度スコア</span>
         </div>
-
-        <div id="category-filter-bar" class="glass-card filter-section-wrapper" style="display: none;">
-    <!-- 検索ボックス -->
-    <div class="filter-row problem-search-row">
-        <span class="filter-label">🔎 検索：</span>
-        <input type="text" class="problem-search-input" id="problem-search-input" placeholder="問題文・分野・タイトルで検索...">
-        <button type="button" class="problem-search-clear-btn" id="problem-search-clear-btn">✕ クリア</button>
+        <div class="m-score-row"><span>総合記憶定着率（推定）</span><span id="retention-rate-display">--%</span></div>
+        <div class="m-score-bar-track"><div class="m-score-bar-fill" id="retention-bar-display"></div></div>
+        <div class="m-score-due" id="due-count-display">計算中...</div>
     </div>
-    <!-- 上段：教科タブ -->
-    <div class="filter-row">
-        <span class="filter-label">📚 教科：</span>
-        <div id="subject-tab-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <!-- JSで動的に教科ボタンが生成されます -->
+
+    <div class="m-mini-stats">
+        <div class="m-mini-stat errors">
+            <div class="m-mini-label">TOTAL ERRORS</div>
+            <div class="m-mini-value" id="total-errors-display">--</div>
+            <div class="m-mini-sub">未消化の累積誤答数</div>
+        </div>
+        <div class="m-mini-stat solved">
+            <div class="m-mini-label">SOLVED TODAY</div>
+            <div class="m-mini-value" id="solved-today-display">00</div>
+            <div class="m-mini-sub">本日の克服弱点数</div>
         </div>
     </div>
-    <!-- 下段：単元選択ドロップダウン（教科が選ばれたら出現） -->
-    <div class="filter-row" id="field-filter-row" style="display: none; border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 0.6rem;">
-        <span class="filter-label">🎯 単元：</span>
-        <select class="field-select" id="field-filter-select">
-            <option value="ALL">✨ すべての単元を表示</option>
+
+    <div class="m-panel m-filter-panel">
+        <div class="m-search-row">
+            <input type="text" class="m-search-input" id="problem-search-input" placeholder="問題文・分野・タイトルで検索">
+            <button type="button" class="m-search-clear" id="problem-search-clear-btn">✕</button>
+        </div>
+        <select class="m-sort-select" id="problem-sort-select">
+            <option value="priority">復習優先度順（おすすめ）</option>
+            <option value="newest">追加日が新しい順</option>
+            <option value="oldest">追加日が古い順</option>
+        </select>
+        <div class="m-subject-scroll" id="subject-tab-container"></div>
+        <select class="m-field-select" id="field-filter-select" style="display:none;">
+            <option value="ALL">✨ 全単元を表示</option>
         </select>
     </div>
-</div>
 
-        <main class="bento-grid" id="main-dashboard-grid" style="display: none;">
-            
-            <div class="squircle-card size-high glass-card" style="padding: 1.5rem;">
-                <div class="card-content-top">
-                    <span class="badge badge-alert">HYBRID ENGINE: GEMINI + DEEPSEEK</span>
-                    <h2 class="card-title" style="color: var(--accent-cyan);">記憶安定度スコア</h2>
-                </div>
-                <div style="margin: 0.8rem 0 0 0; width: 100%;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: var(--fs-sm);">
-                        <span>総合記憶定着率（推定）</span><span id="retention-rate-display">--%</span>
-                    </div>
-                    <div style="width: 100%; height: 6px; background: #fff; border-radius: 3px; overflow: hidden; border: 1px solid #2a2420;">
-                        <div id="retention-bar-display" style="width: 0%; height: 100%; background: var(--accent-cyan); transition: width 0.8s ease;"></div>
-                    </div>
-                    <p style="line-height: 1.4; font-size: 0.85rem; color: var(--text-bright-muted); margin-top: 0.8rem;">FSRSの忘却曲線モデルに基き、あなたが今日復習すべき最適な問題を自動算出しています。</p>
-                </div>
-                <div class="card-meta" style="margin-top: 1rem; padding-top:0.3rem; border-top: 1.5px dashed rgba(42,36,32,0.25);">
-                    <span style="color: var(--text-muted);" id="due-count-display">計算中...</span>
-                </div>
-            </div>
-
-            <div id="dynamic-cards-area" style="grid-column: span 12; display: flex; flex-direction: column; gap: 0.6rem;"></div>
-
-            <div style="display: flex; gap: 1rem;">
-                <div class="squircle-card size-mini" style="flex: 1; background: linear-gradient(135deg, #fffdf7, #ffe3ea);">
-                    <div class="mini-label" style="color: var(--accent-magenta-d);">TOTAL ERRORS</div>
-                    <div class="mini-value" id="total-errors-display" style="color: var(--accent-magenta-d);">--</div>
-                    <div class="mini-sub">未消化の累積誤答数</div>
-                </div>
-
-                <div class="squircle-card size-mini" style="flex: 1; background: linear-gradient(135deg, #fffdf7, #e3f4ff);">
-                    <span class="sticker-star">★</span>
-                    <div class="mini-label" style="color: var(--accent-cyan-d);">SOLVED TODAY</div>
-                    <div class="mini-value" id="solved-today-display" style="color: var(--accent-cyan-d);">00</div>
-                    <div class="mini-sub">本日の克服弱点数</div>
-                </div>
-            </div>
-        </main>
+    <div class="m-section-list" id="dynamic-cards-area">
+        <div class="m-loading"><div class="m-spinner"></div>読み込み中...</div>
     </div>
 
-    <!-- 1. 問題登録モーダル -->
-    <div class="modal-overlay" id="add-problem-modal">
-        <div class="squircle-tile modal-content glass-card">
-            <div class="tile-header-group">
-                <span class="badge badge-alert">NEW PROBLEM // CLOUD STORAGE</span>
-                <h3 style="font-size: 1.3rem; font-weight: 800;">間違えた問題の登録解析</h3>
-                <p style="color: var(--text-muted); font-size: 0.85rem;">テキスト入力、または写真をアップロードして登録します。数式や記号はキーパッドを活用してください。</p>
-            </div>
+</main>
 
-            <div id="linked-lesson-badge" style="display:none; background: linear-gradient(135deg, rgba(255, 122, 156, 0.15), rgba(95, 198, 255, 0.15)); border: 1px solid var(--accent-magenta); border-radius: 10px; padding: 0.6rem 0.9rem; margin-bottom: 0.8rem; font-size: 0.82rem; font-weight: 700; color: var(--ink);">
-                🎓 授業「<span id="linked-lesson-title-text"></span>」の続きとして登録されます
-            </div>
+<div class="m-toast" id="m-toast"></div>
 
-            <div style="margin-bottom: 0.8rem;">
-                <span class="filter-label" style="font-size: 0.8rem; display:block; margin-bottom:0.4rem;">📚 教科を選択：</span>
-                <div id="subject-select-group" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button type="button" class="subject-select-btn active" data-subject="数学" onclick="setSelectedSubject('数学')">数学</button>
-                    <button type="button" class="subject-select-btn" data-subject="物理" onclick="setSelectedSubject('物理')">物理基礎</button>
-                    <button type="button" class="subject-select-btn" data-subject="化学" onclick="setSelectedSubject('化学')">化学基礎</button>
-                    <button type="button" class="subject-select-btn" data-subject="英語" onclick="setSelectedSubject('英語')">英語</button>
-                    <button type="button" class="subject-select-btn" data-subject="国語" onclick="setSelectedSubject('国語')">国語</button>
-                    <button type="button" class="subject-select-btn" data-subject="地歴公民" onclick="setSelectedSubject('地歴公民')">地歴公民</button>
-                </div>
-            </div>
-            <style>
-                .subject-select-btn {
-                    background: rgba(255,255,255,0.04);
-                    border: 1px solid rgba(255,255,255,0.12);
-                    color: var(--text-bright-muted);
-                    padding: 0.45rem 0.9rem;
-                    border-radius: 10px;
-                    font-size: 1rem;
-                    font-weight: 800;
-                    cursor: pointer;
-                    transition: all 0.15s ease;
-                }
-@media (hover: hover) and (pointer: fine) { .subject-select-btn:hover { border-color: var(--accent-cyan); color: var(--ink); } }
-                .subject-select-btn.active {
-                    background: var(--accent-cyan);
-                    color: #000;
-                    border-color: var(--accent-cyan);
-                    box-shadow: 0 0 10px rgba(95, 198, 255, 0.4);
-                }
-            </style>
+<nav class="m-tabbar">
+    <a href="index.html" class="m-tab active"><span class="m-tab-icon">🧠</span>誤答ノート</a>
+    <a href="lesson.html" class="m-tab"><span class="m-tab-icon">📖</span>授業</a>
+    <a href="refbook.html" class="m-tab"><span class="m-tab-icon">📚</span>参考書</a>
+    <a href="insights.html" class="m-tab"><span class="m-tab-icon">💡</span>気づき</a>
+    <a href="ai-settings.html" class="m-tab"><span class="m-tab-icon">⚙️</span>設定</a>
+</nav>
 
-            <div class="math-keyboard" id="math-keyboard-group">
-                <button type="button" class="math-key btn-accent" onclick="insertMathSymbol('$', '$')">$$</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\frac{', '}{}')">分数</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\sqrt{', '}')">√</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('^{', '}')">xⁿ</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('_{', '}')">xₙ</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\theta')">θ</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\pi')">π</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\alpha')">α</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\beta')">β</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\Delta')">Δ</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\pm')">±</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\le')">≦</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\ge')">≧</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\vec{', '}')">ベクトル</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\int_{', '}^{}')">∫</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\log_{', '}')">log</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\sin')">sin</button>
-                <button type="button" class="math-key" onclick="insertMathSymbol('\\cos')">cos</button>
-            </div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-            <textarea class="modal-textarea" id="problem-text-input" placeholder="問題文を直接入力するか、写真の補足メモを入力してください。数式は $x^2+y^2=1$ のように $ で挟むと綺麗にプレビューされます。"></textarea>
-            
-            <div id="math-preview" class="math-preview tex2jax_process">入力プレビューがここに表示されます</div>
+const firebaseConfig = {
+    apiKey: "AIzaSyB55MdhpjJizQaLEdRu-XhBVJ4PqrHsAyY",
+    authDomain: "buturi-2449e.firebaseapp.com",
+    databaseURL: "https://buturi-2449e-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "buturi-2449e",
+    storageBucket: "buturi-2449e.appspot.com",
+    messagingSenderId: "976306696124",
+    appId: "1:976306696124:web:e455c1953544bff5c345b9"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const database = getDatabase(app);
+const provider = new GoogleAuthProvider();
 
-            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
-    <label for="problem-image-input" class="image-upload-zone" style="flex: 1; margin-bottom: 0; white-space: nowrap; font-size: 0.9rem; min-width: 150px;">
-        📸 写真を追加（複数可・任意）
-    </label>
-    <button type="button" onclick="window.open('https://photos.google.com','_blank')" title="Google Photosを開く"
-        style="flex-shrink: 0; padding: 0.6rem 1rem; background: #ffffff; color: #4fc3f7; border: 1px solid #4fc3f7; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; white-space: nowrap;"
-        📷 Google Photos
-    </button>
-</div>
-            <input type="file" id="problem-image-input" accept="image/*" multiple style="display: none;">
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem;">💡 問題文＋解答用紙など、1問が複数枚にまたがる場合はまとめて選択・追加できます。×で個別に削除できます。</p>
+function showToast(msg, type = "info") {
+    const el = document.getElementById("m-toast");
+    el.textContent = msg;
+    el.className = "m-toast show" + (type === "error" ? " error" : "");
+    setTimeout(() => { el.classList.remove("show"); }, 2600);
+}
 
-            <div class="preview-box" id="image-preview-container"></div>
-            
-            <div style="display: flex; gap: 0.6rem; justify-content: flex-end; width: 100%; margin-top: 1rem; flex-wrap: wrap;">
-                <button type="button" class="tactile-btn tactile-btn-secondary" id="close-modal-btn">キャンセル</button>
-                <button type="button" class="tactile-btn" id="clear-keys-btn" style="background: #fff0ee; color: #ff4545; border: 1px solid #ff4545;">APIキーをリセット</button>
-                <button type="button" class="tactile-btn" id="analyze-submit-btn">AI自動解析を実行</button>
-            </div>
-        </div>
-    </div>
+let currentSubjectFilter = "ALL";
+let currentFieldFilter = "ALL";
+let currentSearchQuery = "";
+let currentProblemSortMode = "priority";
+let lastCloudProblemsSnapshot = {};
 
-    <!-- 🧠 2. 全問題の気づき・極意一覧モーダル（外側へ並列配置） -->
-    <div class="modal-overlay" id="insight-list-modal">
-        <div class="squircle-tile modal-content glass-card" style="max-width: 700px; max-height: 85vh; display: flex; flex-direction: column;">
-            <div class="tile-header-group">
-                <span class="badge badge-ai" style="color: var(--accent-cyan);">MEMORY LOG // 全極意・気づき一覧</span>
-                <h3 style="font-size: 1.3rem; font-weight: 800; margin-top: 0.3rem;">獲得した知識・解法パターン</h3>
-                <p style="color: var(--text-muted); font-size: 0.85rem;">これまでに各問題でメモした気づきの一覧です。クリックで該当問題へジャンプできます。</p>
-                <div style="display: flex; align-items: center; gap: 0.6rem; margin-top: 0.8rem;">
-                    <span class="filter-label" style="font-size: 0.8rem;">🔀 並べ替え：</span>
-                    <select class="field-select" id="insight-sort-select">
-                        <option value="newest">更新が新しい順</option>
-                        <option value="oldest">更新が古い順</option>
-                        <option value="errorCount">誤答回数が多い順</option>
-                        <option value="subject">教科・単元順</option>
-                    </select>
-                </div>
-            </div>
+let collapsedSections = new Set();
+try {
+    collapsedSections = new Set(JSON.parse(localStorage.getItem("collapsedProblemSections") || "[]"));
+} catch (e) { collapsedSections = new Set(); }
+function persistCollapsedSections() {
+    try { localStorage.setItem("collapsedProblemSections", JSON.stringify([...collapsedSections])); } catch (e) {}
+}
 
-            <div id="insight-list-container" style="overflow-y: auto; flex-grow: 1; margin-top: 1.2rem; padding-right: 0.4rem;">
-                <!-- JSで動的にメモカードが生成されます -->
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; margin-top: 1.2rem; border-top: 1px solid #2a2420; padding-top: 0.8rem;">
-                <button type="button" class="tactile-btn tactile-btn-secondary" id="close-insight-list-btn">閉じる</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 💬【新設】全問題横断・質問履歴アーカイブ一覧モーダル -->
-    <div class="modal-overlay" id="qna-archive-modal">
-        <div class="squircle-tile modal-content glass-card" style="max-width: 700px; max-height: 85vh; display: flex; flex-direction: column;">
-            <div class="tile-header-group">
-                <span class="badge badge-ai" style="color: var(--accent-yellow);">QNA LOG // 質問履歴アーカイブ</span>
-                <h3 style="font-size: 1.3rem; font-weight: 800; margin-top: 0.3rem;">記録したAIとのやり取り</h3>
-                <p style="color: var(--text-muted); font-size: 0.85rem;">自分で「記録する」を押した会話だけがここに残ります。クリックで全文を読めます。</p>
-                <div style="display: flex; align-items: center; gap: 0.6rem; margin-top: 0.8rem; flex-wrap: wrap;">
-                    <span class="filter-label" style="font-size: 0.8rem;">🔀 並べ替え：</span>
-                    <select class="field-select" id="qna-archive-sort-select">
-                        <option value="newest">記録日が新しい順</option>
-                        <option value="oldest">記録日が古い順</option>
-                    </select>
-                    <span class="filter-label" style="font-size: 0.8rem;">📚 教科：</span>
-                    <select class="field-select" id="qna-archive-subject-select">
-                        <option value="ALL">すべて</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="qna-archive-list-container" style="overflow-y: auto; flex-grow: 1; margin-top: 1.2rem; padding-right: 0.4rem;">
-                <!-- JSで動的にログカードが生成されます -->
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; margin-top: 1.2rem; border-top: 1px solid #2a2420; padding-top: 0.8rem;">
-                <button type="button" class="tactile-btn tactile-btn-secondary" id="close-qna-archive-btn">閉じる</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 💬【新設】質問履歴アーカイブ・詳細（1件分の会話全文）モーダル -->
-    <div class="modal-overlay" id="qna-archive-detail-modal">
-        <div class="squircle-tile modal-content glass-card" style="max-width: 620px; max-height: 85vh; display: flex; flex-direction: column;">
-            <div class="tile-header-group">
-                <span class="badge badge-ai" style="color: var(--accent-yellow);">QNA LOG // 記録された会話</span>
-                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.3rem;" id="qna-archive-detail-meta"></p>
-            </div>
-            <div class="qna-archive-chat-history" id="qna-archive-detail-messages" style="overflow-y: auto; flex-grow: 1; margin-top: 1rem; padding-right: 0.4rem;"></div>
-            <div style="display: flex; justify-content: space-between; gap: 0.8rem; margin-top: 1.2rem; border-top: 1px solid #2a2420; padding-top: 0.8rem;">
-                <button type="button" class="tactile-btn" id="qna-archive-detail-goto-btn" style="background: rgba(95, 198, 255, 0.08); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); box-shadow: none;">📌 問題ページを開く</button>
-                <div style="display: flex; gap: 0.8rem;">
-                    <button type="button" class="tactile-btn" id="qna-archive-detail-delete-btn" style="background: rgba(255, 122, 156, 0.1); color: var(--accent-magenta); border: 1px solid var(--accent-magenta); box-shadow: none;">🗑 削除</button>
-                    <button type="button" class="tactile-btn tactile-btn-secondary" id="close-qna-archive-detail-btn">閉じる</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-
-   <script type="module">
-        import { getGeminiKeys, getDeepseekKeys, fetchWithKeyRotation, initApiKeyManager, clearAllKeys, notifyModelFallback } from "./api-key-manager.js";
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyB55MdhpjJizQaLEdRu-XhBVJ4PqrHsAyY", 
-            authDomain: "buturi-2449e.firebaseapp.com",
-            databaseURL: "https://buturi-2449e-default-rtdb.asia-southeast1.firebasedatabase.app/",
-            projectId: "buturi-2449e",
-            storageBucket: "buturi-2449e.appspot.com",
-            messagingSenderId: "976306696124",
-            appId: "1:976306696124:web:e455c1953544bff5c345b9"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const database = getDatabase(app);
-        const provider = new GoogleAuthProvider();
-
-        // 🔑【複数キー対応】右下の🔑ボタンから追加/削除できる管理UIを注入。未登録なら自動で開く。
-        initApiKeyManager({ needGemini: true, needDeepseek: true });
-
-        // ✨ 写真解析は画像認識に強い Gemini API のエンドポイントを使用
-        // 🔁【フォールバック対応】無料枠のRPD制限（1日20回など）に達したモデルから順に切り替える
-        const GEMINI_MODEL_FALLBACK_LIST = [
-            'gemini-3.6-flash',
-            'gemini-3.5-flash',
-            'gemini-3-flash-preview',
-            'gemini-2.5-flash',
-            'gemini-3.5-flash-lite',
-            'gemini-3.1-flash-lite',
-            'gemini-2.5-flash-lite'
-        ];
-        function buildGeminiUrl(modelName, apiKey) {
-            return `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+const MIN_PLAUSIBLE_TS = Date.UTC(2020, 0, 1);
+function resolveCreatedAt(p) {
+    if (p.createdAt) return { date: new Date(p.createdAt), estimated: false };
+    if (p.id) {
+        const parts = p.id.split("_");
+        const ts = parts.map(Number).find(n => !isNaN(n) && n >= MIN_PLAUSIBLE_TS);
+        if (ts) return { date: new Date(ts), estimated: false };
+    }
+    if (p.lastAttemptAt) return { date: new Date(p.lastAttemptAt), estimated: true };
+    return null;
+}
+function formatShortDate(d) {
+    if (!d) return null;
+    return d.toLocaleDateString('ja-JP', { year: '2-digit', month: 'numeric', day: 'numeric' });
+}
+function buildRowPreviewText(rawTitle, maxLen = 40) {
+    if (!rawTitle) return "";
+    const oneLine = String(rawTitle).replace(/\\n/g, " ").replace(/\r?\n/g, " ").trim();
+    let body = oneLine, suffix = "";
+    if (oneLine.length > maxLen) {
+        body = oneLine.slice(0, maxLen);
+        suffix = "…";
+        const dollarCount = (body.match(/\$/g) || []).length;
+        if (dollarCount % 2 !== 0) {
+            const lastDollar = body.lastIndexOf("$");
+            body = body.slice(0, lastDollar).trimEnd();
         }
-
-        // 🧠【教科ごとの解析プロンプト集】選択中の教科に応じて出し分ける
-        const SUBJECT_CREATE_PROMPTS = {
-            "数学": `
-あなたは高校数学の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。
-出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
-{
-  "subject": "数学",
-  "field": "分野名（例：数学II 式と証明、数学B ベクトル など）",
-  "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文の全文。数式や記号を含む場合は必ず $ $ で挟むこと",
-  "trap_description": "高校生がこの問題で最も間違えやすいポイントや罠の解説文",
-  "strategy_pattern": "【最重要】この問題固有の数値や図形には一切触れず、①問題文のどの特徴（キーワード・条件・図形の形）を見て問題の『型』を判断するか、②その型に対して定石として使うべきアプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。これは『解き方の地図』であり、具体的な計算はここに書かない。2〜4文程度。数式を含む場合は$で囲むこと",
-  "model_answer": "この問題の最終的な正しい答えと、ステップごとの分かりやすい解説。冒頭でstrategy_patternに書いた定石に軽く触れてから、それに沿って具体的な数値・文字で計算を進めること。数式や変数を記述する場合は、必ず前後に $ または $$ をつけて美しいLaTeX形式にすること。解説文は1行に詰め込まず、手順ごとに必ず改行コード（\\n）を挟んで、美しい箇条書き形式（1., 2.など）で出力すること"
+    }
+    const parts = body.split(/(\$[^$]+\$)/g);
+    return parts.map(part => {
+        if (part.startsWith("$") && part.endsWith("$")) return part;
+        return part.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }).join("") + suffix;
 }
-`.trim(),
 
-            "物理": `
-あなたは高校「物理基礎」の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。物理基礎の範囲（力と運動、エネルギー、熱、波、電気の基礎など）を前提とし、物理IIIで扱うような発展的内容（単振動の一般解、電磁誘導の応用、原子物理など）には踏み込まないこと。
-出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
-{
-  "subject": "物理",
-  "field": "分野名（例：力学基礎 等加速度運動、熱 状態変化、波 音の性質、電気 オームの法則 など）",
-  "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文の全文。数式や記号を含む場合は必ず $ $ で挟むこと",
-  "trap_description": "高校生がこの問題で最も間違えやすいポイントや罠の解説文（単位・符号ミスなども含む）",
-  "strategy_pattern": "【最重要】この問題固有の数値や図形には一切触れず、①問題文のどの特徴（キーワード・条件・設定）を見て問題の『型』を判断するか、②その型に対して定石として使うべきアプローチ（例:『エネルギー保存が使えるかまず疑う』など）、③なぜそのアプローチが有効なのか、を一般化して説明すること。これは『解き方の地図』であり、具体的な計算はここに書かない。2〜4文程度。数式を含む場合は$で囲むこと",
-  "model_answer": "この問題の最終的な正しい答えと、ステップごとの分かりやすい解説。冒頭でstrategy_patternに書いた定石に軽く触れてから、それに沿って具体的な数値・文字で計算を進めること。数式や変数を記述する場合は、必ず前後に $ または $$ をつけて美しいLaTeX形式にすること。解説文は1行に詰め込まず、手順ごとに必ず改行コード（\\n）を挟んで、美しい箇条書き形式（1., 2.など）で出力すること"
-}
-`.trim(),
+const searchInputEl = document.getElementById("problem-search-input");
+const searchClearBtnEl = document.getElementById("problem-search-clear-btn");
+searchInputEl.addEventListener("input", (e) => {
+    currentSearchQuery = e.target.value.trim();
+    searchClearBtnEl.style.display = currentSearchQuery ? "inline-block" : "none";
+    rebuildFilterBarAndCards();
+});
+searchClearBtnEl.addEventListener("click", () => {
+    currentSearchQuery = "";
+    searchInputEl.value = "";
+    searchClearBtnEl.style.display = "none";
+    rebuildFilterBarAndCards();
+});
+document.getElementById("problem-sort-select").addEventListener("change", (e) => {
+    currentProblemSortMode = e.target.value;
+    rebuildFilterBarAndCards();
+});
 
-            "化学": `
-あなたは高校「化学基礎」の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。化学基礎の範囲（物質の構成、化学結合、mol計算、酸塩基、酸化還元の基礎など）を前提とし、化学（発展）で扱うような内容（有機化学の構造決定、高分子、詳細な無機化学の反応系統など）には踏み込まないこと。
-出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
-{
-  "subject": "化学",
-  "field": "分野名（例：物質の構成 mol計算、化学結合、酸と塩基、酸化還元反応 など）",
-  "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文の全文。化学式や数値は $H_2O$ や $CO_2$ のように下付き文字を含むLaTeX形式（$で囲む）で表現すること",
-  "trap_description": "高校生がこの問題で最も間違えやすいポイント（単位換算ミス、有効数字、反応式の係数合わせなど）の解説文",
-  "strategy_pattern": "【最重要】この問題固有の数値や物質名には一切触れず、①問題文のどの特徴（キーワード・条件）を見て問題の『型』を判断するか、②その型に対して定石として使うべきアプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。2〜4文程度。数式を含む場合は$で囲むこと",
-  "model_answer": "最終的な正しい答えと、ステップごとの分かりやすい解説。化学反応式・化学式・数値・単位は必ず $ で囲んだLaTeX形式（例：$2H_2 + O_2 \\rightarrow 2H_2O$）で書くこと。手順ごとに改行コード（\\n）を挟んで見やすい箇条書き形式（1., 2.など）で出力すること"
-}
-`.trim(),
+function rebuildFilterBarAndCards() {
+    const dynamicArea = document.getElementById("dynamic-cards-area");
+    const subjectContainer = document.getElementById("subject-tab-container");
+    const fieldSelect = document.getElementById("field-filter-select");
 
-            "国語": `
-あなたは高校国語（現代文・古文・漢文）の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。
-出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
-{
-  "subject": "国語",
-  "field": "分野名（例：現代文 論理的文章、古文 助動詞の識別、漢文 句法 など）",
-  "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文の全文（古文・漢文は原文のまま。設問文も含める）",
-  "trap_description": "高校生がこの問題で最も間違えやすいポイント（本文の誤読、語彙・文法の混同、設問の条件見落としなど）の解説文",
-  "strategy_pattern": "【最重要】この問題固有の本文内容には一切触れず、①設問文のどの特徴（キーワード・条件・設問形式）を見て問題の『型』を判断するか、②その型に対して定石として使うべき読み方・解答アプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。2〜4文程度。",
-  "model_answer": "この問題の最終的な正しい答えと、根拠となる本文箇所を明示した分かりやすい解説。古文・漢文は現代語訳や句法の説明も含めること。手順ごとに改行コード（\\n）を挟んで、美しい箇条書き形式（1., 2.など）で出力すること"
-}
-`.trim(),
+    const subjectMap = {};
+    Object.keys(lastCloudProblemsSnapshot).forEach(id => {
+        const p = lastCloudProblemsSnapshot[id];
+        const rawSubject = p.subject || "未分類";
+        const rawField = p.field || "未分類";
+        if (!subjectMap[rawSubject]) subjectMap[rawSubject] = new Set();
+        subjectMap[rawSubject].add(rawField);
+    });
 
-            "地歴公民": `
-あなたは高校地理・公民（地理総合、公共・現代社会など）の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。
-出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
-{
-  "subject": "地歴公民",
-  "field": "分野名（例：地理総合 気候区分、地理総合 統計資料の読み取り、公共 政治のしくみ、公共 経済のしくみ など）",
-  "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文の全文（資料・統計・地図の内容が問題に含まれる場合はその要点も書き起こすこと）",
-  "trap_description": "高校生がこの問題で最も間違えやすい用語の混同や、統計・資料の読み違いのポイントの解説文",
-  "strategy_pattern": "【最重要】この問題固有の地名・数値・制度名には一切触れず、①問題文や資料のどの特徴（キーワード・条件）を見て問題の『型』を判断するか、②その型に対して定石として使うべき考え方、③なぜそれが有効なのか、を一般化して説明すること。2〜4文程度。",
-  "model_answer": "最終的な正しい答えと、ステップごとの分かりやすい解説。用語・制度名は正確に使うこと。手順ごとに改行コード（\\n）を挟んで見やすい箇条書き形式（1., 2.など）で出力すること"
-}
-`.trim(),
-
-            "英語": `
-あなたは高校英語の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。
-数式のLaTeX記法（$記号など）は一切使用しないこと。英文はそのまま英語表記で、解説はすべて日本語で書くこと。
-出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
-{
-  "subject": "英語",
-  "field": "分野名（例：文法・語法、長文読解、英作文、語彙 など）",
-  "short_title": "問題の要約タイトル",
-  "extracted_text": "読み取った正確な問題文・英文の全文（英語のまま。改行は\\nで保持）",
-  "trap_description": "高校生がこの問題で引っかかりやすい文法事項・構文・語彙・訳し方のポイントを日本語で解説",
-  "strategy_pattern": "【最重要】この問題固有の単語や具体的な訳には一切触れず、①英文のどの特徴（接続詞・構文・時制などのキーワード）を見て問題の『型』を判断するか、②その型に対して定石として使うべき読解・解答アプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。2〜4文程度。",
-  "model_answer": "最終的な正しい答え・和訳と、ステップごとの分かりやすい解説（文構造の分解、重要単語・熟語の意味、文法事項の解説を含む）。手順ごとに改行コード（\\n）を挟んで見やすい箇条書き形式（1., 2.など）で出力すること"
-}
-`.trim()
-        };
-
-        let selectedSubject = "数学";
-        window.setSelectedSubject = function(subject) {
-            selectedSubject = subject;
-            document.querySelectorAll(".subject-select-btn").forEach(btn => {
-                btn.classList.toggle("active", btn.getAttribute("data-subject") === subject);
-            });
-            // 英語選択時は数式キーパッドを隠す（数式を使わないため）
-            const kb = document.getElementById("math-keyboard-group");
-            if (kb) kb.style.display = (subject === "英語" || subject === "国語" || subject === "地歴公民") ? "none" : "";
-        };
-
-        let currentUser = null;
-        // 📸 複数枚対応：選択された写真は {mimeType, base64, dataUrl} の配列として保持
-        let selectedImages = [];
-        // 🎓【授業からの継続問題】lesson.htmlの「この授業の続きとして解く」から遷移してきた場合にセットされる
-        let linkedLessonId = null;
-        let linkedLessonTitle = null;
-        let linkedLessonText = null;
-        let linkedLessonKeyTerms = null; // 🔗 その授業までに蓄積された用語集（前の講の内容も含む）
-
-        async function checkAndLoadLinkedLesson(uid) {
-            const params = new URLSearchParams(window.location.search);
-            const fromLesson = params.get("fromLesson");
-            if (!fromLesson) return;
-
-            try {
-                const snap = await get(ref(database, 'users/' + uid + '/lessons/' + fromLesson));
-                const lessonData = snap.val();
-                if (!lessonData) {
-                    console.warn("⚠️ 指定された授業データが見つかりませんでした:", fromLesson);
-                    return;
-                }
-                linkedLessonId = fromLesson;
-                linkedLessonTitle = lessonData.title || lessonData.short_title || "無題の授業";
-                linkedLessonText = lessonData.extractedText || "";
-                linkedLessonKeyTerms = lessonData.accumulatedKeyTerms || lessonData.keyTerms || [];
-
-                const badge = document.getElementById("linked-lesson-badge");
-                const badgeText = document.getElementById("linked-lesson-title-text");
-                if (badge && badgeText) {
-                    badgeText.textContent = linkedLessonTitle;
-                    badge.style.display = "block";
-                }
-                // 授業からの続きは物理教材が中心のため、初期選択を物理にしておく（手動で変更可）
-                window.setSelectedSubject("物理");
-                document.getElementById("add-problem-modal").style.display = "flex";
-            } catch (e) {
-                console.error("授業データの読み込みに失敗しました:", e);
-            }
-        }
-        let previewTimeout = null; 
-
-        let lastCloudProblemsSnapshot = {};
-        let currentActiveFilter = "ALL";
-
-        // カーソル位置に数式記号を挿入するロジック
-        window.insertMathSymbol = function(startTag, endTag = "") {
-            const textarea = document.getElementById('problem-text-input');
-            if (!textarea) return;
-
-            let startPos = textarea.selectionStart;
-            let endPos = textarea.selectionEnd;
-            const currentText = textarea.value;
-
-            const textBeforeCursor = currentText.substring(0, startPos);
-            const dollarCount = (textBeforeCursor.match(/\$/g) || []).length;
-
-            if (startTag !== '$' && dollarCount % 2 === 0) {
-                startTag = '$' + startTag;
-                endTag = endTag + '$';
-            }
-
-            const selectedText = currentText.substring(startPos, endPos);
-            const replacement = startTag + selectedText + endTag;
-
-            textarea.value = currentText.substring(0, startPos) + replacement + currentText.substring(endPos);
-            textarea.focus();
-
-            const newCursorPos = startPos + startTag.length + selectedText.length;
-            textarea.selectionStart = newCursorPos;
-            textarea.selectionEnd = newCursorPos;
-
-            window.updateMathPreview(true);
-        };
-
-        // 数式リアルタイムプレビュー更新処理
-        window.updateMathPreview = function(immediate = false) {
-            const textarea = document.getElementById('problem-text-input');
-            const preview = document.getElementById('math-preview');
-            if (!textarea || !preview) return;
-
-            preview.innerHTML = textarea.value ? textarea.value : "入力プレビューがここに表示されます";
-
-            if (previewTimeout) {
-                clearTimeout(previewTimeout);
-            }
-
-            const renderMath = () => {
-                if (window.MathJax && window.MathJax.typesetPromise) {
-                    window.MathJax.typesetPromise([preview]).catch((err) => console.log(err.message));
-                }
-            };
-
-            if (immediate) {
-                renderMath();
-            } else {
-                previewTimeout = setTimeout(renderMath, 300);
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            const authPanel = document.getElementById("auth-panel");
-            const registerBtn = document.getElementById("open-modal-btn");
-            const loginNotice = document.getElementById("login-required-notice");
-            const mainGrid = document.getElementById("main-dashboard-grid");
-            const filterBar = document.getElementById("category-filter-bar");
-
-            if (user) {
-                currentUser = user;
-                authPanel.innerHTML = `
-                    <div class="user-profile">
-                        <img src="${user.photoURL}" class="user-avatar">
-                        <span>${user.displayName}</span>
-                        <button id="logout-btn">ログアウト</button>
-                    </div>
-                `;
-                document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
-                
-                registerBtn.style.display = "block";
-document.getElementById("open-insight-list-btn").style.display = "block"; // 💡 追加
-document.getElementById("open-qna-archive-btn").style.display = "block"; // 💬 追加
-                loginNotice.style.display = "none";
-                mainGrid.style.display = "grid";
-                filterBar.style.display = "flex"; 
-
-                listenToCloudData(user.uid);
-                listenToQnaArchive(user.uid); // 💬【新設】質問履歴アーカイブの監視を開始
-                checkAndLoadLinkedLesson(user.uid); // 🎓 lesson.htmlからの継続問題リンクを確認
-            } else {
-                currentUser = null;
-                authPanel.innerHTML = `<span style="color:var(--accent-magenta); cursor:pointer;" id="header-login-btn">SIGN IN</span>`;
-                document.getElementById("header-login-btn").addEventListener("click", doLogin);
-                
-                registerBtn.style.display = "none";
-                document.getElementById("open-insight-list-btn").style.display = "none"; // 💡 非表示処理を追加
-                document.getElementById("open-qna-archive-btn").style.display = "none"; // 💬 非表示処理を追加
-                loginNotice.style.display = "block";
-                mainGrid.style.display = "none";
-                filterBar.style.display = "none";
-            }
+    let subjectHtml = `<button type="button" class="m-subject-chip ${currentSubjectFilter === 'ALL' ? 'active' : ''}" data-subject="ALL">✨ すべて</button>`;
+    Object.keys(subjectMap).forEach(sub => {
+        subjectHtml += `<button type="button" class="m-subject-chip ${currentSubjectFilter === sub ? 'active' : ''}" data-subject="${sub}">${sub}</button>`;
+    });
+    subjectContainer.innerHTML = subjectHtml;
+    subjectContainer.querySelectorAll(".m-subject-chip").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            currentSubjectFilter = e.currentTarget.getAttribute("data-subject");
+            currentFieldFilter = "ALL";
+            rebuildFilterBarAndCards();
         });
+    });
 
-        function doLogin() { signInWithPopup(auth, provider).catch(e => console.error(e)); }
-        document.getElementById("main-login-btn").addEventListener("click", doLogin);
+    if (currentSubjectFilter !== "ALL" && subjectMap[currentSubjectFilter]) {
+        fieldSelect.style.display = "block";
+        let opts = `<option value="ALL">✨ ${currentSubjectFilter} の全単元</option>`;
+        subjectMap[currentSubjectFilter].forEach(fld => {
+            opts += `<option value="${fld}" ${currentFieldFilter === fld ? 'selected' : ''}>${fld}</option>`;
+        });
+        fieldSelect.innerHTML = opts;
+        fieldSelect.onchange = (e) => { currentFieldFilter = e.target.value; rebuildFilterBarAndCards(); };
+    } else {
+        fieldSelect.style.display = "none";
+    }
 
-        function listenToCloudData(uid) {
-            const userProblemsRef = ref(database, 'users/' + uid + '/problems');
-            onValue(userProblemsRef, (snapshot) => {
-                lastCloudProblemsSnapshot = snapshot.val() || {};
-                rebuildFilterBarAndCards();
-            });
+    dynamicArea.innerHTML = "";
+    let dynamicTotalCount = 0, solvedTodayCount = 0, criticalDueCount = 0, safeCount = 0, totalProblemEntries = 0;
+    const todayStr = new Date().toDateString();
+
+    const urgencyColorMap = { "badge-overdue": "var(--accent-yellow)", "badge-critical": "var(--accent-magenta)", "badge-new": "#888", "badge-pending": "#b16eff", "badge-safe": "var(--accent-cyan)" };
+    const badgeClassMap = { "badge-overdue": "m-badge-yellow", "badge-critical": "m-badge-magenta", "badge-new": "m-badge-muted", "badge-pending": "m-badge-muted", "badge-safe": "m-badge-cyan" };
+    const sectionOrder = [
+        { key: "badge-overdue", label: "⚠️ 忘却危機" },
+        { key: "badge-critical", label: "🔥 要復習" },
+        { key: "badge-new", label: "🆕 未挑戦" },
+        { key: "badge-pending", label: "⏳ 定着中" },
+        { key: "badge-safe", label: "✨ 克服済" }
+    ];
+    const buckets = { "badge-overdue": [], "badge-critical": [], "badge-new": [], "badge-pending": [], "badge-safe": [] };
+
+    Object.keys(lastCloudProblemsSnapshot).forEach(id => {
+        let p = lastCloudProblemsSnapshot[id];
+        let subjectText = p.subject || "未分類";
+        let fieldText = p.field || "未分類";
+        if (currentSubjectFilter !== "ALL" && subjectText !== currentSubjectFilter) return;
+        if (currentFieldFilter !== "ALL" && fieldText !== currentFieldFilter) return;
+        if (currentSearchQuery) {
+            const haystack = [p.short_title, p.title, p.field, p.subject, p.insight, p.trap_description].filter(Boolean).join(" ").toLowerCase();
+            if (!haystack.includes(currentSearchQuery.toLowerCase())) return;
         }
 
-      let currentSubjectFilter = "ALL";
-        let currentFieldFilter = "ALL";
-        let currentSearchQuery = "";
+        totalProblemEntries++;
+        dynamicTotalCount += Number(p.errorCount || 0);
 
-        // 🗂️ 折りたたみ状態（端末ローカルに保存し、次回訪問時も維持）
-        let collapsedSections = new Set();
-        try {
-            const savedCollapsed = JSON.parse(localStorage.getItem("collapsedProblemSections") || "[]");
-            collapsedSections = new Set(savedCollapsed);
-        } catch (e) { collapsedSections = new Set(); }
-        function persistCollapsedSections() {
-            try { localStorage.setItem("collapsedProblemSections", JSON.stringify([...collapsedSections])); } catch (e) {}
+        if (p.lastAttemptAt && p.lastResult === true && new Date(p.lastAttemptAt).toDateString() === todayStr) {
+            solvedTodayCount++;
         }
 
-        // 🔎 検索ボックスのイベントバインド
-        const searchInputEl = document.getElementById("problem-search-input");
-        const searchClearBtnEl = document.getElementById("problem-search-clear-btn");
-        if (searchInputEl) {
-            searchInputEl.addEventListener("input", (e) => {
-                currentSearchQuery = e.target.value.trim();
-                searchClearBtnEl.style.display = currentSearchQuery ? "inline-block" : "none";
-                rebuildFilterBarAndCards();
-            });
-        }
-        if (searchClearBtnEl) {
-            searchClearBtnEl.addEventListener("click", () => {
-                currentSearchQuery = "";
-                if (searchInputEl) searchInputEl.value = "";
-                searchClearBtnEl.style.display = "none";
-                rebuildFilterBarAndCards();
-            });
-        }
+        let timeBadgeText = "🆕 NEW", timeBadgeClass = "badge-new";
+        const boostedAt = p.lessonReviewPriorityAt ? new Date(p.lessonReviewPriorityAt) : null;
+        const alreadyReviewedSinceBoost = boostedAt && p.lastAttemptAt && new Date(p.lastAttemptAt) >= boostedAt;
+        if (boostedAt && !alreadyReviewedSinceBoost) {
+            timeBadgeText = "🎓 授業後の復習"; timeBadgeClass = "badge-overdue"; criticalDueCount++;
+        } else if (p.lastAttemptAt) {
+            const lastTime = new Date(p.lastAttemptAt).getTime();
+            const diffDays = (Date.now() - lastTime) / (1000 * 60 * 60 * 24);
+            const difficulty = Number(p.errorCount || 1);
+            let optimalInterval = 7;
+            if (difficulty === 1) optimalInterval = 4;
+            if (difficulty === 2) optimalInterval = 2;
+            if (difficulty >= 3) optimalInterval = 1;
 
-        // 🗓️ createdAtが無い古いデータでも、可能な限り妥当な追加日を推定して表示する
-        //    1. createdAtがあればそれを使う
-        //    2. IDが "CUSTOM_<ミリ秒タイムスタンプ>" 形式なら、そこから逆算する（2020年以降の値のみ信頼する）
-        //    3. それも無理なら、記録が残っている中で一番古い日付（lastAttemptAt）で代用する
-        //    4. それすらなければ「不明」として扱う
-        const MIN_PLAUSIBLE_TS = Date.UTC(2020, 0, 1); // これより古いIDの数字は「タイムスタンプではない」と判断する
-        function resolveCreatedAt(p) {
-            if (p.createdAt) return { date: new Date(p.createdAt), estimated: false };
-            if (p.id) {
-                const parts = p.id.split("_");
-                const ts = Number(parts[parts.length - 1]);
-                if (!isNaN(ts) && ts >= MIN_PLAUSIBLE_TS) {
-                    return { date: new Date(ts), estimated: false };
-                }
-            }
-            if (p.lastAttemptAt) {
-                return { date: new Date(p.lastAttemptAt), estimated: true };
-            }
-            return null;
-        }
-        function formatShortDate(d) {
-            if (!d) return null;
-            return d.toLocaleDateString('ja-JP', { year: '2-digit', month: 'numeric', day: 'numeric' });
-        }
-
-        function rebuildFilterBarAndCards() {
-            const dynamicArea = document.getElementById("dynamic-cards-area");
-            const subjectContainer = document.getElementById("subject-tab-container");
-            const fieldRow = document.getElementById("field-filter-row");
-            const fieldSelect = document.getElementById("field-filter-select");
-            if (!dynamicArea || !subjectContainer) return;
-
-            // 1. クラウド上のデータから「存在する教科」と「教科ごとの単元」を抽出
-            const subjectMap = {}; // { "数学II": Set(["式と証明", "図形と方程式"]), ... }
-
-            Object.keys(lastCloudProblemsSnapshot).forEach(id => {
-                const p = lastCloudProblemsSnapshot[id];
-                const rawSubject = p.subject || "未分類";
-                const rawField = p.field || "未分類";
-
-                if (!subjectMap[rawSubject]) {
-                    subjectMap[rawSubject] = new Set();
-                }
-                subjectMap[rawSubject].add(rawField);
-            });
-
-            // 2. 上段「教科タブ」のHTML生成
-            let subjectHtml = `<button type="button" class="subject-tab-btn ${currentSubjectFilter === 'ALL' ? 'active' : ''}" data-subject="ALL">✨ すべて</button>`;
-            Object.keys(subjectMap).forEach(sub => {
-                const activeClass = currentSubjectFilter === sub ? 'active' : '';
-                subjectHtml += `<button type="button" class="subject-tab-btn ${activeClass}" data-subject="${sub}">${sub}</button>`;
-            });
-            subjectContainer.innerHTML = subjectHtml;
-
-            // 教科タブのクリックイベントバインド
-            subjectContainer.querySelectorAll(".subject-tab-btn").forEach(btn => {
-                btn.addEventListener("click", (e) => {
-                    currentSubjectFilter = e.target.getAttribute("data-subject");
-                    currentFieldFilter = "ALL"; // 教科を変えたら単元はリセット
-                    rebuildFilterBarAndCards();
-                });
-            });
-
-            // 3. 下段「単元ドロップダウン」の表示＆更新ロジック
-            if (currentSubjectFilter !== "ALL" && subjectMap[currentSubjectFilter]) {
-                fieldRow.style.display = "flex";
-                let fieldOptionsHtml = `<option value="ALL">✨ ${currentSubjectFilter} の全単元</option>`;
-                
-                subjectMap[currentSubjectFilter].forEach(fld => {
-                    const selected = currentFieldFilter === fld ? 'selected' : '';
-                    fieldOptionsHtml += `<option value="${fld}" ${selected}>${fld}</option>`;
-                });
-                fieldSelect.innerHTML = fieldOptionsHtml;
-
-                // 単元セレクトの変更イベント
-                fieldSelect.onchange = (e) => {
-                    currentFieldFilter = e.target.value;
-                    rebuildFilterBarAndCards();
-                };
+            if (p.errorCount === 0 || p.lastResult === true) {
+                timeBadgeText = "✨ SAFE"; timeBadgeClass = "badge-safe"; safeCount++;
+            } else if (diffDays >= optimalInterval * 1.5) {
+                timeBadgeText = "⚠️ OVERDUE"; timeBadgeClass = "badge-overdue"; criticalDueCount++;
+            } else if (diffDays >= optimalInterval) {
+                timeBadgeText = "🔥 CRITICAL"; timeBadgeClass = "badge-critical"; criticalDueCount++;
             } else {
-                fieldRow.style.display = "none";
+                timeBadgeText = "⏳ PENDING"; timeBadgeClass = "badge-pending";
             }
+        } else {
+            criticalDueCount++;
+        }
 
-            // 4. 問題一覧の描画処理（フィルタリング適用＋緊急度別セクション分け＋リスト行表示）
-            dynamicArea.innerHTML = "";
-            let dynamicTotalCount = 0;
-            let solvedTodayCount = 0;
-            let criticalDueCount = 0;
-            let safeCount = 0;
-            let totalProblemEntries = 0;
-            const todayStr = new Date().toDateString();
+        let thumbHtml = "";
+        if (p.thumb) {
+            const imgCount = typeof p.imageCount === "number" ? p.imageCount : 1;
+            const countBadge = imgCount > 1 ? `<span class="m-row-thumb-count">+${imgCount - 1}</span>` : "";
+            thumbHtml = `<div class="m-row-thumb"><img src="${p.thumb}">${countBadge}</div>`;
+        } else {
+            const pImages = Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.imageData ? [p.imageData] : []);
+            if (pImages.length > 0) {
+                const countBadge = pImages.length > 1 ? `<span class="m-row-thumb-count">+${pImages.length - 1}</span>` : "";
+                thumbHtml = `<div class="m-row-thumb"><img src="${pImages[0]}">${countBadge}</div>`;
+            } else {
+                let symbol = "📝", glowClass = "glow-purple";
+                if (subjectText.includes("数学")) { symbol = "f(x)"; glowClass = "glow-math"; }
+                else if (subjectText.includes("物理")) { symbol = "F"; glowClass = "glow-physics"; }
+                else if (subjectText.includes("化学")) { symbol = "mol"; glowClass = "glow-chemistry"; }
+                else if (subjectText.includes("世界史")) { symbol = "🌍"; glowClass = "glow-history"; }
+                else if (subjectText.includes("英語")) { symbol = "🔤"; glowClass = "glow-english"; }
+                else if (subjectText.includes("国語")) { symbol = "📖"; glowClass = "glow-japanese"; }
+                else if (subjectText.includes("地歴") || subjectText.includes("公民")) { symbol = "🏛️"; glowClass = "glow-civics"; }
+                thumbHtml = `<div class="m-row-thumb ${glowClass}"><span>${symbol}</span></div>`;
+            }
+        }
 
-            // 🎨 緊急度→色のマッピング（枠線・誤答数の数字色に共通利用）
-            const urgencyColorMap = {
-                "badge-overdue":  "var(--accent-yellow)",
-                "badge-critical": "var(--accent-magenta)",
-                "badge-new":      "#888",
-                "badge-pending":  "#b16eff",
-                "badge-safe":     "var(--accent-cyan)"
-            };
+        const createdInfo = resolveCreatedAt(p);
+        const createdAtDate = createdInfo ? formatShortDate(createdInfo.date) : null;
+        const rowColor = urgencyColorMap[timeBadgeClass] || "var(--accent-cyan)";
+        const badgeCls = badgeClassMap[timeBadgeClass] || "m-badge-muted";
 
-            // 🗂️ セクションの表示順（上ほど緊急）と、行を溜めるバケツ
-            const sectionOrder = [
-                { key: "badge-overdue",  label: "⚠️ 忘却危機 // OVERDUE" },
-                { key: "badge-critical", label: "🔥 要復習 // CRITICAL" },
-                { key: "badge-new",      label: "🆕 未挑戦 // NEW" },
-                { key: "badge-pending",  label: "⏳ 定着中 // PENDING" },
-                { key: "badge-safe",     label: "✨ 克服済 // SAFE" }
-            ];
-            const buckets = { "badge-overdue": [], "badge-critical": [], "badge-new": [], "badge-pending": [], "badge-safe": [] };
-
-            Object.keys(lastCloudProblemsSnapshot).forEach(id => {
-                let p = lastCloudProblemsSnapshot[id];
-                let subjectText = p.subject || "未分類";
-                let fieldText = p.field || "未分類";
-
-                // 💡 教科＆単元のダブルフィルタリングチェック
-                if (currentSubjectFilter !== "ALL" && subjectText !== currentSubjectFilter) {
-                    return; // 教科不一致でスキップ
-                }
-                if (currentFieldFilter !== "ALL" && fieldText !== currentFieldFilter) {
-                    return; // 単元不一致でスキップ
-                }
-
-                // 🔎 検索キーワードによる絞り込み（タイトル・問題文・分野・気づきメモを対象）
-                if (currentSearchQuery) {
-                    const haystack = [
-                        p.short_title, p.title, p.field, p.subject, p.insight, p.trap_description
-                    ].filter(Boolean).join(" ").toLowerCase();
-                    if (!haystack.includes(currentSearchQuery.toLowerCase())) {
-                        return; // キーワード不一致でスキップ
-                    }
-                }
-
-                totalProblemEntries++;
-                dynamicTotalCount += Number(p.errorCount || 0);
-                
-                let badgeSubjectClass = subjectText.includes("物理") ? "badge-physics" : (subjectText.includes("数学") ? "badge-math" : "badge-new");
-
-                if (p.lastAttemptAt && p.lastResult === true) {
-                    if (new Date(p.lastAttemptAt).toDateString() === todayStr) {
-                        solvedTodayCount++;
-                    }
-                }
-
-                let timeBadgeText = "🆕 NEW // 未挑戦";
-                let timeBadgeClass = "badge-new";
-
-                if (p.lastAttemptAt) {
-                    const lastTime = new Date(p.lastAttemptAt).getTime();
-                    const nowTime = new Date().getTime();
-                    const diffDays = (nowTime - lastTime) / (1000 * 60 * 60 * 24);
-                    const difficulty = Number(p.errorCount || 1);
-                    
-                    let optimalInterval = 7; 
-                    if (difficulty === 1) optimalInterval = 4;
-                    if (difficulty === 2) optimalInterval = 2;
-                    if (difficulty >= 3)  optimalInterval = 1; 
-
-                    if (p.errorCount === 0 || p.lastResult === true) {
-                        timeBadgeText = "✨ SAFE // 克服済";
-                        timeBadgeClass = "badge-safe";
-                        safeCount++;
-                    } else if (diffDays >= (optimalInterval * 1.5)) {
-                        timeBadgeText = "⚠️ OVERDUE // 忘却危機";
-                        timeBadgeClass = "badge-overdue";
-                        criticalDueCount++;
-                    } else if (diffDays >= optimalInterval) {
-                        timeBadgeText = "🔥 CRITICAL // 要復習";
-                        timeBadgeClass = "badge-critical";
-                        criticalDueCount++;
-                    } else {
-                        timeBadgeText = "⏳ PENDING // 定着中";
-                        timeBadgeClass = "badge-pending";
-                    }
-                } else {
-                    criticalDueCount++;
-                }
-
-                // 🖼️ サムネイル（リスト行用の小型版）
-                // 互換性: 新形式の images配列があればそれを優先、無ければ旧形式のimageData単体を使う
-                const pImages = Array.isArray(p.images) && p.images.length > 0
-                    ? p.images
-                    : (p.imageData ? [p.imageData] : []);
-                let thumbHtml = "";
-                if (pImages.length > 0) {
-                    const countBadge = pImages.length > 1
-                        ? `<span class="row-thumb-count-badge">+${pImages.length - 1}</span>`
-                        : "";
-                    thumbHtml = `<div class="row-thumb"><img src="${pImages[0]}">${countBadge}</div>`;
-                } else {
-                    let symbol = "？";
-                    let glowClass = "glow-purple";
-                    if (subjectText.includes("数学")) { symbol = "$f(x)$"; glowClass = "glow-math"; }
-                    else if (subjectText.includes("物理")) { symbol = "$\\vec{F}$"; glowClass = "glow-physics"; }
-                    thumbHtml = `<div class="row-thumb row-thumb-icon ${glowClass} tex2jax_process"><span>${symbol}</span></div>`;
-                }
-
-                let insightBadgeHtml = "";
-                if (p.insight && p.insight.trim() !== "") {
-                    insightBadgeHtml = `<span class="badge badge-insight">🧠</span>`;
-                }
-
-                // 🗓️ 追加日・気づき更新日メタ表示
-                const createdInfo = resolveCreatedAt(p);
-                const createdAtDate = createdInfo ? formatShortDate(createdInfo.date) : null;
-                const insightDate = p.insightUpdatedAt ? formatShortDate(new Date(p.insightUpdatedAt)) : null;
-                let dateMetaHtml = "";
-                if (createdAtDate || insightDate) {
-                    dateMetaHtml = `<div class="row-date-meta">`;
-                    if (createdAtDate) dateMetaHtml += `<span>📅 追加: ${createdAtDate}${createdInfo.estimated ? '（推定）' : ''}</span>`;
-                    if (insightDate) dateMetaHtml += `<span class="insight-date">🧠 気づき更新: ${insightDate}</span>`;
-                    dateMetaHtml += `</div>`;
-                }
-
-                // 🧩 分野バッジをカンマ区切りで個別チップに分割
-                const fieldChipsHtml = fieldText
-                    .split(",")
-                    .map(f => f.trim())
-                    .filter(Boolean)
-                    .map(f => `<span class="badge field-chip">${f}</span>`)
-                    .join("");
-
-                const rowColor = urgencyColorMap[timeBadgeClass] || "var(--accent-cyan)";
-
-                const rowHtml = `
-                    <div class="problem-row" onclick="location.href='problem.html?id=${p.id}'" style="border-left: 4px solid ${rowColor};">
-                        ${thumbHtml}
-                        <div class="row-main">
-                            <div class="row-badges">
-                                <span class="badge ${badgeSubjectClass}">${subjectText}</span>
-                                ${fieldChipsHtml}
-                                ${insightBadgeHtml}
-                            </div>
-                            <div class="row-title tex2jax_process">${p.short_title}</div>
-                            <div class="row-preview tex2jax_process">${p.title}</div>
-                            ${dateMetaHtml}
-                        </div>
-                        <div class="row-stat" style="color: ${rowColor};">
-                            <div class="row-stat-number">${String(p.errorCount).padStart(2, '0')}</div>
-                            <div class="row-stat-label">誤答</div>
-                        </div>
+        const rowHtml = `
+            <div class="m-row" onclick="location.href='problem.html?id=${p.id}'" style="border-left: 3px solid ${rowColor};">
+                ${thumbHtml}
+                <div class="m-row-main">
+                    <div class="m-row-badges">
+                        <span class="m-badge ${badgeCls}">${subjectText}</span>
+                        ${p.insight && p.insight.trim() !== "" ? '<span class="m-badge m-badge-cyan">🧠</span>' : ""}
                     </div>
-                `;
-
-                if (buckets[timeBadgeClass]) buckets[timeBadgeClass].push(rowHtml);
-            });
-
-            // 🗂️ 緊急度セクションごとに見出し＋行を描画（クリックで開閉可能）
-            sectionOrder.forEach(section => {
-                const rows = buckets[section.key];
-                if (!rows || rows.length === 0) return;
-                const isCollapsed = collapsedSections.has(section.key);
-                dynamicArea.insertAdjacentHTML("beforeend", `
-                    <div class="problem-section-header ${isCollapsed ? 'collapsed' : ''}" data-section-key="${section.key}">
-                        <div class="problem-section-header-left">
-                            <span class="problem-section-chevron">▼</span>
-                            <span>${section.label}</span>
-                        </div>
-                        <span class="problem-section-count">${rows.length}</span>
-                    </div>
-                    <div class="problem-section-rows ${isCollapsed ? 'collapsed' : ''}" data-section-rows="${section.key}">
-                        ${rows.join("")}
-                    </div>
-                `);
-            });
-
-            // 開閉トグルのイベントバインド
-            dynamicArea.querySelectorAll(".problem-section-header").forEach(headerEl => {
-                headerEl.addEventListener("click", () => {
-                    const key = headerEl.getAttribute("data-section-key");
-                    const rowsEl = dynamicArea.querySelector(`[data-section-rows="${key}"]`);
-                    if (collapsedSections.has(key)) {
-                        collapsedSections.delete(key);
-                    } else {
-                        collapsedSections.add(key);
-                    }
-                    headerEl.classList.toggle("collapsed");
-                    if (rowsEl) rowsEl.classList.toggle("collapsed");
-                    persistCollapsedSections();
-                });
-            });
-
-            if (totalProblemEntries === 0) {
-                dynamicArea.innerHTML = `<div style="padding: 3rem 1rem; text-align: center; color: var(--text-muted);">条件に一致する問題が見つかりませんでした。</div>`;
-            }
-
-            // 集計スコアの更新
-            const totalDisplay = document.getElementById("total-errors-display");
-            if (totalDisplay) totalDisplay.textContent = String(dynamicTotalCount).padStart(2, '0');
-
-            const solvedDisplay = document.getElementById("solved-today-display");
-            if (solvedDisplay) solvedDisplay.textContent = String(solvedTodayCount).padStart(2, '0');
-
-            let retentionRate = 100;
-            if (totalProblemEntries > 0) {
-                retentionRate = Math.round((safeCount / totalProblemEntries) * 100);
-            }
-            document.getElementById("retention-rate-display").textContent = `${retentionRate}%`;
-            document.getElementById("retention-bar-display").style.width = `${retentionRate}%`;
-            document.getElementById("due-count-display").textContent = `本日要対応: ${criticalDueCount} 問`;
-
-            if (window.MathJax && window.MathJax.typesetPromise) {
-                window.MathJax.typesetPromise([dynamicArea]).catch((err) => console.log(err.message));
-            }
-        }
-
-        // 📸【Gemini復帰】写真の画像認識が必要なので、ここはGemini Visionをそのまま叩く
-        async function analyzeAndAddProblem(userRawText) {
-            if (!currentUser) {
-                alert("エラー: ログイン状態が確認できません。Google接続してください。");
-                return;
-            }
-            if (getGeminiKeys().length === 0) {
-                alert("GeminiのAPIキーが登録されていません。右下の🔑ボタンから登録してください。");
-                return;
-            }
-            
-            const submitBtn = document.getElementById("analyze-submit-btn");
-            
-            submitBtn.textContent = "Gemini Visionが画像を分析中...";
-            submitBtn.disabled = true;
-
-            let parts = [{ "text": "提出されたデータを解析し、最終的な『正しい答え（model_answer）』も含めて指定のJSONで返してください。" }];
-            if (userRawText) parts[0].text += `\nユーザーの入力メモ: ${userRawText}`;
-            if (selectedImages.length > 0) {
-                selectedImages.forEach(img => {
-                    parts.push({ "inlineData": { "mimeType": img.mimeType, "data": img.base64 } });
-                });
-                // 🖼️【複数枚対応】写真が複数枚ある場合、それらは同じ1問の異なるページ・カット
-                // （問題文ページ＋解答用紙／続きのページなど）である可能性が高いことをAIに明示する
-                if (selectedImages.length > 1) {
-                    parts[0].text += `\n\n【重要】画像は${selectedImages.length}枚提出されていますが、これらは全て同じ1つの問題に関する別々のページ・カット（例：問題文のページと、生徒が実際に解いた解答用紙のページなど）です。複数の異なる問題として分割せず、すべての画像の情報を統合して、この1問についての内容としてextracted_textやtrap_descriptionなどを作成してください。`;
-                }
-            }
-
-            try {
-                let activeSystemInstruction = SUBJECT_CREATE_PROMPTS[selectedSubject] || SUBJECT_CREATE_PROMPTS["数学"];
-
-                // 🎓【授業からの継続問題】直前に受けた授業の参考書全文をAIに渡し、
-                //   その授業固有の用語・法則名・手順番号をそのまま使って解説させる
-                if (linkedLessonText) {
-                    const glossaryBlock = (linkedLessonKeyTerms && linkedLessonKeyTerms.length > 0)
-                        ? `\n\n【この授業までに生徒が習った、参考書オリジナルの用語集（前の講の内容も含む）】\n` +
-                          linkedLessonKeyTerms.map(t => `・${t.name}：${t.definition}`).join("\n") +
-                          `\n※これらの用語は、たとえこの授業のテキスト全文に載っていなくても、生徒はすでに正確な定義を知っています。解説中でこれらの言葉が使える場面では、遠慮せずこの定義通りに名指しで使ってください。`
-                        : "";
-                    activeSystemInstruction += `
-
-【直前に受けた授業からの継続問題】
-この問題は、直前に受けた授業「${linkedLessonTitle || "無題の授業"}」の続きとして生徒が解いている問題です。
-以下は、その授業の元になった参考書のテキスト全文です。この中で使われている固有の名称（法則名・大原則・「タッチの定理」のような参考書独自の用語・「手順①〜⑦」のような番号付き手順など）を、strategy_patternとmodel_answerの解説の中で積極的に名指しして使い、授業内容を思い出させながら解説すること。勝手に別の言葉に言い換えたり、新しい独自用語を作ったりしないこと。一般論だけで済ませず、必ずこの参考書固有の言葉で解説すること。
-
-【授業で読んだ参考書の全文】
-${linkedLessonText}
-${glossaryBlock}`;
-                }
-
-                const requestBody = JSON.stringify({
-                    "contents": [{ "parts": parts }],
-                    "systemInstruction": { "parts": [{ "text": activeSystemInstruction }] },
-                    "generationConfig": { "responseMimeType": "application/json", "temperature": 0.3 }
-                });
-
-                const fixJsonEscapes = (str) => {
-                    let inString = false; let result = "";
-                    for (let i = 0; i < str.length; i++) {
-                        let c = str[i];
-                        if (c === '"' && (i === 0 || str[i-1] !== '\\')) { inString = !inString; result += c; }
-                        else if (c === '\\' && inString) {
-                            let next = str[i+1];
-                            if (next === '"') { result += '\\"'; i++; }
-                            else if (next === '\\') { result += '\\\\'; i++; }
-                            else if (next === 'n' && (str[i+2] === ' ' || str[i+2] === '"' || str[i+2] === '\\' || !/[a-zA-Z]/.test(str[i+2]))) { result += '\\n'; i++; }
-                            else { result += '\\\\'; }
-                        } else if (inString && c.charCodeAt(0) < 0x20) {
-                            if (c === '\n') result += '\\n';
-                            else if (c === '\r') result += '\\r';
-                            else if (c === '\t') result += '\\t';
-                            else result += '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0');
-                        } else { result += c; }
-                    }
-                    return result;
-                };
-
-                // 🩹【新設】JSONの前後に余計な文章が付いてしまう事故への保険。
-                //    文字列中の { } は無視しつつ、最初の { から対応する閉じ } までを取り出す。
-                const extractJsonObject = (text) => {
-                    const start = text.indexOf('{');
-                    if (start === -1) return text;
-                    let depth = 0; let inString = false;
-                    for (let i = start; i < text.length; i++) {
-                        const c = text[i];
-                        if (c === '"' && text[i - 1] !== '\\') inString = !inString;
-                        if (!inString) {
-                            if (c === '{') depth++;
-                            else if (c === '}') { depth--; if (depth === 0) return text.substring(start, i + 1); }
-                        }
-                    }
-                    return text.substring(start);
-                };
-
-                let parsedResult = null;
-                let usedModel = null;
-                let lastError = null;
-                const fallbackAttempts = [];
-
-                for (const modelName of GEMINI_MODEL_FALLBACK_LIST) {
-                    submitBtn.textContent = `Gemini(${modelName})が分析中...`;
-                    let response;
-                    try {
-                        response = await fetchWithKeyRotation(getGeminiKeys(), (key) => ({
-                            url: buildGeminiUrl(modelName, key),
-                            options: {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: requestBody
-                            }
-                        }));
-                    } catch (err) {
-                        // 登録済みの全キーで失敗した場合のみ、次のモデルへフォールバック
-                        console.warn(`⚠️ ${modelName} は登録済みの全キーで失敗しました → 次のモデルへフォールバック`, err);
-                        lastError = err;
-                        fallbackAttempts.push({ model: modelName, reason: err?.message || "不明な通信エラー" });
-                        continue;
-                    }
-
-                    const candidateJson = await response.json();
-                    const candidateText = candidateJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                    if (!candidateText) {
-                        console.warn(`⚠️ ${modelName} が空の応答を返却しました → 次のモデルへフォールバック`);
-                        lastError = new Error(`Empty response: ${modelName}`);
-                        fallbackAttempts.push({ model: modelName, reason: "空応答（finishReason等が原因の可能性）" });
-                        continue;
-                    }
-
-                    let rawJsonText = candidateText.trim();
-                    if (rawJsonText.startsWith("```json")) rawJsonText = rawJsonText.substring(7);
-                    else if (rawJsonText.startsWith("```")) rawJsonText = rawJsonText.substring(3);
-                    if (rawJsonText.endsWith("```")) rawJsonText = rawJsonText.substring(0, rawJsonText.length - 3);
-                    rawJsonText = rawJsonText.trim();
-
-                    try {
-                        parsedResult = JSON.parse(fixJsonEscapes(extractJsonObject(rawJsonText)));
-                        usedModel = modelName;
-                        break;
-                    } catch (parseErr) {
-                        console.warn(`⚠️ ${modelName} の応答が不正なJSONでした → 次のモデルへフォールバック`, parseErr);
-                        lastError = parseErr;
-                        fallbackAttempts.push({ model: modelName, reason: "JSON解析エラー（応答の形式が崩れていた）" });
-                        continue;
-                    }
-                }
-
-                notifyModelFallback(fallbackAttempts, usedModel);
-
-                if (!parsedResult) {
-                    throw new Error(`全モデルが利用できませんでした（レート制限または不正な応答）。時間を置いて再度お試しください。\n最終エラー: ${lastError?.message || "不明"}`);
-                }
-
-                const aiResult = parsedResult;
-
-                const newId = "CUSTOM_" + Date.now();
-                const nowIso = new Date().toISOString();
-                const newProblem = {
-                    id: newId,
-                    title: aiResult.extracted_text || userRawText, 
-                    short_title: aiResult.short_title || "解析問題",
-                    subject: selectedSubject,
-                    field: aiResult.field || "手動管理",
-                    trap_description: aiResult.trap_description || "",
-                    strategyPattern: aiResult.strategy_pattern || "",
-                    errorCount: 1,
-                    lastAttemptAt: nowIso,
-                    lastResult: false,
-                    images: selectedImages.map(img => img.dataUrl),
-                    imageData: selectedImages.length > 0 ? selectedImages[0].dataUrl : null, // 互換用（1枚目）
-                    answerFormula: aiResult.model_answer || "解説データなし",
-                    createdAt: nowIso,
-                    ...(linkedLessonId ? {
-                        sourceLessonId: linkedLessonId,
-                        sourceLessonTitle: linkedLessonTitle,
-                        sourceLessonText: linkedLessonText,
-                        sourceLessonKeyTerms: linkedLessonKeyTerms || []
-                    } : {})
-                };
-
-                await set(ref(database, 'users/' + currentUser.uid + '/problems/' + newId), newProblem);
-                closeModalAndReset();
-
-            } catch (error) {
-                console.error("AI解析エラー発生:", error);
-                alert("❌ AI自動解析に失敗しました！\n\n【原因】:\n" + error.message);
-            } finally {
-                submitBtn.textContent = "AI自動解析を実行";
-                submitBtn.disabled = false;
-            }
-        }
-
-        function closeModalAndReset() {
-            document.getElementById("add-problem-modal").style.display = "none";
-            document.getElementById("problem-text-input").value = "";
-            document.getElementById("problem-image-input").value = "";
-            selectedImages = [];
-            renderImagePreviews();
-            
-            const preview = document.getElementById("math-preview");
-            if (window.MathJax && window.MathJax.typesetClear) {
-                window.MathJax.typesetClear([preview]);
-            }
-            preview.innerHTML = "入力プレビューがここに表示されます";
-            window.setSelectedSubject("数学");
-
-            // 🎓 授業からの継続リンクもリセット
-            linkedLessonId = null;
-            linkedLessonTitle = null;
-            linkedLessonText = null;
-            linkedLessonKeyTerms = null;
-            const badge = document.getElementById("linked-lesson-badge");
-            if (badge) badge.style.display = "none";
-            // URLの?fromLessonを消して、再度開いた時に誤って再リンクされないようにする
-            if (window.location.search.includes("fromLesson")) {
-                window.history.replaceState({}, "", window.location.pathname);
-            }
-        }
-
-        const modal = document.getElementById("add-problem-modal");
-        const openBtn = document.getElementById("open-modal-btn");
-        const closeBtn = document.getElementById("close-modal-btn");
-        const submitBtn = document.getElementById("analyze-submit-btn");
-        const clearKeysBtn = document.getElementById("clear-keys-btn");
-        const textInput = document.getElementById("problem-text-input");
-        const imageInput = document.getElementById("problem-image-input");
-        const previewContainer = document.getElementById("image-preview-container");
-
-        if (openBtn) openBtn.addEventListener("click", () => modal.style.display = "flex");
-        if (closeBtn) closeBtn.addEventListener("click", () => { closeModalAndReset(); });
-
-        if (textInput) {
-            textInput.addEventListener('input', () => { window.updateMathPreview(false); });
-        }
-
-        if (clearKeysBtn) {
-            clearKeysBtn.addEventListener("click", () => {
-                clearAllKeys();
-                alert("ブラウザに保存されていたGeminiとDeepSeekのAPIキーを全件消去しました。\n\n再読み込み後に🔑ボタンから新しいAPIキーを登録してください。");
-                location.reload();
-            });
-        }
-
-        // 🖼️ 選択中の写真サムネイル一覧を描画（×で個別削除可能）
-        function renderImagePreviews() {
-            if (!previewContainer) return;
-            if (selectedImages.length === 0) {
-                previewContainer.classList.remove("has-images");
-                previewContainer.innerHTML = "";
-                return;
-            }
-            previewContainer.classList.add("has-images");
-            previewContainer.innerHTML = selectedImages.map((img, i) => `
-                <div class="photo-thumb-wrap">
-                    <img src="${img.dataUrl}">
-                    <span class="photo-thumb-index">${i + 1}</span>
-                    <div class="photo-thumb-remove" data-remove-img="${i}">×</div>
+                    <div class="m-row-title tex2jax_process">${p.short_title || buildRowPreviewText(p.title)}</div>
+                    ${createdAtDate ? `<div class="m-row-date">📅 ${createdAtDate}${createdInfo.estimated ? '（推定）' : ''}</div>` : ""}
                 </div>
-            `).join("");
-            previewContainer.querySelectorAll("[data-remove-img]").forEach(btn => {
-                btn.addEventListener("click", () => {
-                    const idx = parseInt(btn.getAttribute("data-remove-img"), 10);
-                    selectedImages.splice(idx, 1);
-                    renderImagePreviews();
-                });
-            });
+                <div class="m-row-stat" style="color: ${rowColor};">
+                    <div class="m-row-stat-num">${String(p.errorCount || 0).padStart(2, '0')}</div>
+                    <div class="m-row-stat-label">誤答</div>
+                </div>
+            </div>
+        `;
+        if (buckets[timeBadgeClass]) {
+            buckets[timeBadgeClass].push({ html: rowHtml, sortDate: createdInfo ? createdInfo.date.getTime() : 0 });
         }
+    });
 
-        // 📸 1枚の画像ファイルを圧縮してdataURLに変換（Promiseでラップ）
-        function compressImageFile(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    const img = new Image();
-                    img.onload = function() {
-                        const canvas = document.createElement("canvas");
-                        const max_size = 800; let width = img.width, height = img.height;
-                        if (width > height) { if (width > max_size) { height *= max_size / width; width = max_size; } }
-                        else { if (height > max_size) { width *= max_size / height; height = max_size; } }
-                        canvas.width = width; canvas.height = height;
-                        const ctx = canvas.getContext("2d"); ctx.drawImage(img, 0, 0, width, height);
-                        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.6);
-                        resolve({
-                            mimeType: "image/jpeg",
-                            base64: compressedDataUrl.split(',')[1],
-                            dataUrl: compressedDataUrl
-                        });
-                    };
-                    img.onerror = reject;
-                    img.src = evt.target.result;
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
+    if (currentProblemSortMode === "priority") {
+        sectionOrder.forEach(section => {
+            const rows = buckets[section.key];
+            if (!rows || rows.length === 0) return;
+            const isCollapsed = collapsedSections.has(section.key);
+            dynamicArea.insertAdjacentHTML("beforeend", `
+                <div class="m-section-header ${isCollapsed ? 'collapsed' : ''}" data-section-key="${section.key}">
+                    <div class="m-section-header-left"><span class="m-chevron">▼</span><span>${section.label}</span></div>
+                    <span class="m-section-count">${rows.length}</span>
+                </div>
+                <div class="m-section-rows ${isCollapsed ? 'collapsed' : ''}" data-section-rows="${section.key}">
+                    ${rows.map(r => r.html).join("")}
+                </div>
+            `);
+        });
+    } else {
+        const allRows = sectionOrder.flatMap(section => buckets[section.key] || []);
+        allRows.sort((a, b) => currentProblemSortMode === "oldest" ? a.sortDate - b.sortDate : b.sortDate - a.sortDate);
+        if (allRows.length > 0) {
+            dynamicArea.insertAdjacentHTML("beforeend", `
+                <div class="m-section-header" style="cursor:default;">
+                    <div class="m-section-header-left"><span>${currentProblemSortMode === "oldest" ? "🗓️ 追加日が古い順" : "🗓️ 追加日が新しい順"}</span></div>
+                    <span class="m-section-count">${allRows.length}</span>
+                </div>
+                <div class="m-section-rows" data-section-rows="__sorted_flat__">${allRows.map(r => r.html).join("")}</div>
+            `);
         }
+    }
 
-        if (imageInput) {
-            imageInput.addEventListener("change", async function(e) {
-                const files = Array.from(e.target.files || []);
-                if (files.length === 0) return;
-                for (const file of files) {
-                    try {
-                        selectedImages.push(await compressImageFile(file));
-                    } catch (err) {
-                        console.error("画像の読み込みに失敗しました:", err);
-                    }
-                }
-                renderImagePreviews();
-                imageInput.value = ""; // 同じファイルを再度追加選択できるようにリセット
-            });
-        }
+    dynamicArea.querySelectorAll(".m-section-header[data-section-key]").forEach(headerEl => {
+        headerEl.addEventListener("click", () => {
+            const key = headerEl.getAttribute("data-section-key");
+            const rowsEl = dynamicArea.querySelector(`[data-section-rows="${key}"]`);
+            if (collapsedSections.has(key)) collapsedSections.delete(key); else collapsedSections.add(key);
+            headerEl.classList.toggle("collapsed");
+            if (rowsEl) rowsEl.classList.toggle("collapsed");
+            persistCollapsedSections();
+        });
+    });
 
-        if (submitBtn) {
-            submitBtn.addEventListener("click", () => {
-                const text = textInput.value.trim();
-                if (!text && selectedImages.length === 0) { alert("写真を選択するかメモを入力してください。"); return; }
-                analyzeAndAddProblem(text);
-            });
-        }
+    if (totalProblemEntries === 0) {
+        dynamicArea.innerHTML = `<div class="m-empty">条件に一致する問題が見つかりませんでした。</div>`;
+    }
 
-        // 🧠【新設】全気づき一覧モーダル制御ロジック
-        const insightListModal = document.getElementById("insight-list-modal");
-        const openInsightListBtn = document.getElementById("open-insight-list-btn");
-        const closeInsightListBtn = document.getElementById("close-insight-list-btn");
-        const insightListContainer = document.getElementById("insight-list-container");
-        const insightSortSelect = document.getElementById("insight-sort-select");
+    document.getElementById("total-errors-display").textContent = String(dynamicTotalCount).padStart(2, '0');
+    document.getElementById("solved-today-display").textContent = String(solvedTodayCount).padStart(2, '0');
+    let retentionRate = totalProblemEntries > 0 ? Math.round((safeCount / totalProblemEntries) * 100) : 100;
+    document.getElementById("retention-rate-display").textContent = `${retentionRate}%`;
+    document.getElementById("retention-bar-display").style.width = `${retentionRate}%`;
+    document.getElementById("due-count-display").textContent = `本日要対応: ${criticalDueCount} 問`;
 
-        function sortInsightEntries(entries, sortKey) {
-            const sorted = entries.slice();
-            switch (sortKey) {
-                case "oldest":
-                    sorted.sort((a, b) => new Date(a[1].lastAttemptAt || 0) - new Date(b[1].lastAttemptAt || 0));
-                    break;
-                case "errorCount":
-                    sorted.sort((a, b) => (b[1].errorCount || 0) - (a[1].errorCount || 0));
-                    break;
-                case "subject":
-                    sorted.sort((a, b) => {
-                        const subjA = (a[1].subject || "未分類") + (a[1].field || "");
-                        const subjB = (b[1].subject || "未分類") + (b[1].field || "");
-                        return subjA.localeCompare(subjB, "ja");
-                    });
-                    break;
-                case "newest":
-                default:
-                    sorted.sort((a, b) => new Date(b[1].lastAttemptAt || 0) - new Date(a[1].lastAttemptAt || 0));
-                    break;
-            }
-            return sorted;
-        }
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([dynamicArea]).catch(err => console.log(err.message));
+    }
+}
 
-        function renderInsightList() {
-            if (!insightListContainer) return;
-            insightListContainer.innerHTML = "";
+function listenToCloudData(uid) {
+    const userProblemsRef = ref(database, 'users/' + uid + '/problems');
+    onValue(userProblemsRef, (snapshot) => {
+        lastCloudProblemsSnapshot = snapshot.val() || {};
+        rebuildFilterBarAndCards();
+    }, (err) => {
+        console.error(err);
+        showToast("データの読み込みに失敗しました。ネットワークをご確認ください。", "error");
+    });
+}
 
-            const sortKey = insightSortSelect ? insightSortSelect.value : "newest";
-            const entries = Object.keys(lastCloudProblemsSnapshot)
-                .map(id => [id, lastCloudProblemsSnapshot[id]])
-                .filter(([, p]) => p.insight && p.insight.trim() !== "");
-            const sortedEntries = sortInsightEntries(entries, sortKey);
+function doLogin() { signInWithPopup(auth, provider).catch(e => console.error(e)); }
+document.getElementById("main-login-btn").addEventListener("click", doLogin);
 
-            sortedEntries.forEach(([id, p]) => {
-                const subject = p.subject || "未分類";
-                const field = p.field || "未分類";
-                const shortTitle = p.short_title || "無題の問題";
+onAuthStateChanged(auth, (user) => {
+    const authChip = document.getElementById("auth-chip");
+    const loginNotice = document.getElementById("login-required-notice");
+    const mainContent = document.getElementById("main-content");
 
-                const createdInfo = resolveCreatedAt(p);
-                const createdAtDate = createdInfo ? formatShortDate(createdInfo.date) : null;
-                const insightDate = p.insightUpdatedAt ? formatShortDate(new Date(p.insightUpdatedAt)) : null;
-                let dateMetaHtml = "";
-                if (createdAtDate || insightDate) {
-                    dateMetaHtml = `<div class="row-date-meta" style="margin-top:0.4rem;">`;
-                    if (createdAtDate) dateMetaHtml += `<span>📅 追加: ${createdAtDate}${createdInfo.estimated ? '（推定）' : ''}</span>`;
-                    if (insightDate) dateMetaHtml += `<span class="insight-date">🧠 気づき更新: ${insightDate}</span>`;
-                    dateMetaHtml += `</div>`;
-                }
-
-                const itemHtml = `
-                    <div class="insight-card-item" onclick="location.href='problem.html?id=${p.id}'">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.4rem;">
-                            <span class="badge badge-physics" style="font-size: 0.7rem;">${subject} // ${field}</span>
-                            <span style="font-size: 0.8rem; font-weight: 800; color: var(--accent-cyan);">📌 ${shortTitle} ➔</span>
-                        </div>
-                        <div class="tex2jax_process" style="font-size: 0.95rem; color: var(--text-main); line-height: 1.6; white-space: pre-wrap; font-weight: 600;">${p.insight.trim()}</div>
-                        ${dateMetaHtml}
-                    </div>
-                `;
-                insightListContainer.insertAdjacentHTML("beforeend", itemHtml);
-            });
-
-            if (sortedEntries.length === 0) {
-                insightListContainer.innerHTML = `
-                    <div style="padding: 3rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-                        まだ「気づきメモ」が登録されていません。<br>各問題の解答セッションで得た知識を記録してみましょう！
-                    </div>
-                `;
-            }
-
-            if (window.MathJax && window.MathJax.typesetPromise) {
-                window.MathJax.typesetPromise([insightListContainer]).catch(err => console.log(err.message));
-            }
-        }
-
-        if (insightSortSelect) {
-            insightSortSelect.addEventListener("change", renderInsightList);
-        }
-
-        if (openInsightListBtn && insightListModal) {
-            openInsightListBtn.addEventListener("click", () => {
-                renderInsightList();
-                insightListModal.style.display = "flex";
-            });
-        }
-
-        if (closeInsightListBtn && insightListModal) {
-            closeInsightListBtn.addEventListener("click", () => {
-                insightListModal.style.display = "none";
-            });
-        }
-
-        if (insightListModal) {
-            insightListModal.addEventListener("click", (e) => {
-                if (e.target === insightListModal) {
-                    insightListModal.style.display = "none";
-                }
-            });
-        }
-
-        // ==========================================================================
-        // 💬【新設】質問履歴アーカイブ（全問題横断）の監視・一覧表示・詳細表示・削除ロジック
-        // ==========================================================================
-        let qnaLogsCache = {}; // { logId: {problemId, shortTitle, subject, field, savedAt, messages} }
-        let currentQnaUid = null;
-
-        function listenToQnaArchive(uid) {
-            currentQnaUid = uid;
-            const qnaLogsRootRef = ref(database, 'users/' + uid + '/qna_logs');
-            onValue(qnaLogsRootRef, (snapshot) => {
-                qnaLogsCache = snapshot.val() || {};
-                populateQnaArchiveSubjectFilter();
-                if (qnaArchiveModal && qnaArchiveModal.style.display === "flex") renderQnaArchiveList();
-            });
-        }
-
-        function formatQnaArchiveDate(iso) {
-            if (!iso) return "";
-            return new Date(iso).toLocaleString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        }
-
-        const qnaArchiveModal = document.getElementById("qna-archive-modal");
-        const openQnaArchiveBtn = document.getElementById("open-qna-archive-btn");
-        const closeQnaArchiveBtn = document.getElementById("close-qna-archive-btn");
-        const qnaArchiveListContainer = document.getElementById("qna-archive-list-container");
-        const qnaArchiveSortSelect = document.getElementById("qna-archive-sort-select");
-        const qnaArchiveSubjectSelect = document.getElementById("qna-archive-subject-select");
-
-        function populateQnaArchiveSubjectFilter() {
-            if (!qnaArchiveSubjectSelect) return;
-            const currentVal = qnaArchiveSubjectSelect.value || "ALL";
-            const subjects = [...new Set(Object.values(qnaLogsCache).map(l => l.subject || "未分類"))].sort((a, b) => a.localeCompare(b, "ja"));
-            qnaArchiveSubjectSelect.innerHTML = `<option value="ALL">すべて</option>` +
-                subjects.map(s => `<option value="${s}">${s}</option>`).join("");
-            if (subjects.includes(currentVal)) qnaArchiveSubjectSelect.value = currentVal;
-        }
-
-        function renderQnaArchiveList() {
-            if (!qnaArchiveListContainer) return;
-            const sortKey = qnaArchiveSortSelect ? qnaArchiveSortSelect.value : "newest";
-            const subjectFilter = qnaArchiveSubjectSelect ? qnaArchiveSubjectSelect.value : "ALL";
-
-            let entries = Object.entries(qnaLogsCache);
-            if (subjectFilter !== "ALL") {
-                entries = entries.filter(([, l]) => (l.subject || "未分類") === subjectFilter);
-            }
-            entries.sort((a, b) => {
-                const diff = new Date(b[1].savedAt || 0) - new Date(a[1].savedAt || 0);
-                return sortKey === "oldest" ? -diff : diff;
-            });
-
-            if (entries.length === 0) {
-                qnaArchiveListContainer.innerHTML = `
-                    <div style="padding: 3rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-                        まだ記録された質問ログがありません。<br>各問題のAIチャットで「この会話を記録する」を押すと、ここに残ります。
-                    </div>
-                `;
-                return;
-            }
-
-            qnaArchiveListContainer.innerHTML = entries.map(([logId, log]) => {
-                const firstUserMsg = (log.messages || []).find(m => m.role === "user");
-                const preview = firstUserMsg ? firstUserMsg.content : "（内容なし）";
-                const subject = log.subject || "未分類";
-                const field = log.field || "未分類";
-                return `
-                    <div class="qna-archive-item" data-log-id="${logId}">
-                        <span class="badge badge-physics" style="font-size: 0.7rem;">${subject} // ${field}</span>
-                        <div style="font-size: 0.85rem; font-weight: 800; color: var(--accent-yellow); margin-top: 0.4rem;">📌 ${log.shortTitle || "無題の問題"}</div>
-                        <div class="qna-archive-preview tex2jax_process">💬 ${preview}</div>
-                        <div class="qna-archive-date">🗓️ ${formatQnaArchiveDate(log.savedAt)}</div>
-                    </div>
-                `;
-            }).join("");
-
-            qnaArchiveListContainer.querySelectorAll("[data-log-id]").forEach(itemEl => {
-                itemEl.addEventListener("click", () => openQnaArchiveDetail(itemEl.getAttribute("data-log-id")));
-            });
-
-            if (window.MathJax && window.MathJax.typesetPromise) {
-                window.MathJax.typesetPromise([qnaArchiveListContainer]).catch(err => console.log(err.message));
-            }
-        }
-
-        if (qnaArchiveSortSelect) qnaArchiveSortSelect.addEventListener("change", renderQnaArchiveList);
-        if (qnaArchiveSubjectSelect) qnaArchiveSubjectSelect.addEventListener("change", renderQnaArchiveList);
-
-        if (openQnaArchiveBtn && qnaArchiveModal) {
-            openQnaArchiveBtn.addEventListener("click", () => {
-                renderQnaArchiveList();
-                qnaArchiveModal.style.display = "flex";
-            });
-        }
-        if (closeQnaArchiveBtn && qnaArchiveModal) {
-            closeQnaArchiveBtn.addEventListener("click", () => { qnaArchiveModal.style.display = "none"; });
-        }
-        if (qnaArchiveModal) {
-            qnaArchiveModal.addEventListener("click", (e) => {
-                if (e.target === qnaArchiveModal) qnaArchiveModal.style.display = "none";
-            });
-        }
-
-        // 質問ログ詳細モーダル
-        const qnaArchiveDetailModal = document.getElementById("qna-archive-detail-modal");
-        const qnaArchiveDetailMessages = document.getElementById("qna-archive-detail-messages");
-        const qnaArchiveDetailMeta = document.getElementById("qna-archive-detail-meta");
-        const qnaArchiveDetailGotoBtn = document.getElementById("qna-archive-detail-goto-btn");
-        const qnaArchiveDetailDeleteBtn = document.getElementById("qna-archive-detail-delete-btn");
-        const closeQnaArchiveDetailBtn = document.getElementById("close-qna-archive-detail-btn");
-        let currentOpenQnaArchiveLogId = null;
-
-        function renderQnaArchiveFormattedText(text) {
-            if (!text) return "";
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-
-        function openQnaArchiveDetail(logId) {
-            const log = qnaLogsCache[logId];
-            if (!log) return;
-            currentOpenQnaArchiveLogId = logId;
-
-            qnaArchiveDetailMeta.textContent = `📌 ${log.shortTitle || "無題の問題"} ｜ ${log.subject || "未分類"} // ${log.field || "未分類"} ｜ 🗓️ ${formatQnaArchiveDate(log.savedAt)}`;
-            qnaArchiveDetailMessages.innerHTML = (log.messages || []).map(m => {
-                const cls = m.role === "user" ? "bubble-user" : "bubble-ai";
-                return `<div class="chat-bubble ${cls} tex2jax_process">${renderQnaArchiveFormattedText(m.content)}</div>`;
-            }).join("");
-
-            qnaArchiveModal.style.display = "none";
-            qnaArchiveDetailModal.style.display = "flex";
-
-            if (window.MathJax && window.MathJax.typesetPromise) {
-                window.MathJax.typesetPromise([qnaArchiveDetailMessages]).catch(err => console.log(err.message));
-            }
-        }
-
-        if (qnaArchiveDetailGotoBtn) {
-            qnaArchiveDetailGotoBtn.addEventListener("click", () => {
-                const log = qnaLogsCache[currentOpenQnaArchiveLogId];
-                if (log && log.problemId) location.href = `problem.html?id=${log.problemId}`;
-            });
-        }
-        if (qnaArchiveDetailDeleteBtn) {
-            qnaArchiveDetailDeleteBtn.addEventListener("click", async () => {
-                if (!currentOpenQnaArchiveLogId || !currentQnaUid) return;
-                if (!confirm("この質問ログを削除しますか？この操作は取り消せません。")) return;
-                try {
-                    await remove(ref(database, 'users/' + currentQnaUid + '/qna_logs/' + currentOpenQnaArchiveLogId));
-                    qnaArchiveDetailModal.style.display = "none";
-                } catch (error) {
-                    console.error("質問ログ削除エラー:", error);
-                    alert("削除に失敗しました。ネットワークの状態を確認してください。");
-                }
-            });
-        }
-        if (closeQnaArchiveDetailBtn && qnaArchiveDetailModal) {
-            closeQnaArchiveDetailBtn.addEventListener("click", () => { qnaArchiveDetailModal.style.display = "none"; });
-        }
-        if (qnaArchiveDetailModal) {
-            qnaArchiveDetailModal.addEventListener("click", (e) => {
-                if (e.target === qnaArchiveDetailModal) qnaArchiveDetailModal.style.display = "none";
-            });
-        }
-   </script>
-
+    if (user) {
+        authChip.className = "m-auth-chip";
+        authChip.innerHTML = `<img src="${user.photoURL}"><span>${user.displayName}</span>`;
+        loginNotice.style.display = "none";
+        mainContent.style.display = "block";
+        listenToCloudData(user.uid);
+    } else {
+        authChip.className = "m-auth-chip signed-out";
+        authChip.textContent = "未サインイン";
+        loginNotice.style.display = "block";
+        mainContent.style.display = "none";
+    }
+});
+</script>
 </body>
 </html>

@@ -1,0 +1,253 @@
+/* ==========================================================================
+   LOLZ MOBILE // 共通デザインシステム
+   「サイバー・ネオン」のDNAを継承しつつ、タッチ操作前提に最適化。
+   PC版のガラス質感（backdrop-filter多用）は描画負荷が高いため、
+   モバイルでは半透明の単色パネル＋くっきりしたネオン輪郭に置き換える。
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body, * {
+    scrollbar-width: none !important;
+}
+*::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+
+:root {
+    --bg-color: #08080d;
+    --panel-bg: #12121a;
+    --panel-bg-raised: #171722;
+    --border-color: rgba(255, 255, 255, 0.09);
+
+    --accent-cyan: #00f3ff;
+    --accent-magenta: #ff2e88;
+    --accent-yellow: #ffe600;
+    --accent-green: #00ff90;
+
+    --text-main: #ffffff;
+    --text-muted: #8a97a3;
+    --text-bright-muted: #c7d4dc;
+
+    --fs-xs: 0.72rem;
+    --fs-sm: 0.85rem;
+    --fs-md: 1rem;
+    --fs-lg: 1.25rem;
+    --fs-xl: 1.7rem;
+
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --tabbar-height: 64px;
+}
+
+body {
+    background-color: var(--bg-color);
+    background-image:
+        radial-gradient(circle at 15% 0%, rgba(0, 243, 255, 0.07), transparent 45%),
+        radial-gradient(circle at 85% 15%, rgba(255, 46, 136, 0.06), transparent 40%);
+    color: var(--text-main);
+    font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', Arial, sans-serif;
+    min-height: 100vh;
+    padding: 0.9rem 0.9rem calc(var(--tabbar-height) + var(--safe-bottom) + 1.2rem);
+    overflow-x: hidden;
+    position: relative;
+    font-size: var(--fs-md);
+    -webkit-font-smoothing: antialiased;
+}
+
+mjx-container { max-width: 100% !important; overflow-x: auto !important; overflow-y: hidden !important; vertical-align: middle; }
+mjx-container[jax="CHTML"][display="true"] { display: block !important; margin: 0.5em 0 !important; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 8px; }
+
+/* ==========================================================================
+   TOP HEADER（コンパクト・固定なし）
+   ========================================================================== */
+.m-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.15rem 1rem;
+}
+.m-header .m-logo {
+    font-weight: 900;
+    font-size: 1.05rem;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.m-header .m-logo::before {
+    content: "●";
+    color: var(--accent-green);
+    font-size: 0.55rem;
+    animation: m-blink 1.6s infinite;
+}
+@keyframes m-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.m-header .m-page-title {
+    font-weight: 800;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+.m-auth-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    color: var(--text-bright-muted);
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    padding: 0.35rem 0.6rem;
+    border-radius: 20px;
+}
+.m-auth-chip img { width: 20px; height: 20px; border-radius: 50%; }
+.m-auth-chip.signed-out { color: var(--accent-magenta); }
+
+/* ==========================================================================
+   BOTTOM TAB BAR（シグネチャー要素）
+   ========================================================================== */
+.m-tabbar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: calc(var(--tabbar-height) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    background: rgba(9, 9, 14, 0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    z-index: 1000;
+}
+.m-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    position: relative;
+}
+.m-tab .m-tab-icon { font-size: 1.25rem; line-height: 1; filter: grayscale(1) opacity(0.7); transition: filter 0.15s ease, transform 0.15s ease; }
+.m-tab.active { color: var(--accent-cyan); }
+.m-tab.active .m-tab-icon { filter: none; transform: translateY(-1px); }
+.m-tab.active::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    width: 22px;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px rgba(0, 243, 255, 0.8);
+}
+.m-tab:active { opacity: 0.6; }
+
+/* ==========================================================================
+   共通パネル / カード
+   ========================================================================== */
+.m-panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 1rem;
+}
+.m-panel-raised {
+    background: var(--panel-bg-raised);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 1rem;
+}
+
+.m-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.6rem;
+    border-radius: 7px;
+    font-weight: 800;
+    font-size: 0.68rem;
+    letter-spacing: 0.3px;
+}
+.m-badge-cyan     { background: rgba(0, 243, 255, 0.1); color: var(--accent-cyan); }
+.m-badge-magenta  { background: rgba(255, 46, 136, 0.12); color: var(--accent-magenta); }
+.m-badge-yellow   { background: rgba(255, 230, 0, 0.1); color: var(--accent-yellow); }
+.m-badge-muted    { background: rgba(255, 255, 255, 0.06); color: var(--text-bright-muted); }
+.m-badge-green    { background: rgba(0, 255, 144, 0.1); color: var(--accent-green); }
+
+.m-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    background: var(--accent-cyan);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1.1rem;
+    font-weight: 900;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+    min-height: 44px;
+}
+.m-btn:active { transform: scale(0.97); }
+.m-btn-ghost {
+    background: transparent;
+    color: var(--text-bright-muted);
+    border: 1px solid var(--border-color);
+}
+.m-btn-outline-cyan {
+    background: rgba(0, 243, 255, 0.06);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(0, 243, 255, 0.4);
+}
+
+.m-empty {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    line-height: 1.7;
+}
+
+.m-login-gate {
+    padding: 3rem 1.2rem;
+    text-align: center;
+    background: var(--panel-bg);
+    border: 1px dashed var(--border-color);
+    border-radius: 18px;
+}
+.m-login-gate h2 { font-size: var(--fs-lg); font-weight: 900; color: var(--accent-cyan); margin-bottom: 0.7rem; }
+.m-login-gate p { color: var(--text-muted); font-size: var(--fs-sm); margin-bottom: 1.5rem; line-height: 1.7; }
+
+/* トースト */
+.m-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 14px);
+    transform: translateX(-50%) translateY(10px);
+    background: #1a1a24;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.7rem 1.1rem;
+    border-radius: 12px;
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    max-width: 88vw;
+    text-align: center;
+}
+.m-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.m-toast.error { border-color: rgba(255, 46, 136, 0.5); color: #ffb3d1; }
+
+/* スピナー */
+.m-loading { display: flex; align-items: center; justify-content: center; padding: 3rem 0; color: var(--text-muted); font-size: var(--fs-sm); gap: 0.6rem; }
+.m-spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); border-top-color: var(--accent-cyan); animation: m-spin 0.7s linear infinite; }
+@keyframes m-spin { to { transform: rotate(360deg); } }
