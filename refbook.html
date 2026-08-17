@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#050508">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LOLZ">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon.png">
+    <link rel="apple-touch-icon" href="icons/icon.png">
+    <title>LOLZ // 参考書 一問一答</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="mobile-nav.css">
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                macros: { fbox: ["\\bbox[2px,border:1px solid]{#1}", 1] }
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <style>
+        .refbook-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.6rem; }
+
+        header.rb-header {
+            display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;
+            border-bottom: 1px solid #22222a; padding-bottom: 1.2rem;
+        }
+        .rb-title { font-size: var(--fs-lg); font-weight: 900; letter-spacing: -1px; }
+        .rb-sub { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.3rem; }
+        .back-link { color: var(--text-bright-muted); font-size: 0.85rem; text-decoration: none; font-weight: 700; }
+        .back-link:hover { color: var(--accent-cyan); }
+
+        .user-profile { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700; }
+        .user-avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--accent-cyan); }
+        #logout-btn { background: transparent; border: 1px solid #222; color: var(--text-muted); font-size: 0.8rem; padding: 0.3rem 0.6rem; border-radius: 8px; cursor: pointer; }
+        #logout-btn:hover { border-color: var(--accent-magenta); color: var(--accent-magenta); }
+
+        .login-overlay-box {
+            text-align: center; padding: 3rem 2rem; border: 1px solid #22222a; border-radius: 24px;
+        }
+
+        .rb-action-bar { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+
+        .unit-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.2rem;
+        }
+        .unit-card {
+            border: 1px solid #22222a; box-shadow: 4px 4px 0px #22222a; cursor: pointer; min-height: 140px;
+            transition: transform 150ms cubic-bezier(0.1,0.8,0.2,1);
+        }
+        .unit-card:hover { transform: translate(-2px, -2px); border-color: var(--accent-cyan); box-shadow: 6px 6px 0px #003a3d; }
+        .unit-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+        .unit-card-name { font-weight: 800; font-size: 1.05rem; line-height: 1.4; }
+        .unit-card-icons { display: flex; gap: 0.4rem; flex-shrink: 0; }
+        .unit-icon-btn {
+            background: rgba(255,255,255,0.04); border: 1px solid #22222a; color: var(--text-muted);
+            border-radius: 8px; width: 26px; height: 26px; font-size: 0.75rem; cursor: pointer; flex-shrink: 0;
+        }
+        .unit-icon-btn:hover { color: #fff; border-color: var(--accent-cyan); }
+        .unit-card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
+        .unit-card-count { font-size: 1.6rem; font-weight: 900; color: var(--accent-cyan); }
+        .unit-card-count-label { font-size: 0.72rem; color: var(--text-muted); }
+
+        .empty-note { padding: 3rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; grid-column: 1 / -1; }
+
+        /* 単元詳細（一問一答）ビュー */
+        #unit-detail-view { display: none; flex-direction: column; gap: 1.2rem; }
+        .quiz-progress-bar { display: flex; align-items: center; gap: 0.8rem; }
+        .quiz-progress-track { flex-grow: 1; height: 6px; background: #1a1a22; border-radius: 4px; overflow: hidden; }
+        .quiz-progress-fill { height: 100%; background: var(--accent-cyan); transition: width 200ms ease; }
+        .quiz-progress-text { font-size: 0.8rem; color: var(--text-muted); font-weight: 800; white-space: nowrap; }
+
+        .quiz-jump-strip { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .quiz-jump-chip {
+            background: rgba(255,255,255,0.04); border: 1px solid #22222a; color: var(--text-muted);
+            border-radius: 8px; padding: 0.3rem 0.6rem; font-size: 0.72rem; font-weight: 800; cursor: pointer;
+        }
+        .quiz-jump-chip.current { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); }
+        .quiz-jump-chip.done { border-color: #00ff78; color: #00ff78; }
+
+        .quiz-card { border: 1px solid #22222a; box-shadow: 4px 4px 0px #22222a; padding: 2rem; }
+        .quiz-card-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.2rem; }
+        .quiz-card-actions { display: flex; gap: 0.5rem; }
+        .quiz-question-text { font-size: 1.05rem; line-height: 1.9; white-space: pre-wrap; }
+        .quiz-answer-block {
+            margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px dashed #22222a; display: none;
+        }
+        .quiz-answer-block.open { display: block; }
+        .quiz-answer-label { font-size: 0.78rem; font-weight: 900; color: var(--accent-cyan); letter-spacing: 1px; margin-bottom: 0.4rem; }
+        .quiz-answer-text { font-size: 0.98rem; line-height: 1.9; white-space: pre-wrap; margin-bottom: 1.2rem; }
+        .quiz-explanation-text { font-size: 0.92rem; line-height: 1.9; white-space: pre-wrap; color: var(--text-bright-muted); }
+
+        .quiz-reveal-row { margin-top: 1.6rem; display: flex; justify-content: center; }
+        .quiz-judge-row { margin-top: 1.6rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .btn-know { background: #00ff78; color: #000; box-shadow: 3px 3px 0px #00a34e; }
+        .btn-dunno { background: var(--accent-magenta); color: #fff; box-shadow: 3px 3px 0px #8b0044; }
+
+        .quiz-nav-row { display: flex; justify-content: space-between; }
+
+        .quiz-complete-box { text-align: center; padding: 3rem 1rem; }
+
+        /* モーダル共通フォーム */
+        .rb-form-row { margin-top: 1rem; }
+        .rb-form-label { font-size: 0.78rem; font-weight: 800; color: var(--text-bright-muted); margin-bottom: 0.3rem; display: block; }
+        .rb-form-input, .rb-form-select, .rb-form-textarea {
+            width: 100%; background: #000; border: 1px solid #222; color: #fff; padding: 0.7rem 0.9rem;
+            border-radius: 10px; font-size: 0.92rem; font-family: inherit;
+        }
+        .rb-form-textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
+        .rb-inline-row { display: flex; gap: 0.8rem; }
+        .rb-inline-row > div { flex: 1; }
+
+        .photo-thumb-strip { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.8rem; }
+        .photo-thumb { position: relative; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; border: 1px solid #22222a; }
+        .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-thumb-remove {
+            position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); color: #fff;
+            width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; cursor: pointer;
+        }
+
+        .extracted-item {
+            border: 1px solid #22222a; border-radius: 14px; padding: 1.2rem; margin-top: 1rem; background: rgba(255,255,255,0.02);
+        }
+        .extracted-item-head { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; }
+        .extracted-item-toggle { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 800; }
+
+        .rb-modal-content { width: 92%; max-width: 720px; max-height: 92vh; overflow-y: auto; }
+
+        /* 🩹【修正】style.css側には.modal-overlay/.modal-contentの基底定義が無いため、
+           ここで明示的に定義する（無いと画面中央固定のポップアップにならず、
+           通常のページ要素としてそのまま縦に積まれて表示されてしまう） */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            display: none; align-items: center; justify-content: center;
+            z-index: 10000;
+        }
+        .modal-content {
+            width: 90%; max-width: 600px;
+            border: 1px solid var(--accent-cyan);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        .unit-new-row { display: none; margin-top: 0.6rem; padding: 1rem; border: 1px dashed #22222a; border-radius: 12px; }
+
+        /* 🖼️ 図・写真ビューア（一問一答画面） */
+        .quiz-badge-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .mini-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; font-weight: 800;
+            padding: 0.3rem 0.6rem; border-radius: 8px; letter-spacing: 0.5px;
+        }
+        .mini-badge-figure { background: rgba(255, 245, 0, 0.14); color: var(--accent-yellow); border: 1px solid rgba(255, 245, 0, 0.35); }
+        .mini-badge-ai { background: rgba(0, 243, 255, 0.12); color: var(--accent-cyan); border: 1px solid rgba(0, 243, 255, 0.3); }
+
+        .figure-toggle-btn {
+            margin-top: 1rem; font-size: 0.78rem; padding: 0.5rem 0.9rem;
+        }
+        .figure-gallery {
+            display: none; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.8rem;
+            padding: 0.8rem; border: 1px dashed rgba(255, 245, 0, 0.3); border-radius: 12px; background: rgba(0,0,0,0.25);
+        }
+        .figure-gallery.open { display: flex; }
+        .figure-gallery img {
+            height: 140px; border-radius: 8px; border: 1px solid #22222a; cursor: zoom-in;
+            transition: transform 150ms ease;
+        }
+        .figure-gallery img:hover { transform: scale(1.03); }
+
+        .lightbox-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 20000;
+            display: none; align-items: center; justify-content: center; padding: 2rem; cursor: zoom-out;
+        }
+        .lightbox-overlay.open { display: flex; }
+        .lightbox-overlay img { max-width: 100%; max-height: 100%; border-radius: 6px; }
+
+        .ai-answer-note {
+            font-size: 0.72rem; color: var(--accent-cyan); font-weight: 800; margin-bottom: 0.5rem;
+        }
+
+        /* 📝 自分用メモ（一問一答・保存されないその場だけのメモ） */
+        .scratch-memo-row { margin-top: 1.2rem; }
+        .scratch-memo-label {
+            font-size: 0.75rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.4rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .scratch-memo-textarea {
+            width: 100%; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.2); color: #fff;
+            padding: 0.7rem 0.9rem; border-radius: 10px; font-size: 0.9rem; font-family: inherit; line-height: 1.6;
+            resize: vertical; min-height: 60px;
+        }
+        .scratch-memo-textarea:focus { border-color: var(--accent-cyan); outline: none; }
+        .scratch-memo-recap {
+            display: none; margin-bottom: 1.2rem; padding: 0.8rem 0.9rem; border-radius: 10px;
+            border: 1px dashed rgba(255,255,255,0.2); background: rgba(255,255,255,0.02);
+        }
+        .scratch-memo-recap.visible { display: block; }
+        .scratch-memo-recap-label { font-size: 0.72rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.35rem; }
+        .scratch-memo-recap-text { font-size: 0.88rem; color: var(--text-bright-muted); line-height: 1.6; white-space: pre-wrap; }
+
+        @media (max-width: 640px) {
+            .quiz-card { padding: 1.3rem; }
+            .rb-inline-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="refbook-container">
+        <header class="m-mobile-header">
+            <a href="index.html" class="m-back-btn" aria-label="誤答ノートに戻る">‹</a>
+            <div class="m-mobile-header-title">📚 参考書 一問一答</div>
+            <div id="auth-panel" style="font-weight: 800; font-size: 0.75rem; border: 1px solid #22222a; padding: 0.4rem 0.7rem; border-radius: 10px;" class="glass-card">
+                LOADING...
+            </div>
+        </header>
+
+        <div id="login-required-notice" class="login-overlay-box" style="display: none;">
+            <h2 style="font-size: 1.4rem; font-weight: 900; color: var(--accent-cyan); margin-bottom: 1rem;">CLOUD SYNC // クラウド同期未接続</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">問題データをクラウド保存するために、Googleアカウントでログインしてください。</p>
+            <button type="button" class="tactile-btn" id="main-login-btn" style="padding: 1rem 2rem; font-size: 1.1rem; background:var(--accent-cyan); box-shadow: 4px 4px 0px #008b94;">
+                Googleアカウントでサインイン
+            </button>
+        </div>
+
+        <!-- 単元一覧ビュー -->
+        <div id="units-view" style="display:none; flex-direction: column; gap: 1.2rem;">
+            <div class="rb-action-bar" style="display:none;">
+                <button type="button" class="tactile-btn" id="open-register-modal-btn">📸 写真から問題を登録</button>
+            </div>
+            <div class="unit-grid" id="unit-grid-container">
+                <!-- JSで生成 -->
+            </div>
+        </div>
+
+        <!-- 単元詳細（一問一答）ビュー -->
+        <div id="unit-detail-view">
+            <div style="display:flex; justify-content: space-between; align-items:center; flex-wrap: wrap; gap: 0.6rem;">
+                <a href="#" class="back-link" id="back-to-units-link">← 単元一覧に戻る</a>
+                <div style="display:flex; gap:0.6rem;">
+                    <span class="badge badge-math" id="unit-detail-title-badge">単元名</span>
+                    <button type="button" class="tactile-btn tactile-btn-secondary" id="unit-add-problem-btn" style="display:none;">＋ この単元に追加登録</button>
+                </div>
+            </div>
+
+            <div class="quiz-progress-bar">
+                <div class="quiz-progress-track"><div class="quiz-progress-fill" id="quiz-progress-fill"></div></div>
+                <div class="quiz-progress-text" id="quiz-progress-text">0 / 0</div>
+            </div>
+
+            <div class="quiz-jump-strip" id="quiz-jump-strip"></div>
+
+            <div id="quiz-active-area">
+                <div class="squircle-card quiz-card">
+                    <div class="quiz-card-head">
+                        <div class="quiz-badge-row">
+                            <span class="badge badge-physics" id="quiz-card-badge">--</span>
+                            <span class="mini-badge mini-badge-figure" id="quiz-figure-badge" style="display:none;">🖼️ 図あり</span>
+                        </div>
+                        <div class="quiz-card-actions" style="display:none;">
+                            <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-edit-btn">✏️ 編集</button>
+                            <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-delete-btn">🗑 削除</button>
+                        </div>
+                    </div>
+
+                    <div class="quiz-question-text tex2jax_process" id="quiz-question-text"></div>
+
+                    <button type="button" class="tactile-btn tactile-btn-secondary figure-toggle-btn" id="quiz-figure-toggle-btn" style="display:none;">🖼️ 参考書の元写真を見る（図・表を確認）</button>
+                    <div class="figure-gallery" id="quiz-figure-gallery"></div>
+
+                    <div class="scratch-memo-row">
+                        <div class="scratch-memo-label">📝 自分の解答メモ（保存されません・答えを見るときに一緒に表示されます）</div>
+                        <textarea class="scratch-memo-textarea" id="quiz-scratch-memo" placeholder="ここに自分の解答を書いておくと、答えを見るときに一緒に見比べられます"></textarea>
+                    </div>
+
+                    <div class="quiz-reveal-row" id="quiz-reveal-row">
+                        <button type="button" class="tactile-btn" id="quiz-reveal-btn">👀 答え・解説を見る</button>
+                    </div>
+
+                    <div class="quiz-answer-block" id="quiz-answer-block">
+                        <div class="scratch-memo-recap" id="quiz-scratch-memo-recap">
+                            <div class="scratch-memo-recap-label">📝 自分が書いたメモ</div>
+                            <div class="scratch-memo-recap-text" id="quiz-scratch-memo-recap-text"></div>
+                        </div>
+                        <div class="quiz-answer-label">✅ ANSWER</div>
+                        <div class="ai-answer-note" id="quiz-answer-ai-note" style="display:none;">🤖 この解答・解説はAIが作成したものです（参考書に印刷がなかったため）。念のため内容を確認してください。</div>
+                        <div class="quiz-answer-text tex2jax_process" id="quiz-answer-text"></div>
+                        <div class="quiz-answer-label">📝 EXPLANATION</div>
+                        <div class="quiz-explanation-text tex2jax_process" id="quiz-explanation-text"></div>
+
+                        <div class="quiz-judge-row">
+                            <button type="button" class="tactile-btn btn-know" id="quiz-know-btn">✅ わかった → 次へ</button>
+                            <button type="button" class="tactile-btn btn-dunno" id="quiz-dunno-btn">❌ わからなかった → 誤答ノートへ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quiz-nav-row" style="margin-top: 1rem;">
+                    <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-prev-btn">← 前の問題</button>
+                    <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-next-btn">次の問題 →</button>
+                </div>
+            </div>
+
+            <div class="squircle-card quiz-complete-box" id="quiz-complete-area" style="display:none;">
+                <div style="font-size: 1.4rem; font-weight: 900; color: var(--accent-cyan);">🎉 この単元の問題を最後まで解きました！</div>
+                <div style="margin-top: 1.5rem; display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+                    <button type="button" class="tactile-btn" id="quiz-restart-btn">🔁 最初から解き直す</button>
+                    <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-back-to-units-btn2">← 単元一覧に戻る</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📸 登録モーダル -->
+    <div class="modal-overlay" id="register-modal">
+        <div class="squircle-tile modal-content rb-modal-content glass-card">
+            <div class="tile-header-group">
+                <span class="badge badge-ai" style="color: var(--accent-cyan);">📸 参考書の写真から問題を登録</span>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.4rem;">同じページ内の複数の問題（例：WARMING UP①〜⑤、基本例題1など）はまとめて1回で読み取れます。</p>
+            </div>
+
+            <div class="rb-form-row">
+                <label class="rb-form-label">登録先の単元</label>
+                <select class="rb-form-select" id="register-unit-select"></select>
+                <button type="button" class="tactile-btn tactile-btn-secondary" id="show-new-unit-btn" style="margin-top:0.6rem; padding:0.4rem 0.8rem; font-size:0.75rem;">＋ 新しい単元を作る</button>
+
+                <div class="unit-new-row" id="unit-new-row">
+                    <div class="rb-inline-row">
+                        <div>
+                            <label class="rb-form-label">単元名（例：①物質の探究）</label>
+                            <input type="text" class="rb-form-input" id="new-unit-name-input" placeholder="①物質の探究">
+                        </div>
+                        <div>
+                            <label class="rb-form-label">教科</label>
+                            <select class="rb-form-select" id="new-unit-subject-select">
+                                <option value="数学">数学</option>
+                                <option value="物理">物理</option>
+                                <option value="化学" selected>化学基礎</option>
+                                <option value="国語">国語</option>
+                                <option value="地歴公民">地歴公民</option>
+                                <option value="英語">英語</option>
+                                <option value="世界史">世界史</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" class="tactile-btn" id="create-unit-btn" style="margin-top:0.7rem; padding:0.5rem 1rem; font-size:0.8rem;">この単元を作成</button>
+                </div>
+            </div>
+
+            <div class="rb-form-row">
+                <label class="rb-form-label">問題ページの写真（複数選択可）</label>
+                <input type="file" accept="image/*" multiple id="register-image-input" style="display:none;">
+                <button type="button" class="tactile-btn tactile-btn-secondary" id="register-image-trigger-btn">🖼️ 写真を選択</button>
+                <div class="photo-thumb-strip" id="register-photo-preview"></div>
+            </div>
+
+            <div class="rb-form-row">
+                <button type="button" class="tactile-btn" id="run-extract-btn" style="width:100%; padding: 0.9rem; font-size: 1rem;">✨ AIで問題を読み取る</button>
+            </div>
+
+            <div id="extracted-items-container"></div>
+
+            <div style="display:flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.4rem; border-top: 1px solid #22222a; padding-top: 1rem;">
+                <button type="button" class="tactile-btn tactile-btn-secondary" id="close-register-modal-btn">閉じる</button>
+                <button type="button" class="tactile-btn" id="save-extracted-btn" style="display:none;">✅ この内容で登録する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✏️ 編集モーダル（AIの読み取りミスの修正用） -->
+    <div class="modal-overlay" id="edit-modal">
+        <div class="squircle-tile modal-content rb-modal-content glass-card">
+            <div class="tile-header-group">
+                <span class="badge badge-ai" style="color: var(--accent-yellow);">✏️ 問題を編集</span>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.4rem;">AIの読み取りミスがあれば、ここで直接修正できます。</p>
+            </div>
+            <div class="rb-inline-row rb-form-row">
+                <div>
+                    <label class="rb-form-label">問題番号</label>
+                    <input type="text" class="rb-form-input" id="edit-number-input" placeholder="基本例題1 / 3 など">
+                </div>
+                <div>
+                    <label class="rb-form-label">種別</label>
+                    <input type="text" class="rb-form-input" id="edit-type-input" placeholder="基本問題 / WARMING UP など">
+                </div>
+            </div>
+            <div class="rb-form-row">
+                <label class="rb-form-label">問題文</label>
+                <textarea class="rb-form-textarea" id="edit-question-input" style="min-height: 120px;"></textarea>
+            </div>
+            <div class="rb-form-row" id="edit-figure-preview-row" style="display:none;">
+                <label class="rb-form-label">登録済みの元写真</label>
+                <div class="photo-thumb-strip" id="edit-figure-preview"></div>
+            </div>
+            <div class="rb-form-row">
+                <label class="rb-form-label">解答</label>
+                <textarea class="rb-form-textarea" id="edit-answer-input" style="min-height: 90px;"></textarea>
+            </div>
+            <div class="rb-form-row">
+                <label class="rb-form-label">解説</label>
+                <textarea class="rb-form-textarea" id="edit-explanation-input" style="min-height: 110px;"></textarea>
+            </div>
+            <div class="rb-form-row">
+                <button type="button" class="tactile-btn tactile-btn-secondary" id="edit-ai-generate-btn" style="width:100%; padding:0.7rem; font-size:0.85rem;">🤖 AIに解答・解説を作らせる（今の解答は上書きされます）</button>
+            </div>
+            <div style="display:flex; justify-content: space-between; gap: 0.8rem; margin-top: 1.4rem; border-top: 1px solid #22222a; padding-top: 1rem;">
+                <button type="button" class="tactile-btn tactile-btn-secondary" id="edit-delete-btn" style="color: var(--accent-magenta); border-color: var(--accent-magenta);">🗑 この問題を削除</button>
+                <div style="display:flex; gap:0.6rem;">
+                    <button type="button" class="tactile-btn tactile-btn-secondary" id="close-edit-modal-btn">キャンセル</button>
+                    <button type="button" class="tactile-btn" id="save-edit-btn">保存する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔍 画像拡大表示用ライトボックス -->
+    <div class="lightbox-overlay" id="lightbox-overlay">
+        <img id="lightbox-img" src="" alt="拡大画像">
+    </div>
+
+    <script type="module">
+        import {
+            getGeminiKeys, initApiKeyManager, showToast, callGeminiJSON, generateTinyThumbnail
+        } from "./api-key-manager.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB55MdhpjJizQaLEdRu-XhBVJ4PqrHsAyY",
+            authDomain: "buturi-2449e.firebaseapp.com",
+            databaseURL: "https://buturi-2449e-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "buturi-2449e",
+            storageBucket: "buturi-2449e.appspot.com",
+            messagingSenderId: "976306696124",
+            appId: "1:976306696124:web:e455c1953544bff5c345b9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+
+        initApiKeyManager({ needGemini: true, needDeepseek: false });
+
+        // ----------------------------------------------------------------
+        // 状態
+        // ----------------------------------------------------------------
+        let currentUser = null;
+        let unitsCache = {};      // unitId -> {name, subject, order, createdAt}
+        let problemsCache = {};   // problemId -> {unitId, number, type, question, answer, explanation, order, createdAt}
+        let currentUnitId = null;
+        let currentQuizList = []; // このユニットの問題ID配列（order順）
+        let currentQuizIndex = 0;
+        let solvedInThisRun = {}; // problemId -> true（今回のセッションで解答表示済み）
+
+        let pendingImages = [];   // 登録モーダルで選択中の画像 {mimeType, base64, dataUrl}
+        let pendingExtracted = []; // AI読み取り結果のプレビュー行 {number,type,question,hasFigure,answer,explanation,answerGenerated,include}
+
+        let problemImagesCache = {}; // problemId -> [dataUrl, ...]（一度取得した元写真をキャッシュ）
+        let scratchMemos = {}; // problemId -> 自分用メモ（保存しない・ページを閉じたら消える一時メモ）
+
+        // "data:image/jpeg;base64,xxxx" 形式のURLをGemini用 {mimeType, data} に分解
+        function dataUrlToInlineData(dataUrl) {
+            const m = /^data:([^;]+);base64,(.*)$/s.exec(dataUrl || "");
+            if (!m) return null;
+            return { mimeType: m[1], data: m[2] };
+        }
+
+        function openLightbox(src) {
+            document.getElementById("lightbox-img").src = src;
+            document.getElementById("lightbox-overlay").classList.add("open");
+        }
+        document.getElementById("lightbox-overlay").addEventListener("click", () => {
+            document.getElementById("lightbox-overlay").classList.remove("open");
+        });
+
+        let editingProblemId = null;
+
+        // ----------------------------------------------------------------
+        // 画像圧縮（OCR精度を優先してやや高めの解像度・画質で保持）
+        // ----------------------------------------------------------------
+        function compressImageForOcr(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function (evt) {
+                    const img = new Image();
+                    img.onload = function () {
+                        const canvas = document.createElement("canvas");
+                        const max_size = 1600;
+                        let width = img.width, height = img.height;
+                        if (width > height) { if (width > max_size) { height *= max_size / width; width = max_size; } }
+                        else { if (height > max_size) { width *= max_size / height; height = max_size; } }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
+                        resolve({ mimeType: "image/jpeg", base64: compressedDataUrl.split(",")[1], dataUrl: compressedDataUrl });
+                    };
+                    img.onerror = reject;
+                    img.src = evt.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ----------------------------------------------------------------
+        // 認証
+        // ----------------------------------------------------------------
+        onAuthStateChanged(auth, (user) => {
+            const authPanel = document.getElementById("auth-panel");
+            const loginNotice = document.getElementById("login-required-notice");
+            const unitsView = document.getElementById("units-view");
+
+            if (user) {
+                currentUser = user;
+                authPanel.innerHTML = `
+                    <div class="user-profile" style="display:flex; align-items:center; gap:0.6rem;">
+                        <img src="${user.photoURL}" class="user-avatar">
+                        <span>${user.displayName}</span>
+                        <button id="logout-btn">ログアウト</button>
+                    </div>
+                `;
+                document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
+
+                loginNotice.style.display = "none";
+                unitsView.style.display = "flex";
+
+                listenToUnits(user.uid);
+                listenToProblems(user.uid);
+            } else {
+                currentUser = null;
+                authPanel.innerHTML = `<span style="color:var(--accent-magenta); cursor:pointer;" id="header-login-btn">SIGN IN</span>`;
+                document.getElementById("header-login-btn").addEventListener("click", doLogin);
+
+                loginNotice.style.display = "block";
+                unitsView.style.display = "none";
+                document.getElementById("unit-detail-view").style.display = "none";
+            }
+        });
+
+        function doLogin() { signInWithPopup(auth, provider).catch(e => console.error(e)); }
+        document.getElementById("main-login-btn").addEventListener("click", doLogin);
+
+        // ----------------------------------------------------------------
+        // Firebase監視
+        // ----------------------------------------------------------------
+        function listenToUnits(uid) {
+            onValue(ref(database, "users/" + uid + "/refBookUnits"), (snap) => {
+                unitsCache = snap.val() || {};
+                renderUnitGrid();
+                renderUnitSelectOptions();
+                if (currentUnitId && unitsCache[currentUnitId]) {
+                    renderUnitDetailHeader();
+                }
+            });
+        }
+
+        function listenToProblems(uid) {
+            onValue(ref(database, "users/" + uid + "/refBookProblems"), (snap) => {
+                problemsCache = snap.val() || {};
+                renderUnitGrid();
+                if (currentUnitId) {
+                    rebuildQuizList();
+                    renderQuizCard();
+                }
+            });
+        }
+
+        // ----------------------------------------------------------------
+        // 単元一覧の描画
+        // ----------------------------------------------------------------
+        function countProblemsInUnit(unitId) {
+            return Object.values(problemsCache).filter(p => p.unitId === unitId).length;
+        }
+
+        function renderUnitGrid() {
+            const container = document.getElementById("unit-grid-container");
+            const unitEntries = Object.entries(unitsCache).sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
+
+            if (unitEntries.length === 0) {
+                container.innerHTML = `<div class="empty-note">まだ単元が登録されていません。PC版から問題を登録してください。</div>`;
+                return;
+            }
+
+            container.innerHTML = unitEntries.map(([unitId, unit]) => {
+                const count = countProblemsInUnit(unitId);
+                const badgeClass = unit.subject === "数学" ? "badge-math" : (unit.subject === "世界史" ? "badge-history" : "badge-physics");
+                return `
+                    <div class="squircle-card unit-card" data-unit-id="${unitId}">
+                        <div class="unit-card-top">
+                            <span class="badge ${badgeClass}" style="font-size:0.7rem;">${escapeHtml(unit.subject || "未分類")}</span>
+                            <div class="unit-card-icons" style="display:none;">
+                                <button type="button" class="unit-icon-btn" data-rename-unit="${unitId}" title="単元名を変更">✏️</button>
+                                <button type="button" class="unit-icon-btn" data-delete-unit="${unitId}" title="単元を削除">🗑</button>
+                            </div>
+                        </div>
+                        <div class="unit-card-name">${escapeHtml(unit.name || "無題の単元")}</div>
+                        <div class="unit-card-meta">
+                            <div>
+                                <div class="unit-card-count">${count}</div>
+                                <div class="unit-card-count-label">問題</div>
+                            </div>
+                            <span style="color: var(--accent-cyan); font-weight:800; font-size:0.85rem;">開く →</span>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            container.querySelectorAll(".unit-card").forEach(card => {
+                card.addEventListener("click", (e) => {
+                    if (e.target.closest("[data-rename-unit], [data-delete-unit]")) return;
+                    openUnit(card.getAttribute("data-unit-id"));
+                });
+            });
+            container.querySelectorAll("[data-rename-unit]").forEach(btn => {
+                btn.addEventListener("click", () => renameUnit(btn.getAttribute("data-rename-unit")));
+            });
+            container.querySelectorAll("[data-delete-unit]").forEach(btn => {
+                btn.addEventListener("click", () => deleteUnit(btn.getAttribute("data-delete-unit")));
+            });
+        }
+
+        async function renameUnit(unitId) {
+            const unit = unitsCache[unitId];
+            if (!unit) return;
+            const newName = prompt("新しい単元名を入力してください", unit.name || "");
+            if (newName === null || !newName.trim()) return;
+            await update(ref(database, "users/" + currentUser.uid + "/refBookUnits/" + unitId), { name: newName.trim() });
+            showToast("単元名を変更しました。", "info");
+        }
+
+        async function deleteUnit(unitId) {
+            const unit = unitsCache[unitId];
+            if (!unit) return;
+            const count = countProblemsInUnit(unitId);
+            if (!confirm(`単元「${unit.name}」を削除します。中の問題${count}件もすべて削除されます。よろしいですか？`)) return;
+
+            const targetProblemIds = Object.entries(problemsCache).filter(([, p]) => p.unitId === unitId).map(([id]) => id);
+            for (const pid of targetProblemIds) {
+                await remove(ref(database, "users/" + currentUser.uid + "/refBookProblems/" + pid));
+                await remove(ref(database, "users/" + currentUser.uid + "/refBookProblemImages/" + pid)).catch(() => {});
+            }
+            await remove(ref(database, "users/" + currentUser.uid + "/refBookUnits/" + unitId));
+            showToast("単元を削除しました。", "info");
+        }
+
+        // ----------------------------------------------------------------
+        // 単元詳細（一問一答）
+        // ----------------------------------------------------------------
+        function naturalSortKey(p) {
+            // number文字列から先頭の数字を拾って並び替えの目安にする（例："基本例題1"→1, "WARMING UP③"→拾えなければorder頼み）
+            const m = String(p.number || "").match(/\d+/);
+            return m ? parseInt(m[0], 10) : 999999;
+        }
+
+        function rebuildQuizList() {
+            currentQuizList = Object.entries(problemsCache)
+                .filter(([, p]) => p.unitId === currentUnitId)
+                .sort((a, b) => {
+                    const diff = naturalSortKey(a[1]) - naturalSortKey(b[1]);
+                    if (diff !== 0) return diff;
+                    return (a[1].order || 0) - (b[1].order || 0);
+                })
+                .map(([id]) => id);
+            if (currentQuizIndex >= currentQuizList.length) currentQuizIndex = 0;
+        }
+
+        function openUnit(unitId) {
+            currentUnitId = unitId;
+            currentQuizIndex = 0;
+            solvedInThisRun = {};
+            rebuildQuizList();
+            document.getElementById("units-view").style.display = "none";
+            document.getElementById("unit-detail-view").style.display = "flex";
+            renderUnitDetailHeader();
+            renderQuizCard();
+        }
+
+        function closeUnit() {
+            currentUnitId = null;
+            document.getElementById("unit-detail-view").style.display = "none";
+            document.getElementById("units-view").style.display = "flex";
+        }
+        document.getElementById("back-to-units-link").addEventListener("click", (e) => { e.preventDefault(); closeUnit(); });
+        document.getElementById("quiz-back-to-units-btn2").addEventListener("click", closeUnit);
+
+        function renderUnitDetailHeader() {
+            const unit = unitsCache[currentUnitId];
+            document.getElementById("unit-detail-title-badge").textContent = unit ? unit.name : "単元";
+        }
+
+        function renderJumpStrip() {
+            const strip = document.getElementById("quiz-jump-strip");
+            strip.innerHTML = currentQuizList.map((pid, i) => {
+                const p = problemsCache[pid];
+                const cls = i === currentQuizIndex ? "current" : (solvedInThisRun[pid] ? "done" : "");
+                return `<span class="quiz-jump-chip ${cls}" data-jump="${i}">${escapeHtml(p.number || (i + 1))}</span>`;
+            }).join("");
+            strip.querySelectorAll("[data-jump]").forEach(chip => {
+                chip.addEventListener("click", () => {
+                    currentQuizIndex = parseInt(chip.getAttribute("data-jump"), 10);
+                    renderQuizCard();
+                });
+            });
+        }
+
+        function renderQuizCard() {
+            if (currentQuizList.length === 0) {
+                document.getElementById("quiz-active-area").style.display = "none";
+                document.getElementById("quiz-complete-area").style.display = "block";
+                document.querySelector("#quiz-complete-area .quiz-complete-box, #quiz-complete-area").innerHTML = `
+                    <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-muted);">この単元にはまだ問題が登録されていません。</div>
+                    <div style="margin-top: 1.5rem;">
+                        <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-back-to-units-btn3">← 単元一覧に戻る</button>
+                    </div>
+                `;
+                document.getElementById("quiz-back-to-units-btn3")?.addEventListener("click", closeUnit);
+                document.getElementById("quiz-progress-text").textContent = "0 / 0";
+                document.getElementById("quiz-progress-fill").style.width = "0%";
+                document.getElementById("quiz-jump-strip").innerHTML = "";
+                return;
+            }
+
+            if (currentQuizIndex >= currentQuizList.length) {
+                document.getElementById("quiz-active-area").style.display = "none";
+                document.getElementById("quiz-complete-area").style.display = "block";
+                renderJumpStrip();
+                return;
+            }
+
+            document.getElementById("quiz-active-area").style.display = "block";
+            document.getElementById("quiz-complete-area").style.display = "none";
+
+            const pid = currentQuizList[currentQuizIndex];
+            const p = problemsCache[pid];
+
+            document.getElementById("quiz-progress-text").textContent = `${currentQuizIndex + 1} / ${currentQuizList.length}`;
+            document.getElementById("quiz-progress-fill").style.width = `${((currentQuizIndex + 1) / currentQuizList.length) * 100}%`;
+            renderJumpStrip();
+
+            document.getElementById("quiz-card-badge").textContent = `${p.type || "問題"} ${p.number || ""}`.trim();
+            document.getElementById("quiz-question-text").innerHTML = renderMathText(p.question || "（問題文なし）");
+            document.getElementById("quiz-answer-text").innerHTML = renderMathText(p.answer || "（解答なし）");
+            document.getElementById("quiz-explanation-text").innerHTML = renderMathText(p.explanation || "（解説なし）");
+
+            // 📝 自分用メモ（この問題のぶんを復元。保存はしない）
+            const scratchTa = document.getElementById("quiz-scratch-memo");
+            scratchTa.value = scratchMemos[pid] || "";
+            updateScratchMemoRecap(pid);
+
+            document.getElementById("quiz-answer-ai-note").style.display = p.answerGenerated ? "block" : "none";
+
+            document.getElementById("quiz-answer-block").classList.remove("open");
+            document.getElementById("quiz-reveal-row").style.display = "flex";
+
+            // 🖼️ 図・元写真の表示
+            document.getElementById("quiz-figure-badge").style.display = p.hasFigure ? "inline-flex" : "none";
+            loadQuizFigures(pid, !!p.hasFigure);
+
+            document.getElementById("quiz-prev-btn").disabled = currentQuizIndex === 0;
+            document.getElementById("quiz-prev-btn").style.opacity = currentQuizIndex === 0 ? 0.4 : 1;
+
+            typesetMath([document.getElementById("quiz-active-area")]);
+        }
+
+        // 📝 自分用メモ（一問一答内だけのその場メモ・DB保存なし）
+        // 入力するたびに更新し、答え・解説と一緒に見比べられるようリキャップ欄にも反映する
+        document.getElementById("quiz-scratch-memo").addEventListener("input", (e) => {
+            const pid = currentQuizList[currentQuizIndex];
+            if (!pid) return;
+            scratchMemos[pid] = e.target.value;
+            updateScratchMemoRecap(pid);
+        });
+
+        function updateScratchMemoRecap(problemId) {
+            const text = (scratchMemos[problemId] || "").trim();
+            const recap = document.getElementById("quiz-scratch-memo-recap");
+            const recapText = document.getElementById("quiz-scratch-memo-recap-text");
+            if (text) {
+                recap.classList.add("visible");
+                recapText.textContent = text;
+            } else {
+                recap.classList.remove("visible");
+                recapText.textContent = "";
+            }
+        }
+
+        // 🖼️ 現在の問題に紐づく元写真を取得してギャラリーにセットする
+        //    hasFigure が true の場合は最初から開いた状態で表示する
+        async function loadQuizFigures(problemId, autoOpen) {
+            const toggleBtn = document.getElementById("quiz-figure-toggle-btn");
+            const gallery = document.getElementById("quiz-figure-gallery");
+            toggleBtn.style.display = "none";
+            gallery.classList.remove("open");
+            gallery.innerHTML = "";
+
+            let images = problemImagesCache[problemId];
+            if (images === undefined) {
+                images = [];
+                try {
+                    const snap = await get(ref(database, "users/" + currentUser.uid + "/refBookProblemImages/" + problemId));
+                    if (snap.exists()) images = snap.val().images || [];
+                } catch (e) { /* 画像なしでも続行 */ }
+                problemImagesCache[problemId] = images;
+            }
+
+            // 表示中の問題が切り替わっていないか確認（非同期取得中の競合防止）
+            if (currentQuizList[currentQuizIndex] !== problemId) return;
+            if (images.length === 0) return;
+
+            toggleBtn.style.display = "inline-flex";
+            gallery.innerHTML = images.map(src => `<img src="${src}" loading="lazy">`).join("");
+            gallery.querySelectorAll("img").forEach(img => {
+                img.addEventListener("click", () => openLightbox(img.src));
+            });
+            if (autoOpen) gallery.classList.add("open");
+        }
+        document.getElementById("quiz-figure-toggle-btn").addEventListener("click", () => {
+            document.getElementById("quiz-figure-gallery").classList.toggle("open");
+        });
+
+        function escapeHtml(str) {
+            return String(str == null ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+        function renderMathText(str) {
+            return escapeHtml(str);
+        }
+        function typesetMath(nodes) {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise(nodes).catch(err => console.log(err.message));
+            }
+        }
+
+        document.getElementById("quiz-reveal-btn").addEventListener("click", () => {
+            document.getElementById("quiz-answer-block").classList.add("open");
+            document.getElementById("quiz-reveal-row").style.display = "none";
+            const pid = currentQuizList[currentQuizIndex];
+            solvedInThisRun[pid] = true;
+            typesetMath([document.getElementById("quiz-answer-block")]);
+        });
+
+        document.getElementById("quiz-know-btn").addEventListener("click", () => {
+            currentQuizIndex++;
+            renderQuizCard();
+        });
+        document.getElementById("quiz-next-btn").addEventListener("click", () => {
+            currentQuizIndex = Math.min(currentQuizIndex + 1, currentQuizList.length);
+            renderQuizCard();
+        });
+        document.getElementById("quiz-prev-btn").addEventListener("click", () => {
+            currentQuizIndex = Math.max(currentQuizIndex - 1, 0);
+            renderQuizCard();
+        });
+        document.getElementById("quiz-restart-btn").addEventListener("click", () => {
+            currentQuizIndex = 0;
+            solvedInThisRun = {};
+            renderQuizCard();
+        });
+
+        // 「わからなかった → 誤答ノートへ」
+        document.getElementById("quiz-dunno-btn").addEventListener("click", async () => {
+            const pid = currentQuizList[currentQuizIndex];
+            await sendToMistakeNotebook(pid);
+        });
+
+        async function sendToMistakeNotebook(problemId) {
+            const p = problemsCache[problemId];
+            if (!p || !currentUser) return;
+            const btn = document.getElementById("quiz-dunno-btn");
+            btn.disabled = true;
+            btn.textContent = "誤答ノートに送信中...";
+            try {
+                const unit = unitsCache[p.unitId] || {};
+                let images = [];
+                try {
+                    const imgSnap = await get(ref(database, "users/" + currentUser.uid + "/refBookProblemImages/" + problemId));
+                    if (imgSnap.exists()) images = imgSnap.val().images || [];
+                } catch (e) { /* 画像なしでも続行 */ }
+
+                let thumb = null;
+                if (images.length > 0) {
+                    try { thumb = await generateTinyThumbnail(images[0]); } catch (e) { thumb = images[0]; }
+                }
+
+                const newId = "CUSTOM_" + Date.now();
+                const nowIso = new Date().toISOString();
+                const combinedAnswer = `【解答】\n${p.answer || ""}\n\n【解説】\n${p.explanation || ""}`;
+
+                const newProblem = {
+                    id: newId,
+                    title: p.question || "",
+                    short_title: `${unit.name || "参考書"} ${p.number || ""}`.trim(),
+                    subject: unit.subject || "化学",
+                    field: unit.name || "参考書問題",
+                    trap_description: "",
+                    strategyPattern: "",
+                    errorCount: 1,
+                    lastAttemptAt: nowIso,
+                    lastResult: false,
+                    thumb: thumb,
+                    imageCount: images.length,
+                    answerFormula: combinedAnswer,
+                    mnemonic: "",
+                    events: [],
+                    createdAt: nowIso,
+                    sourceRefBookProblemId: problemId
+                };
+
+                await set(ref(database, "users/" + currentUser.uid + "/problems/" + newId), newProblem);
+                if (images.length > 0) {
+                    await set(ref(database, "users/" + currentUser.uid + "/problemImages/" + newId), { images });
+                }
+
+                location.href = "problem.html?id=" + newId;
+            } catch (error) {
+                console.error("誤答ノートへの送信に失敗:", error);
+                showToast("誤答ノートへの登録に失敗しました。", "error");
+                btn.disabled = false;
+                btn.textContent = "❌ わからなかった → 誤答ノートへ";
+            }
+        }
+
+        // ----------------------------------------------------------------
+        // 編集モーダル
+        // ----------------------------------------------------------------
+        let editAnswerGeneratedFlag = false; // 現在編集中の解答が「AIが作成したもの」かどうか
+
+        async function openEditModal(problemId) {
+            const p = problemsCache[problemId];
+            if (!p) return;
+            editingProblemId = problemId;
+            document.getElementById("edit-number-input").value = p.number || "";
+            document.getElementById("edit-type-input").value = p.type || "";
+            document.getElementById("edit-question-input").value = p.question || "";
+            document.getElementById("edit-answer-input").value = p.answer || "";
+            document.getElementById("edit-explanation-input").value = p.explanation || "";
+            editAnswerGeneratedFlag = !!p.answerGenerated;
+            document.getElementById("edit-modal").style.display = "flex";
+
+            // 登録済みの元写真をプレビュー表示（あれば）
+            const previewRow = document.getElementById("edit-figure-preview-row");
+            const previewStrip = document.getElementById("edit-figure-preview");
+            previewRow.style.display = "none";
+            previewStrip.innerHTML = "";
+            let images = problemImagesCache[problemId];
+            if (images === undefined) {
+                images = [];
+                try {
+                    const snap = await get(ref(database, "users/" + currentUser.uid + "/refBookProblemImages/" + problemId));
+                    if (snap.exists()) images = snap.val().images || [];
+                } catch (e) { /* 画像なしでも続行 */ }
+                problemImagesCache[problemId] = images;
+            }
+            if (images.length > 0 && editingProblemId === problemId) {
+                previewRow.style.display = "block";
+                previewStrip.innerHTML = images.map(src => `<div class="photo-thumb"><img src="${src}"></div>`).join("");
+                previewStrip.querySelectorAll("img").forEach(img => {
+                    img.style.cursor = "zoom-in";
+                    img.addEventListener("click", () => openLightbox(img.src));
+                });
+            }
+        }
+        document.getElementById("quiz-edit-btn").addEventListener("click", () => {
+            if (currentQuizList.length === 0) return;
+            openEditModal(currentQuizList[currentQuizIndex]);
+        });
+        document.getElementById("close-edit-modal-btn").addEventListener("click", () => {
+            document.getElementById("edit-modal").style.display = "none";
+        });
+        document.getElementById("edit-modal").addEventListener("click", (e) => {
+            if (e.target.id === "edit-modal") document.getElementById("edit-modal").style.display = "none";
+        });
+
+        // 🤖 登録済みの問題に対して、後からAIに解答・解説を作らせる
+        const REFBOOK_ANSWER_SCHEMA = {
+            type: "OBJECT",
+            properties: {
+                answer: { type: "STRING" },
+                explanation: { type: "STRING" }
+            },
+            required: ["answer", "explanation"]
+        };
+        const REFBOOK_ANSWER_PROMPT = `
+あなたは高校生向け参考書の「解答作成AI」です。与えられた問題文（写真が添付されている場合は、図・グラフ・表などもよく確認すること）に対して、正しいと考えられる解答と、解答に至る考え方を高校生にわかりやすく説明する解説を作成してください。
+数式・化学式・記号を含む場合は、$ $ で囲んだLaTeX形式で表現すること（例：$H_2O$、$x^2+1$）。
+出力は指定のJSON構造のみとし、他の説明文は一切含めないこと。
+`.trim();
+
+        document.getElementById("edit-ai-generate-btn").addEventListener("click", async () => {
+            const question = document.getElementById("edit-question-input").value.trim();
+            if (!question) { showToast("先に問題文を入力してください。", "error"); return; }
+            const btn = document.getElementById("edit-ai-generate-btn");
+            btn.disabled = true;
+            btn.textContent = "AIが解答を作成中...";
+            try {
+                const images = problemImagesCache[editingProblemId] || [];
+                const parts = [{ text: `問題文：\n${question}` }];
+                images.forEach(dataUrl => {
+                    const inline = dataUrlToInlineData(dataUrl);
+                    if (inline) parts.push({ inlineData: inline });
+                });
+                if (images.length > 0) {
+                    parts.push({ text: "上記の写真はこの問題が載っている参考書のページです。図・グラフ・表がある場合は参考にしてください。" });
+                }
+                const result = await callGeminiJSON(parts, REFBOOK_ANSWER_PROMPT, {
+                    temperature: 0.3, responseSchema: REFBOOK_ANSWER_SCHEMA, featureId: "refbook_answer_generate"
+                });
+                document.getElementById("edit-answer-input").value = result.answer || "";
+                document.getElementById("edit-explanation-input").value = result.explanation || "";
+                editAnswerGeneratedFlag = true;
+                showToast("AIが解答・解説を作成しました。内容を確認してから保存してください。", "info");
+            } catch (error) {
+                console.error("解答生成エラー:", error);
+                showToast("解答の作成に失敗しました。\n\n【原因】" + error.message, "error", 8000);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "🤖 AIに解答・解説を作らせる（今の解答は上書きされます）";
+            }
+        });
+
+        // 解答・解説を手動で編集したら「AI作成」フラグを外す
+        ["edit-answer-input", "edit-explanation-input"].forEach(id => {
+            document.getElementById(id).addEventListener("input", () => { editAnswerGeneratedFlag = false; });
+        });
+
+        document.getElementById("save-edit-btn").addEventListener("click", async () => {
+            if (!editingProblemId || !currentUser) return;
+            const updates = {
+                number: document.getElementById("edit-number-input").value.trim(),
+                type: document.getElementById("edit-type-input").value.trim(),
+                question: document.getElementById("edit-question-input").value.trim(),
+                answer: document.getElementById("edit-answer-input").value.trim(),
+                explanation: document.getElementById("edit-explanation-input").value.trim(),
+                answerGenerated: editAnswerGeneratedFlag
+            };
+            await update(ref(database, "users/" + currentUser.uid + "/refBookProblems/" + editingProblemId), updates);
+            document.getElementById("edit-modal").style.display = "none";
+            showToast("問題を更新しました。", "info");
+        });
+
+        document.getElementById("edit-delete-btn").addEventListener("click", async () => {
+            if (!editingProblemId || !currentUser) return;
+            if (!confirm("この問題を削除しますか？この操作は取り消せません。")) return;
+            await remove(ref(database, "users/" + currentUser.uid + "/refBookProblems/" + editingProblemId));
+            await remove(ref(database, "users/" + currentUser.uid + "/refBookProblemImages/" + editingProblemId)).catch(() => {});
+            document.getElementById("edit-modal").style.display = "none";
+            showToast("問題を削除しました。", "info");
+        });
+
+        document.getElementById("quiz-delete-btn").addEventListener("click", async () => {
+            if (currentQuizList.length === 0 || !currentUser) return;
+            const pid = currentQuizList[currentQuizIndex];
+            if (!confirm("この問題を削除しますか？この操作は取り消せません。")) return;
+            await remove(ref(database, "users/" + currentUser.uid + "/refBookProblems/" + pid));
+            await remove(ref(database, "users/" + currentUser.uid + "/refBookProblemImages/" + pid)).catch(() => {});
+            showToast("問題を削除しました。", "info");
+        });
+
+        // ----------------------------------------------------------------
+        // 登録モーダル
+        // ----------------------------------------------------------------
+        function renderUnitSelectOptions() {
+            const select = document.getElementById("register-unit-select");
+            const prevValue = select.value;
+            const entries = Object.entries(unitsCache).sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
+            select.innerHTML = entries.length === 0
+                ? `<option value="">（まだ単元がありません。下の「＋ 新しい単元を作る」から作成してください）</option>`
+                : entries.map(([id, u]) => `<option value="${id}">${escapeHtml(u.name)}</option>`).join("");
+            if (entries.some(([id]) => id === prevValue)) select.value = prevValue;
+            else if (currentUnitId && entries.some(([id]) => id === currentUnitId)) select.value = currentUnitId;
+        }
+
+        document.getElementById("open-register-modal-btn").addEventListener("click", () => openRegisterModal());
+        document.getElementById("unit-add-problem-btn").addEventListener("click", () => openRegisterModal(currentUnitId));
+
+        function openRegisterModal(preselectUnitId) {
+            if (getGeminiKeys().length === 0) {
+                showToast("GeminiのAPIキーが登録されていません。右下の🔑ボタンから登録してください。", "error");
+                return;
+            }
+            resetRegisterModal();
+            if (preselectUnitId) document.getElementById("register-unit-select").value = preselectUnitId;
+            document.getElementById("register-modal").style.display = "flex";
+        }
+
+        function resetRegisterModal() {
+            pendingImages = [];
+            pendingExtracted = [];
+            document.getElementById("register-photo-preview").innerHTML = "";
+            document.getElementById("extracted-items-container").innerHTML = "";
+            document.getElementById("save-extracted-btn").style.display = "none";
+            document.getElementById("unit-new-row").style.display = "none";
+            document.getElementById("new-unit-name-input").value = "";
+        }
+
+        document.getElementById("close-register-modal-btn").addEventListener("click", () => {
+            document.getElementById("register-modal").style.display = "none";
+        });
+        document.getElementById("register-modal").addEventListener("click", (e) => {
+            if (e.target.id === "register-modal") document.getElementById("register-modal").style.display = "none";
+        });
+
+        document.getElementById("show-new-unit-btn").addEventListener("click", () => {
+            const row = document.getElementById("unit-new-row");
+            row.style.display = row.style.display === "block" ? "none" : "block";
+        });
+
+        document.getElementById("create-unit-btn").addEventListener("click", async () => {
+            const name = document.getElementById("new-unit-name-input").value.trim();
+            if (!name) { showToast("単元名を入力してください。", "error"); return; }
+            if (!currentUser) return;
+            const subject = document.getElementById("new-unit-subject-select").value;
+            const newUnitId = "UNIT_" + Date.now();
+            await set(ref(database, "users/" + currentUser.uid + "/refBookUnits/" + newUnitId), {
+                name, subject, order: Date.now(), createdAt: new Date().toISOString()
+            });
+            document.getElementById("unit-new-row").style.display = "none";
+            document.getElementById("new-unit-name-input").value = "";
+            setTimeout(() => { document.getElementById("register-unit-select").value = newUnitId; }, 300);
+            showToast("単元を作成しました。", "info");
+        });
+
+        document.getElementById("register-image-trigger-btn").addEventListener("click", () => {
+            document.getElementById("register-image-input").click();
+        });
+        document.getElementById("register-image-input").addEventListener("change", async (e) => {
+            const files = Array.from(e.target.files || []);
+            for (const file of files) {
+                try { pendingImages.push(await compressImageForOcr(file)); }
+                catch (err) { console.error("画像読み込み失敗:", err); }
+            }
+            renderPendingImagePreview();
+            e.target.value = "";
+        });
+
+        function renderPendingImagePreview() {
+            const container = document.getElementById("register-photo-preview");
+            container.innerHTML = pendingImages.map((img, i) => `
+                <div class="photo-thumb">
+                    <img src="${img.dataUrl}">
+                    <div class="photo-thumb-remove" data-remove-pending-img="${i}">×</div>
+                </div>
+            `).join("");
+            container.querySelectorAll("[data-remove-pending-img]").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    pendingImages.splice(parseInt(btn.getAttribute("data-remove-pending-img"), 10), 1);
+                    renderPendingImagePreview();
+                });
+            });
+        }
+
+        const REFBOOK_EXTRACT_SCHEMA = {
+            type: "OBJECT",
+            properties: {
+                unitLabelGuess: { type: "STRING" },
+                problems: {
+                    type: "ARRAY",
+                    items: {
+                        type: "OBJECT",
+                        properties: {
+                            number: { type: "STRING" },
+                            type: { type: "STRING" },
+                            question: { type: "STRING" },
+                            hasFigure: { type: "BOOLEAN" },
+                            answer: { type: "STRING" },
+                            explanation: { type: "STRING" },
+                            answerGenerated: { type: "BOOLEAN" }
+                        },
+                        required: ["number", "question", "answer", "answerGenerated"]
+                    }
+                }
+            },
+            required: ["problems"]
+        };
+
+        const REFBOOK_EXTRACT_PROMPT = `
+あなたは高校生向け参考書の「問題読み取りAI」です。提出された参考書ページの写真から、番号が振られた個別の「問題」だけを、写真に写っている順番通りにすべて抽出してください。
+
+【厳守事項】
+- 1枚の写真、あるいは複数枚の写真の中に複数の問題（例：WARMING UP①〜⑤、基本例題1・2、□3〜6の練習問題など）が写っている場合は、それらすべてを別々の要素として問題配列(problems)に含めること。1問も見逃さないこと。
+- 「WARMING UP」のような単元まるごとの解説パートで、個別の問題番号が振られていない導入文・まとめ図・年表などは抽出しないこと（それらは別の授業用ページとして扱われるため対象外）。
+- 数式・化学式・記号を含む場合は、$ $ で囲んだLaTeX形式で表現すること（例：$H_2O$、$x^2+1$）。
+- 要約・省略は禁止。問題文・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず書き出すこと。
+- number には、参考書内でその問題に振られている番号や記号をそのまま入れる（例："基本例題1"、"3"、"WARMING UP①"）。
+- type には、その問題の種別を短く入れる（例："基本例題"、"WARMING UP"、"練習問題"、"実験"）。
+- unitLabelGuess には、そのページの単元見出し（例："①物質の探究"）が写真から読み取れればそれを入れる。読み取れなければ空文字にする。
+
+【図・グラフについて】
+- hasFigure には、その問題を解くために図・グラフ・表・実験装置のイラスト・写真など「文章だけでは再現できない視覚情報」を参照する必要がある場合は true を、問題文だけで完結する場合は false を入れること。
+- 図そのものを書き起こす必要はない（元の写真がアプリ内に保存され、hasFigure=trueの問題には自動的にその写真が添付表示されるため）。ただし問題文中の「右図のように」「下のグラフから」等の文言はそのまま残すこと。
+
+【解答・解説について（必ず両方を埋めること）】
+- 各問題の解答・解説がページ内に印刷されている場合は、その内容をできる限り正確に書き写すこと（解答編が別写真で写っている場合はそちらも参照して対応付ける）。この場合 answerGenerated は false にすること。
+- 解答・解説がページ内のどこにも印刷されていない場合は、answer と explanation を空文字のままにせず、問題文（および図が写っている場合はその画像）をもとに、あなた自身の知識で正しいと考えられる解答と、高校生にわかりやすい解説を作成すること。この場合 answerGenerated は true にすること。
+- 印刷されている解答をそのまま書き写した場合と、あなたが自分で作成した場合を、answerGenerated で必ず区別すること（真偽を混同しないこと）。
+
+出力は指定のJSON構造のみとし、他の説明文は一切含めないこと。
+`.trim();
+
+        document.getElementById("run-extract-btn").addEventListener("click", async () => {
+            if (pendingImages.length === 0) {
+                showToast("写真を選択してください。", "error");
+                return;
+            }
+            const btn = document.getElementById("run-extract-btn");
+            btn.disabled = true;
+            btn.textContent = "Gemini Visionが読み取り中...";
+
+            try {
+                const parts = [{ text: "このページに写っている問題をすべて指定のJSONで抽出してください。" }];
+                pendingImages.forEach(img => {
+                    parts.push({ inlineData: { mimeType: img.mimeType, data: img.base64 } });
+                });
+                if (pendingImages.length > 1) {
+                    parts[0].text += `\n\n写真は${pendingImages.length}枚あります。同じページの別カット、または問題ページと解答ページの組み合わせである可能性があります。すべての画像の情報を統合して抽出してください。`;
+                }
+
+                const aiResult = await callGeminiJSON(parts, REFBOOK_EXTRACT_PROMPT, {
+                    temperature: 0.2, responseSchema: REFBOOK_EXTRACT_SCHEMA, featureId: "refbook_extract"
+                });
+
+                pendingExtracted = (aiResult.problems || []).map(p => ({
+                    number: p.number || "",
+                    type: p.type || "",
+                    question: p.question || "",
+                    hasFigure: !!p.hasFigure,
+                    answer: p.answer || "",
+                    explanation: p.explanation || "",
+                    answerGenerated: !!p.answerGenerated,
+                    include: true
+                }));
+
+                if (pendingExtracted.length === 0) {
+                    showToast("問題を読み取れませんでした。写真を変えて再度お試しください。", "error");
+                } else {
+                    if (aiResult.unitLabelGuess && !document.getElementById("new-unit-name-input").value) {
+                        document.getElementById("new-unit-name-input").value = aiResult.unitLabelGuess;
+                    }
+                    renderExtractedItems();
+                    document.getElementById("save-extracted-btn").style.display = "inline-flex";
+                    showToast(`${pendingExtracted.length}問読み取りました。内容を確認して登録してください。`, "info");
+                }
+            } catch (error) {
+                console.error("AI読み取りエラー:", error);
+                showToast("読み取りに失敗しました。\n\n【原因】" + error.message, "error", 8000);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "✨ AIで問題を読み取る";
+            }
+        });
+
+        function renderExtractedItems() {
+            const container = document.getElementById("extracted-items-container");
+            container.innerHTML = pendingExtracted.map((item, i) => `
+                <div class="extracted-item" data-idx="${i}">
+                    <div class="extracted-item-head">
+                        <label class="extracted-item-toggle">
+                            <input type="checkbox" data-field="include" ${item.include ? "checked" : ""}> 登録する
+                        </label>
+                        <span style="color:var(--text-muted); font-size:0.75rem;">読み取り結果 #${i + 1}（内容はこの下で修正できます）</span>
+                    </div>
+                    <div class="rb-inline-row rb-form-row">
+                        <div>
+                            <label class="rb-form-label">問題番号</label>
+                            <input type="text" class="rb-form-input" data-field="number" value="${escapeAttr(item.number)}">
+                        </div>
+                        <div>
+                            <label class="rb-form-label">種別</label>
+                            <input type="text" class="rb-form-input" data-field="type" value="${escapeAttr(item.type)}">
+                        </div>
+                    </div>
+                    <div class="rb-form-row">
+                        <label class="rb-form-label">問題文</label>
+                        <textarea class="rb-form-textarea" data-field="question">${escapeHtml(item.question)}</textarea>
+                    </div>
+                    <label class="extracted-item-toggle" style="margin-top:0.6rem;">
+                        <input type="checkbox" data-field="hasFigure" ${item.hasFigure ? "checked" : ""}> 🖼️ この問題には図・グラフ・表がある（元の写真を一問一答画面に添付表示）
+                    </label>
+                    <div class="rb-form-row">
+                        <label class="rb-form-label">解答${item.answerGenerated ? ' <span class="mini-badge mini-badge-ai">🤖 AI作成</span>' : ""}</label>
+                        <textarea class="rb-form-textarea" data-field="answer" style="min-height:60px;">${escapeHtml(item.answer)}</textarea>
+                    </div>
+                    <div class="rb-form-row">
+                        <label class="rb-form-label">解説</label>
+                        <textarea class="rb-form-textarea" data-field="explanation" style="min-height:80px;">${escapeHtml(item.explanation)}</textarea>
+                    </div>
+                </div>
+            `).join("");
+
+            container.querySelectorAll(".extracted-item").forEach(itemEl => {
+                const idx = parseInt(itemEl.getAttribute("data-idx"), 10);
+                itemEl.querySelectorAll("[data-field]").forEach(fieldEl => {
+                    const field = fieldEl.getAttribute("data-field");
+                    const eventName = fieldEl.type === "checkbox" ? "change" : "input";
+                    fieldEl.addEventListener(eventName, () => {
+                        pendingExtracted[idx][field] = fieldEl.type === "checkbox" ? fieldEl.checked : fieldEl.value;
+                        if (field === "answer") pendingExtracted[idx].answerGenerated = false; // 手動修正したらAI作成フラグは外す
+                    });
+                });
+            });
+        }
+
+        function escapeAttr(str) { return escapeHtml(str).replace(/"/g, "&quot;"); }
+
+        document.getElementById("save-extracted-btn").addEventListener("click", async () => {
+            const unitId = document.getElementById("register-unit-select").value;
+            if (!unitId) { showToast("登録先の単元を選択してください。", "error"); return; }
+            const toSave = pendingExtracted.filter(item => item.include);
+            if (toSave.length === 0) { showToast("登録する問題を1つ以上チェックしてください。", "error"); return; }
+            if (!currentUser) return;
+
+            const btn = document.getElementById("save-extracted-btn");
+            btn.disabled = true;
+            btn.textContent = "登録中...";
+
+            try {
+                const imagesToStore = pendingImages.map(img => img.dataUrl);
+                let i = 0;
+                for (const item of toSave) {
+                    const newId = "RB_" + Date.now() + "_" + (i++);
+                    await set(ref(database, "users/" + currentUser.uid + "/refBookProblems/" + newId), {
+                        id: newId,
+                        unitId,
+                        number: item.number,
+                        type: item.type,
+                        question: item.question,
+                        hasFigure: !!item.hasFigure,
+                        answer: item.answer,
+                        explanation: item.explanation,
+                        answerGenerated: !!item.answerGenerated,
+                        order: Date.now() + i,
+                        createdAt: new Date().toISOString()
+                    });
+                    if (imagesToStore.length > 0) {
+                        await set(ref(database, "users/" + currentUser.uid + "/refBookProblemImages/" + newId), { images: imagesToStore });
+                    }
+                }
+                showToast(`${toSave.length}問を登録しました。`, "info");
+                document.getElementById("register-modal").style.display = "none";
+                resetRegisterModal();
+            } catch (error) {
+                console.error("保存エラー:", error);
+                showToast("登録に失敗しました。" + error.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "✅ この内容で登録する";
+            }
+        });
+
+        // ----------------------------------------------------------------
+        // Service Worker
+        // ----------------------------------------------------------------
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW register error:', err));
+            });
+        }
+    </script>
+
+    <nav class="m-tabbar">
+        <a href="index.html" class="m-tab"><span class="m-tab-icon">🧠</span>誤答ノート</a>
+        <a href="lesson.html" class="m-tab"><span class="m-tab-icon">📖</span>授業</a>
+        <a href="refbook.html" class="m-tab active"><span class="m-tab-icon">📚</span>参考書</a>
+        <a href="insights.html" class="m-tab"><span class="m-tab-icon">💡</span>気づき</a>
+        <a href="ai-settings.html" class="m-tab"><span class="m-tab-icon">⚙️</span>設定</a>
+    </nav>
+</body>
+</html>
