@@ -240,7 +240,7 @@
 
         <!-- 単元一覧ビュー -->
         <div id="units-view" style="display:none; flex-direction: column; gap: 1.2rem;">
-            <div class="rb-action-bar" style="display:none;">
+            <div class="rb-action-bar">
                 <button type="button" class="tactile-btn" id="open-register-modal-btn">📸 写真から問題を登録</button>
             </div>
             <div class="unit-grid" id="unit-grid-container">
@@ -254,7 +254,7 @@
                 <a href="#" class="back-link" id="back-to-units-link">← 単元一覧に戻る</a>
                 <div style="display:flex; gap:0.6rem;">
                     <span class="badge badge-math" id="unit-detail-title-badge">単元名</span>
-                    <button type="button" class="tactile-btn tactile-btn-secondary" id="unit-add-problem-btn" style="display:none;">＋ この単元に追加登録</button>
+                    <button type="button" class="tactile-btn tactile-btn-secondary" id="unit-add-problem-btn">＋ この単元に追加登録</button>
                 </div>
             </div>
 
@@ -272,7 +272,7 @@
                             <span class="badge badge-physics" id="quiz-card-badge">--</span>
                             <span class="mini-badge mini-badge-figure" id="quiz-figure-badge" style="display:none;">🖼️ 図あり</span>
                         </div>
-                        <div class="quiz-card-actions" style="display:none;">
+                        <div class="quiz-card-actions">
                             <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-edit-btn">✏️ 編集</button>
                             <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-delete-btn">🗑 削除</button>
                         </div>
@@ -595,7 +595,7 @@
             const unitEntries = Object.entries(unitsCache).sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
 
             if (unitEntries.length === 0) {
-                container.innerHTML = `<div class="empty-note">まだ単元が登録されていません。PC版から問題を登録してください。</div>`;
+                container.innerHTML = `<div class="empty-note">まだ単元が登録されていません。「📸 写真から問題を登録」から始めてください。</div>`;
                 return;
             }
 
@@ -606,7 +606,7 @@
                     <div class="squircle-card unit-card" data-unit-id="${unitId}">
                         <div class="unit-card-top">
                             <span class="badge ${badgeClass}" style="font-size:0.7rem;">${escapeHtml(unit.subject || "未分類")}</span>
-                            <div class="unit-card-icons" style="display:none;">
+                            <div class="unit-card-icons">
                                 <button type="button" class="unit-icon-btn" data-rename-unit="${unitId}" title="単元名を変更">✏️</button>
                                 <button type="button" class="unit-icon-btn" data-delete-unit="${unitId}" title="単元を削除">🗑</button>
                             </div>

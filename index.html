@@ -109,6 +109,93 @@
     .glow-japanese { background: radial-gradient(circle at center, rgba(255,105,180,0.18) 0%, #0a0206 100%); } .glow-japanese span { color: #ff69b4; }
     .glow-civics { background: radial-gradient(circle at center, rgba(0,255,200,0.18) 0%, #020a08 100%); } .glow-civics span { color: #00ffc8; }
     .glow-purple { background: radial-gradient(circle at center, rgba(255,46,136,0.18) 0%, #0a0206 100%); } .glow-purple span { color: var(--accent-magenta); }
+
+    /* --- 登録ボタン（フローティング） --- */
+    .m-fab {
+        position: fixed;
+        right: 1rem;
+        bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 1rem);
+        z-index: 900;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--accent-magenta);
+        color: #fff;
+        border: none;
+        border-radius: 28px;
+        padding: 0.85rem 1.3rem;
+        font-weight: 900;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 18px rgba(255, 46, 136, 0.45);
+    }
+    .m-fab:active { transform: scale(0.96); }
+
+    /* --- 問題登録モーダル --- */
+    .m-modal-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+        display: none; align-items: flex-end; justify-content: center; z-index: 10000;
+    }
+    .m-modal-overlay.open { display: flex; }
+    .m-modal-content {
+        width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto;
+        background: var(--panel-bg-raised, #171722); border: 1px solid var(--accent-cyan);
+        border-radius: 22px 22px 0 0; padding: 1.3rem 1.1rem calc(1.3rem + var(--safe-bottom));
+        box-shadow: 0 -4px 30px rgba(0,243,255,0.15);
+    }
+    .m-modal-title { font-size: 1.1rem; font-weight: 900; margin-bottom: 0.3rem; }
+    .m-modal-sub { color: var(--text-muted); font-size: 0.8rem; line-height: 1.6; margin-bottom: 1rem; }
+    .m-linked-lesson-badge {
+        display: none; background: linear-gradient(135deg, rgba(255,46,136,0.15), rgba(0,243,255,0.15));
+        border: 1px solid var(--accent-magenta); border-radius: 10px; padding: 0.6rem 0.9rem;
+        margin-bottom: 0.9rem; font-size: 0.8rem; font-weight: 700; color: #fff;
+    }
+    .m-field-label { font-size: 0.78rem; font-weight: 800; color: var(--text-bright-muted); display: block; margin-bottom: 0.5rem; }
+    .m-subject-select-group { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
+    .m-subject-select-btn {
+        background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-bright-muted);
+        padding: 0.5rem 0.9rem; border-radius: 10px; font-size: 0.82rem; font-weight: 800; min-height: 40px;
+    }
+    .m-subject-select-btn.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); }
+    .m-math-keyboard {
+        display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.35rem; margin-bottom: 0.9rem;
+        background: rgba(0,0,0,0.4); padding: 0.5rem; border-radius: 12px; border: 1px solid var(--border-color);
+    }
+    .m-math-key {
+        background: #050508; border: 1px solid var(--border-color); color: var(--text-bright-muted);
+        padding: 0.55rem 0.2rem; font-size: 0.8rem; font-weight: 700; border-radius: 8px; min-height: 40px;
+    }
+    .m-math-key.accent { border-color: var(--accent-magenta); color: var(--accent-magenta); }
+    .m-modal-textarea {
+        width: 100%; min-height: 100px; background: #000; border: 1px solid var(--border-color);
+        color: #fff; padding: 0.9rem; border-radius: 12px; font-size: 0.95rem; resize: vertical;
+    }
+    .m-math-preview {
+        margin-top: 0.6rem; padding: 0.8rem; background: #020205; border: 1px dashed var(--border-color);
+        border-radius: 12px; min-height: 40px; font-size: 0.85rem; color: var(--text-muted); word-break: break-all;
+    }
+    .m-image-upload-row { display: flex; gap: 0.5rem; margin: 0.9rem 0 0.4rem; }
+    .m-image-upload-zone {
+        flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+        padding: 0.8rem; border: 1px dashed rgba(0,243,255,0.4); border-radius: 12px;
+        background: rgba(0,243,255,0.03); font-size: 0.85rem; font-weight: 700; color: var(--accent-cyan); min-height: 44px;
+    }
+    .m-preview-box { width: 100%; display: none; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.8rem; }
+    .m-preview-box.has-images { display: flex; }
+    .m-photo-thumb {
+        position: relative; width: 78px; height: 78px; border-radius: 10px; overflow: hidden;
+        border: 1px solid var(--border-color); background: #020205; flex-shrink: 0;
+    }
+    .m-photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .m-photo-remove {
+        position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 50%;
+        background: rgba(0,0,0,0.8); color: #fff; border: 1px solid rgba(255,255,255,0.3);
+        font-size: 0.72rem; display: flex; align-items: center; justify-content: center; font-weight: 900;
+    }
+    .m-photo-index {
+        position: absolute; bottom: 3px; left: 3px; background: rgba(0,0,0,0.8); color: var(--accent-cyan);
+        font-size: 0.6rem; font-weight: 900; padding: 0.05rem 0.35rem; border-radius: 6px;
+    }
+    .m-modal-actions { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 1.2rem; }
 </style>
 </head>
 <body>
@@ -168,7 +255,66 @@
         <div class="m-loading"><div class="m-spinner"></div>読み込み中...</div>
     </div>
 
+    <button type="button" class="m-fab" id="open-modal-btn" style="display:none;">＋ 誤答問題を登録</button>
 </main>
+
+<div class="m-modal-overlay" id="add-problem-modal">
+    <div class="m-modal-content">
+        <div class="m-modal-title">間違えた問題の登録解析</div>
+        <div class="m-modal-sub">テキスト入力、または写真をアップロードして登録します。数式や記号はキーパッドを活用してください。</div>
+
+        <div id="linked-lesson-badge" class="m-linked-lesson-badge">
+            🎓 授業「<span id="linked-lesson-title-text"></span>」の続きとして登録されます
+        </div>
+
+        <span class="m-field-label">📚 教科を選択：</span>
+        <div class="m-subject-select-group" id="subject-select-group">
+            <button type="button" class="m-subject-select-btn active" data-subject="数学">数学</button>
+            <button type="button" class="m-subject-select-btn" data-subject="物理">物理基礎</button>
+            <button type="button" class="m-subject-select-btn" data-subject="化学">化学基礎</button>
+            <button type="button" class="m-subject-select-btn" data-subject="英語">英語</button>
+            <button type="button" class="m-subject-select-btn" data-subject="国語">国語</button>
+            <button type="button" class="m-subject-select-btn" data-subject="地歴公民">地歴公民</button>
+            <button type="button" class="m-subject-select-btn" data-subject="世界史">世界史</button>
+        </div>
+
+        <div class="m-math-keyboard" id="math-keyboard-group">
+            <button type="button" class="m-math-key" data-mk="$$">$$</button>
+            <button type="button" class="m-math-key" data-mk="frac">分数</button>
+            <button type="button" class="m-math-key" data-mk="sqrt">√</button>
+            <button type="button" class="m-math-key" data-mk="pow">xⁿ</button>
+            <button type="button" class="m-math-key" data-mk="sub">xₙ</button>
+            <button type="button" class="m-math-key" data-mk="theta">θ</button>
+            <button type="button" class="m-math-key" data-mk="pi">π</button>
+            <button type="button" class="m-math-key" data-mk="alpha">α</button>
+            <button type="button" class="m-math-key" data-mk="beta">β</button>
+            <button type="button" class="m-math-key" data-mk="delta">Δ</button>
+            <button type="button" class="m-math-key" data-mk="pm">±</button>
+            <button type="button" class="m-math-key" data-mk="le">≦</button>
+            <button type="button" class="m-math-key" data-mk="ge">≧</button>
+            <button type="button" class="m-math-key" data-mk="vec">ベクトル</button>
+            <button type="button" class="m-math-key" data-mk="int">∫</button>
+            <button type="button" class="m-math-key" data-mk="log">log</button>
+            <button type="button" class="m-math-key" data-mk="sin">sin</button>
+            <button type="button" class="m-math-key" data-mk="cos">cos</button>
+        </div>
+
+        <textarea class="m-modal-textarea" id="problem-text-input" placeholder="問題文を直接入力するか、写真の補足メモを入力してください。数式は $x^2+y^2=1$ のように $ で挟むと綺麗にプレビューされます。"></textarea>
+        <div id="math-preview" class="m-math-preview tex2jax_process">入力プレビューがここに表示されます</div>
+
+        <div class="m-image-upload-row">
+            <label for="problem-image-input" class="m-image-upload-zone">📸 写真を追加（複数可・任意）</label>
+        </div>
+        <input type="file" id="problem-image-input" accept="image/*" multiple style="display:none;">
+        <div class="m-preview-box" id="image-preview-container"></div>
+
+        <div class="m-modal-actions">
+            <button type="button" class="m-btn" id="analyze-submit-btn">AI自動解析を実行</button>
+            <button type="button" class="m-btn m-btn-ghost" id="close-modal-btn">キャンセル</button>
+            <button type="button" class="m-btn m-btn-ghost" id="clear-keys-btn" style="color:#ff4545; border-color:rgba(255,69,69,0.4);">APIキーをリセット</button>
+        </div>
+    </div>
+</div>
 
 <div class="m-toast" id="m-toast"></div>
 
@@ -183,7 +329,10 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import {
+    getGeminiKeys, initApiKeyManager, clearAllKeys, callGeminiJSON, generateTinyThumbnail
+} from "./api-key-manager.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyB55MdhpjJizQaLEdRu-XhBVJ4PqrHsAyY",
@@ -198,6 +347,278 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const database = getDatabase(app);
 const provider = new GoogleAuthProvider();
+
+initApiKeyManager({ needGemini: true, needDeepseek: true });
+
+        // 🧠【教科ごとの解析プロンプト集】選択中の教科に応じて出し分ける
+        // 🔒【新設】SUBJECT_CREATE_PROMPTS 各科目共通のJSON構造をAPI側で強制するためのスキーマ
+        // 🌍【新設】世界史の年表ビュー用：出来事の地域を固定カテゴリに揃えることで、
+        //    複数の問題・授業をまたいでも同じ地域名でレーン分けできるようにする
+        const HISTORY_REGIONS = ["東アジア", "東南アジア", "南アジア", "西アジア・中央アジア", "ヨーロッパ", "アメリカ大陸", "アフリカ", "地域をまたぐ／世界全体"];
+
+        const SUBJECT_ANALYSIS_RESPONSE_SCHEMA = {
+            type: "OBJECT",
+            properties: {
+                subject: { type: "STRING" },
+                field: { type: "STRING" },
+                short_title: { type: "STRING" },
+                extracted_text: { type: "STRING" },
+                trap_description: { type: "STRING" },
+                strategy_pattern: { type: "STRING" },
+                model_answer: { type: "STRING" },
+                mnemonic: { type: "STRING" },
+                events: {
+                    type: "ARRAY",
+                    items: {
+                        type: "OBJECT",
+                        properties: {
+                            name: { type: "STRING" },
+                            year: { type: "STRING" },
+                            year_sort: { type: "INTEGER" },
+                            region: { type: "STRING", enum: HISTORY_REGIONS }
+                        },
+                        required: ["name", "year", "year_sort", "region"]
+                    }
+                }
+            },
+            required: ["subject", "field", "short_title", "extracted_text", "trap_description", "strategy_pattern", "model_answer"]
+        };
+
+        const SUBJECT_CREATE_PROMPTS = {
+            "数学": `
+あなたは高校数学の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。
+出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
+{
+  "subject": "数学",
+  "field": "分野名（例：数学II 式と証明、数学B ベクトル など）",
+  "short_title": "問題の要約タイトル",
+  "extracted_text": "読み取った正確な問題文の全文。数式や記号を含む場合は必ず $ $ で挟むこと 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
+  "trap_description": "高校生がこの問題で最も間違えやすいポイントや罠の解説文",
+  "strategy_pattern": "【最重要】この問題固有の数値や図形には一切触れず、①問題文のどの特徴（キーワード・条件・図形の形）を見て問題の『型』を判断するか、②その型に対して定石として使うべきアプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。これは『解き方の地図』であり、具体的な計算はここに書かない。2〜4文程度。数式を含む場合は$で囲むこと",
+  "model_answer": "この問題の最終的な正しい答えと、ステップごとの分かりやすい解説。冒頭でstrategy_patternに書いた定石に軽く触れてから、それに沿って具体的な数値・文字で計算を進めること。数式や変数を記述する場合は、必ず前後に $ または $$ をつけて美しいLaTeX形式にすること。解説文は1行に詰め込まず、手順ごとに必ず改行コード（\\n）を挟んで、美しい箇条書き形式（1., 2.など）で出力すること"
+}
+`.trim(),
+
+            "物理": `
+あなたは高校「物理基礎」の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。物理基礎の範囲（力と運動、エネルギー、熱、波、電気の基礎など）を前提とし、物理IIIで扱うような発展的内容（単振動の一般解、電磁誘導の応用、原子物理など）には踏み込まないこと。
+出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
+{
+  "subject": "物理",
+  "field": "分野名（例：力学基礎 等加速度運動、熱 状態変化、波 音の性質、電気 オームの法則 など）",
+  "short_title": "問題の要約タイトル",
+  "extracted_text": "読み取った正確な問題文の全文。数式や記号を含む場合は必ず $ $ で挟むこと 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
+  "trap_description": "高校生がこの問題で最も間違えやすいポイントや罠の解説文（単位・符号ミスなども含む）",
+  "strategy_pattern": "【最重要】この問題固有の数値や図形には一切触れず、①問題文のどの特徴（キーワード・条件・設定）を見て問題の『型』を判断するか、②その型に対して定石として使うべきアプローチ（例:『エネルギー保存が使えるかまず疑う』など）、③なぜそのアプローチが有効なのか、を一般化して説明すること。これは『解き方の地図』であり、具体的な計算はここに書かない。2〜4文程度。数式を含む場合は$で囲むこと",
+  "model_answer": "この問題の最終的な正しい答えと、ステップごとの分かりやすい解説。冒頭でstrategy_patternに書いた定石に軽く触れてから、それに沿って具体的な数値・文字で計算を進めること。数式や変数を記述する場合は、必ず前後に $ または $$ をつけて美しいLaTeX形式にすること。解説文は1行に詰め込まず、手順ごとに必ず改行コード（\\n）を挟んで、美しい箇条書き形式（1., 2.など）で出力すること"
+}
+`.trim(),
+
+            "化学": `
+あなたは高校「化学基礎」の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。化学基礎の範囲（物質の構成、化学結合、mol計算、酸塩基、酸化還元の基礎など）を前提とし、化学（発展）で扱うような内容（有機化学の構造決定、高分子、詳細な無機化学の反応系統など）には踏み込まないこと。
+出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
+{
+  "subject": "化学",
+  "field": "分野名（例：物質の構成 mol計算、化学結合、酸と塩基、酸化還元反応 など）",
+  "short_title": "問題の要約タイトル",
+  "extracted_text": "読み取った正確な問題文の全文。化学式や数値は $H_2O$ や $CO_2$ のように下付き文字を含むLaTeX形式（$で囲む）で表現すること 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
+  "trap_description": "高校生がこの問題で最も間違えやすいポイント（単位換算ミス、有効数字、反応式の係数合わせなど）の解説文",
+  "strategy_pattern": "【最重要】この問題固有の数値や物質名には一切触れず、①問題文のどの特徴（キーワード・条件）を見て問題の『型』を判断するか、②その型に対して定石として使うべきアプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。2〜4文程度。数式を含む場合は$で囲むこと",
+  "model_answer": "最終的な正しい答えと、ステップごとの分かりやすい解説。化学反応式・化学式・数値・単位は必ず $ で囲んだLaTeX形式（例：$2H_2 + O_2 \\rightarrow 2H_2O$）で書くこと。手順ごとに改行コード（\\n）を挟んで見やすい箇条書き形式（1., 2.など）で出力すること"
+}
+`.trim(),
+
+            "国語": `
+あなたは高校国語（現代文・古文・漢文）の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。
+出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
+{
+  "subject": "国語",
+  "field": "分野名（例：現代文 論理的文章、古文 助動詞の識別、漢文 句法 など）",
+  "short_title": "問題の要約タイトル",
+  "extracted_text": "読み取った正確な問題文の全文（古文・漢文は原文のまま。設問文も含める） 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
+  "trap_description": "高校生がこの問題で最も間違えやすいポイント（本文の誤読、語彙・文法の混同、設問の条件見落としなど）の解説文",
+  "strategy_pattern": "【最重要】この問題固有の本文内容には一切触れず、①設問文のどの特徴（キーワード・条件・設問形式）を見て問題の『型』を判断するか、②その型に対して定石として使うべき読み方・解答アプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。2〜4文程度。",
+  "model_answer": "この問題の最終的な正しい答えと、根拠となる本文箇所を明示した分かりやすい解説。古文・漢文は現代語訳や句法の説明も含めること。手順ごとに改行コード（\\n）を挟んで、美しい箇条書き形式（1., 2.など）で出力すること"
+}
+`.trim(),
+
+            "地歴公民": `
+あなたは高校地理・公民（地理総合、公共・現代社会など）の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。
+出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
+{
+  "subject": "地歴公民",
+  "field": "分野名（例：地理総合 気候区分、地理総合 統計資料の読み取り、公共 政治のしくみ、公共 経済のしくみ など）",
+  "short_title": "問題の要約タイトル",
+  "extracted_text": "読み取った正確な問題文の全文（資料・統計・地図の内容が問題に含まれる場合はその要点も書き起こすこと） 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
+  "trap_description": "高校生がこの問題で最も間違えやすい用語の混同や、統計・資料の読み違いのポイントの解説文",
+  "strategy_pattern": "【最重要】この問題固有の地名・数値・制度名には一切触れず、①問題文や資料のどの特徴（キーワード・条件）を見て問題の『型』を判断するか、②その型に対して定石として使うべき考え方、③なぜそれが有効なのか、を一般化して説明すること。2〜4文程度。",
+  "model_answer": "最終的な正しい答えと、ステップごとの分かりやすい解説。用語・制度名は正確に使うこと。手順ごとに改行コード（\\n）を挟んで見やすい箇条書き形式（1., 2.など）で出力すること"
+}
+`.trim(),
+
+            "英語": `
+あなたは高校英語の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。
+数式のLaTeX記法（$記号など）は一切使用しないこと。英文はそのまま英語表記で、解説はすべて日本語で書くこと。
+出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
+{
+  "subject": "英語",
+  "field": "分野名（例：文法・語法、長文読解、英作文、語彙 など）",
+  "short_title": "問題の要約タイトル",
+  "extracted_text": "読み取った正確な問題文・英文の全文（英語のまま。改行は\\nで保持） 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
+  "trap_description": "高校生がこの問題で引っかかりやすい文法事項・構文・語彙・訳し方のポイントを日本語で解説",
+  "strategy_pattern": "【最重要】この問題固有の単語や具体的な訳には一切触れず、①英文のどの特徴（接続詞・構文・時制などのキーワード）を見て問題の『型』を判断するか、②その型に対して定石として使うべき読解・解答アプローチ、③なぜそのアプローチが有効なのか、を一般化して説明すること。2〜4文程度。",
+  "model_answer": "最終的な正しい答え・和訳と、ステップごとの分かりやすい解説（文構造の分解、重要単語・熟語の意味、文法事項の解説を含む）。手順ごとに改行コード（\\n）を挟んで見やすい箇条書き形式（1., 2.など）で出力すること"
+}
+`.trim(),
+
+            "世界史": `
+あなたは高校世界史の「誤答分析エキスパートAI」です。提出された問題（画像またはテキスト）を深く分析してください。
+数式のLaTeX記法（$記号など）は一切使用しないこと。
+出力は必ず以下のJSONフォーマットの形式にしてください。他の説明テキストは絶対に含めないでください。
+{
+  "subject": "世界史",
+  "field": "分野名（例：古代オリエント、中国史 唐〜宋、イスラーム世界の成立、近代ヨーロッパ 市民革命、冷戦期の国際関係 など、時代と地域が分かる形で）",
+  "short_title": "問題の要約タイトル",
+  "extracted_text": "読み取った正確な問題文の全文（年表・系図・地図が問題に含まれる場合はその要点も書き起こすこと） 【厳守】要約・省略は絶対禁止。問題文がどれだけ長くても、最後の設問・選択肢・空欄記号（ア,イ,ウ…等）まで一字一句省略せず全文を書き出すこと。1つでも文・記号を省いたら失格とみなす。",
+  "trap_description": "高校生がこの問題で最も間違えやすいポイント（年代の前後関係の取り違え、似た名前の人物・王朝・条約・戦争の混同、離れた地域で起きた同時代の出来事の混同、原因と結果の取り違えなど）の解説文",
+  "strategy_pattern": "【最重要】この問題固有の年号・人物名・地名には一切触れず、①設問文のどの特徴（時期を問う／因果関係を問う／地域間の比較を問うなど）を見て問題の『型』を判断するか、②その型に対して定石として使うべき考え方（例：年表上の前後関係で捉える、対になる出来事とセットで覚える、同時代の他地域と横に並べて整理するなど）、③なぜそれが有効なのかを一般化して説明すること。2〜4文程度。",
+  "model_answer": "この問題の最終的な正しい答えと、ステップごとの分かりやすい解説。重要な出来事には可能な限り西暦（例：1789年）を明記すること。関連が深い場合は同時代の他地域の出来事にも一言触れ、時代・地域をまたいだ位置づけがつかめるようにすること。手順ごとに改行コード（\\n）を挟んで、見やすい箇条書き形式（1., 2.など）で出力すること",
+  "mnemonic": "この問題に登場する重要な年号のうち、最も覚える価値が高いもの1つについての語呂合わせ（「年号：語呂合わせ本文」の形式、例：『1789年：火(1789)の粉ちるフランス革命』のような一文）。該当する重要な年号が無い、または語呂合わせにする価値が薄い問題の場合は空文字（""）にすること",
+  "events": [
+    {
+      "name": "出来事の名前（例：フランス革命の勃発）",
+      "year": "表示用の年（例：1789年、前3世紀、14世紀後半 など、わかる精度で）",
+      "year_sort": "並べ替え用の年（西暦の整数。紀元前は負の数、例：前221年なら-221）",
+      "region": "次のいずれか1つ：東アジア／東南アジア／南アジア／西アジア・中央アジア／ヨーロッパ／アメリカ大陸／アフリカ／地域をまたぐ／世界全体"
+    }
+  ]
+}
+※eventsには、この問題文・解説中に登場する年号つきの出来事をすべて含めること（1個でも複数でもよい）。年号が特定できる出来事が1つも無い問題の場合は空配列（[]）にすること。
+`.trim()
+        };
+
+        let selectedSubject = "数学";
+        window.setSelectedSubject = function(subject) {
+            selectedSubject = subject;
+            document.querySelectorAll(".m-subject-select-btn").forEach(btn => {
+                btn.classList.toggle("active", btn.getAttribute("data-subject") === subject);
+            });
+            // 英語選択時は数式キーパッドを隠す（数式を使わないため）
+            const kb = document.getElementById("math-keyboard-group");
+            if (kb) kb.style.display = (subject === "英語" || subject === "国語" || subject === "地歴公民" || subject === "世界史") ? "none" : "";
+        };
+
+        let currentUser = null;
+        // 📸 複数枚対応：選択された写真は {mimeType, base64, dataUrl} の配列として保持
+        let selectedImages = [];
+        // 🎓【授業からの継続問題】lesson.htmlの「この授業の続きとして解く」から遷移してきた場合にセットされる
+        let linkedLessonId = null;
+        let linkedLessonTitle = null;
+        let linkedLessonText = null;
+        let linkedLessonKeyTerms = null; // 🔗 その授業までに蓄積された用語集（前の講の内容も含む）
+
+        function guessSubjectFromLesson(lesson) {
+    if (lesson.subject) return lesson.subject;
+    const text = ((lesson.title || "") + " " + (lesson.topicKey || "") + " " + (lesson.extractedText || "")).slice(0, 400);
+    if (/数学|微分|積分|ベクトル|数列|三角関数|確率|二次関数|対数|指数|方程式|整数/i.test(text)) return "数学";
+    if (/化学|mol|酸化|還元|酸|塩基|元素|物質量|気体|結晶/i.test(text)) return "化学";
+    if (/世界史|世紀|王朝|帝国|革命|条約|戦争|冷戦|中国史|ヨーロッパ史/i.test(text)) return "世界史";
+    if (/英語|文法|構文|長文|訳|grammar|vocabulary/i.test(text)) return "英語";
+    if (/国語|現代文|古文|漢文|助動詞|句法/i.test(text)) return "国語";
+    if (/公民|公共|政治|経済|地理|気候/i.test(text)) return "地歴公民";
+    return "物理"; // デフォルト（力学・電磁気・波動等の物理基礎）
+}
+
+async function checkAndLoadLinkedLesson(uid) {
+    const params = new URLSearchParams(window.location.search);
+    const fromLesson = params.get("fromLesson");
+    if (!fromLesson) return;
+
+    try {
+        const snap = await get(ref(database, 'users/' + uid + '/lessons/' + fromLesson));
+        const lessonData = snap.val();
+        if (!lessonData) {
+            console.warn("⚠️ 指定された授業データが見つかりませんでした:", fromLesson);
+            return;
+        }
+        linkedLessonId = fromLesson;
+        linkedLessonTitle = lessonData.title || lessonData.short_title || "無題の授業";
+        linkedLessonText = lessonData.extractedText || "";
+        linkedLessonKeyTerms = lessonData.accumulatedKeyTerms || lessonData.keyTerms || [];
+
+        const badge = document.getElementById("linked-lesson-badge");
+        const badgeText = document.getElementById("linked-lesson-title-text");
+        if (badge && badgeText) {
+            badgeText.textContent = linkedLessonTitle;
+            badge.style.display = "block";
+        }
+        
+        // 授業内容に応じた教科を自動選択
+        const matchedSubject = guessSubjectFromLesson(lessonData);
+        window.setSelectedSubject(matchedSubject);
+        document.getElementById("add-problem-modal").classList.add("open");
+    } catch (e) {
+        console.error("授業データの読み込みに失敗しました:", e);
+    }
+}
+        let previewTimeout = null; 
+
+
+        // カーソル位置に数式記号を挿入するロジック
+        window.insertMathSymbol = function(startTag, endTag = "") {
+            const textarea = document.getElementById('problem-text-input');
+            if (!textarea) return;
+
+            let startPos = textarea.selectionStart;
+            let endPos = textarea.selectionEnd;
+            const currentText = textarea.value;
+
+            const textBeforeCursor = currentText.substring(0, startPos);
+            const dollarCount = (textBeforeCursor.match(/\$/g) || []).length;
+
+            if (startTag !== '$' && dollarCount % 2 === 0) {
+                startTag = '$' + startTag;
+                endTag = endTag + '$';
+            }
+
+            const selectedText = currentText.substring(startPos, endPos);
+            const replacement = startTag + selectedText + endTag;
+
+            textarea.value = currentText.substring(0, startPos) + replacement + currentText.substring(endPos);
+            textarea.focus();
+
+            const newCursorPos = startPos + startTag.length + selectedText.length;
+            textarea.selectionStart = newCursorPos;
+            textarea.selectionEnd = newCursorPos;
+
+            window.updateMathPreview(true);
+        };
+
+        // 数式リアルタイムプレビュー更新処理
+        window.updateMathPreview = function(immediate = false) {
+            const textarea = document.getElementById('problem-text-input');
+            const preview = document.getElementById('math-preview');
+            if (!textarea || !preview) return;
+
+            preview.innerHTML = textarea.value ? textarea.value : "入力プレビューがここに表示されます";
+
+            if (previewTimeout) {
+                clearTimeout(previewTimeout);
+            }
+
+            const renderMath = () => {
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise([preview]).catch((err) => console.log(err.message));
+                }
+            };
+
+            if (immediate) {
+                renderMath();
+            } else {
+                previewTimeout = setTimeout(renderMath, 300);
+            }
+        };
+
+
 
 function showToast(msg, type = "info") {
     const el = document.getElementById("m-toast");
@@ -478,6 +899,269 @@ function rebuildFilterBarAndCards() {
     }
 }
 
+// 📸【Gemini復帰】写真の画像認識が必要なので、ここはGemini Visionをそのまま叩く
+async function analyzeAndAddProblem(userRawText) {
+    if (!currentUser) {
+        showToast("ログイン状態が確認できません。Google接続してください。", "error");
+        return;
+    }
+    if (getGeminiKeys().length === 0) {
+        showToast("GeminiのAPIキーが登録されていません。右下の🔑ボタンから登録してください。", "error");
+        return;
+    }
+
+    const submitBtn = document.getElementById("analyze-submit-btn");
+
+    submitBtn.textContent = "Gemini Visionが画像を分析中...";
+    submitBtn.disabled = true;
+
+    let parts = [{ "text": "提出されたデータを解析し、最終的な『正しい答え（model_answer）』も含めて指定のJSONで返してください。" }];
+    if (userRawText) parts[0].text += `\nユーザーの入力メモ: ${userRawText}`;
+    if (selectedImages.length > 0) {
+        selectedImages.forEach(img => {
+            parts.push({ "inlineData": { "mimeType": img.mimeType, "data": img.base64 } });
+        });
+        if (selectedImages.length > 1) {
+            parts[0].text += `\n\n【重要】画像は${selectedImages.length}枚提出されていますが、これらは全て同じ1つの問題に関する別々のページ・カット（例：問題文のページと、生徒が実際に解いた解答用紙のページなど）です。複数の異なる問題として分割せず、すべての画像の情報を統合して、この1問についての内容としてextracted_textやtrap_descriptionなどを作成してください。`;
+        }
+    }
+
+    try {
+        let activeSystemInstruction = SUBJECT_CREATE_PROMPTS[selectedSubject] || SUBJECT_CREATE_PROMPTS["数学"];
+
+        if (linkedLessonText) {
+            const glossaryBlock = (linkedLessonKeyTerms && linkedLessonKeyTerms.length > 0)
+                ? `\n\n【この授業までに生徒が習った、参考書オリジナルの用語集（前の講の内容も含む）】\n` +
+                  linkedLessonKeyTerms.map(t => `・${t.name}：${t.definition}`).join("\n") +
+                  `\n※これらの用語は、たとえこの授業のテキスト全文に載っていなくても、生徒はすでに正確な定義を知っています。解説中でこれらの言葉が使える場面では、遠慮せずこの定義通りに名指しで使ってください。`
+                : "";
+            activeSystemInstruction += `
+
+【直前に受けた授業からの継続問題】
+この問題は、直前に受けた授業「${linkedLessonTitle || "無題の授業"}」の続きとして生徒が解いている問題です。
+以下は、その授業の元になった参考書のテキスト全文です。この中で使われている固有の名称（法則名・大原則・「タッチの定理」のような参考書独自の用語・「手順①〜⑦」のような番号付き手順など）を、strategy_patternとmodel_answerの解説の中で積極的に名指しして使い、授業内容を思い出させながら解説すること。勝手に別の言葉に言い換えたり、新しい独自用語を作ったりしないこと。一般論だけで済ませず、必ずこの参考書固有の言葉で解説すること。
+
+【授業で読んだ参考書の全文】
+${linkedLessonText}
+${glossaryBlock}`;
+        }
+
+        const aiResult = await callGeminiJSON(parts, activeSystemInstruction, { temperature: 0.3, responseSchema: SUBJECT_ANALYSIS_RESPONSE_SCHEMA, featureId: "subject_analysis" });
+
+        const newId = "CUSTOM_" + Date.now();
+        const nowIso = new Date().toISOString();
+
+        const fullImageDataUrls = selectedImages.map(img => img.dataUrl);
+        let thumbDataUrl = null;
+        if (fullImageDataUrls.length > 0) {
+            try {
+                thumbDataUrl = await generateTinyThumbnail(fullImageDataUrls[0]);
+            } catch (e) {
+                console.error("サムネイル生成に失敗、フル画像を暫定的に使用します:", e);
+                thumbDataUrl = fullImageDataUrls[0];
+            }
+        }
+
+        const newProblem = {
+            id: newId,
+            title: aiResult.extracted_text || userRawText,
+            short_title: aiResult.short_title || "解析問題",
+            subject: selectedSubject,
+            field: aiResult.field || "手動管理",
+            trap_description: aiResult.trap_description || "",
+            strategyPattern: aiResult.strategy_pattern || "",
+            errorCount: 1,
+            lastAttemptAt: nowIso,
+            lastResult: false,
+            thumb: thumbDataUrl,
+            imageCount: fullImageDataUrls.length,
+            answerFormula: aiResult.model_answer || "解説データなし",
+            mnemonic: aiResult.mnemonic || "",
+            events: Array.isArray(aiResult.events) ? aiResult.events : [],
+            createdAt: nowIso,
+            ...(linkedLessonId ? {
+                sourceLessonId: linkedLessonId,
+                sourceLessonTitle: linkedLessonTitle,
+                sourceLessonText: linkedLessonText,
+                sourceLessonKeyTerms: linkedLessonKeyTerms || []
+            } : {})
+        };
+
+        await set(ref(database, 'users/' + currentUser.uid + '/problems/' + newId), newProblem);
+        if (fullImageDataUrls.length > 0) {
+            await set(ref(database, 'users/' + currentUser.uid + '/problemImages/' + newId), { images: fullImageDataUrls });
+        }
+        closeModalAndReset();
+
+    } catch (error) {
+        console.error("AI解析エラー発生:", error);
+        showToast("AI自動解析に失敗しました！\n\n【原因】" + error.message, "error");
+    } finally {
+        submitBtn.textContent = "AI自動解析を実行";
+        submitBtn.disabled = false;
+    }
+}
+
+function closeModalAndReset() {
+    document.getElementById("add-problem-modal").classList.remove("open");
+    document.getElementById("problem-text-input").value = "";
+    document.getElementById("problem-image-input").value = "";
+    selectedImages = [];
+    renderImagePreviews();
+
+    const preview = document.getElementById("math-preview");
+    if (window.MathJax && window.MathJax.typesetClear) {
+        window.MathJax.typesetClear([preview]);
+    }
+    preview.innerHTML = "入力プレビューがここに表示されます";
+    window.setSelectedSubject("数学");
+
+    linkedLessonId = null;
+    linkedLessonTitle = null;
+    linkedLessonText = null;
+    linkedLessonKeyTerms = null;
+    const badge = document.getElementById("linked-lesson-badge");
+    if (badge) badge.style.display = "none";
+    if (window.location.search.includes("fromLesson")) {
+        window.history.replaceState({}, "", window.location.pathname);
+    }
+}
+
+const modal = document.getElementById("add-problem-modal");
+const openBtn = document.getElementById("open-modal-btn");
+const closeBtn = document.getElementById("close-modal-btn");
+const submitBtn = document.getElementById("analyze-submit-btn");
+const clearKeysBtn = document.getElementById("clear-keys-btn");
+const textInput = document.getElementById("problem-text-input");
+const imageInput = document.getElementById("problem-image-input");
+const previewContainer = document.getElementById("image-preview-container");
+
+if (openBtn) openBtn.addEventListener("click", () => modal.classList.add("open"));
+if (closeBtn) closeBtn.addEventListener("click", () => { closeModalAndReset(); });
+modal.addEventListener("click", (e) => { if (e.target === modal) closeModalAndReset(); });
+
+if (textInput) {
+    textInput.addEventListener('input', () => { window.updateMathPreview(false); });
+}
+
+if (clearKeysBtn) {
+    clearKeysBtn.addEventListener("click", () => {
+        clearAllKeys();
+        showToast("ブラウザに保存されていたGeminiとDeepSeekのAPIキーを全件消去しました。再読み込み後に🔑ボタンから新しいAPIキーを登録してください。", "success");
+        setTimeout(() => { location.reload(); }, 1500);
+    });
+}
+
+// 🎹 数式キーパッドのボタン割り当て（元のonclick(insertMathSymbol)相当）
+const MATH_KEY_MAP = {
+    "$$": ["$", "$"],
+    "frac": ["\\frac{", "}{}"],
+    "sqrt": ["\\sqrt{", "}"],
+    "pow": ["^{", "}"],
+    "sub": ["_{", "}"],
+    "theta": ["\\theta", ""],
+    "pi": ["\\pi", ""],
+    "alpha": ["\\alpha", ""],
+    "beta": ["\\beta", ""],
+    "delta": ["\\Delta", ""],
+    "pm": ["\\pm", ""],
+    "le": ["\\le", ""],
+    "ge": ["\\ge", ""],
+    "vec": ["\\vec{", "}"],
+    "int": ["\\int_{", "}^{}"],
+    "log": ["\\log_{", "}"],
+    "sin": ["\\sin", ""],
+    "cos": ["\\cos", ""]
+};
+document.querySelectorAll(".m-math-key").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const pair = MATH_KEY_MAP[btn.getAttribute("data-mk")];
+        if (pair) window.insertMathSymbol(pair[0], pair[1]);
+    });
+});
+document.querySelectorAll(".m-subject-select-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        window.setSelectedSubject(btn.getAttribute("data-subject"));
+    });
+});
+
+// 🖼️ 選択中の写真サムネイル一覧を描画（×で個別削除可能）
+function renderImagePreviews() {
+    if (!previewContainer) return;
+    if (selectedImages.length === 0) {
+        previewContainer.classList.remove("has-images");
+        previewContainer.innerHTML = "";
+        return;
+    }
+    previewContainer.classList.add("has-images");
+    previewContainer.innerHTML = selectedImages.map((img, i) => `
+        <div class="m-photo-thumb">
+            <img src="${img.dataUrl}">
+            <span class="m-photo-index">${i + 1}</span>
+            <div class="m-photo-remove" data-remove-img="${i}">×</div>
+        </div>
+    `).join("");
+    previewContainer.querySelectorAll("[data-remove-img]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const idx = parseInt(btn.getAttribute("data-remove-img"), 10);
+            selectedImages.splice(idx, 1);
+            renderImagePreviews();
+        });
+    });
+}
+
+// 📸 1枚の画像ファイルを圧縮してdataURLに変換（Promiseでラップ）
+function compressImageFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement("canvas");
+                const max_size = 800; let width = img.width, height = img.height;
+                if (width > height) { if (width > max_size) { height *= max_size / width; width = max_size; } }
+                else { if (height > max_size) { width *= max_size / height; height = max_size; } }
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext("2d"); ctx.drawImage(img, 0, 0, width, height);
+                const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.6);
+                resolve({
+                    mimeType: "image/jpeg",
+                    base64: compressedDataUrl.split(',')[1],
+                    dataUrl: compressedDataUrl
+                });
+            };
+            img.onerror = reject;
+            img.src = evt.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+if (imageInput) {
+    imageInput.addEventListener("change", async function(e) {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        for (const file of files) {
+            try {
+                selectedImages.push(await compressImageFile(file));
+            } catch (err) {
+                console.error("画像の読み込みに失敗しました:", err);
+            }
+        }
+        renderImagePreviews();
+        imageInput.value = "";
+    });
+}
+
+if (submitBtn) {
+    submitBtn.addEventListener("click", () => {
+        const text = textInput.value.trim();
+        if (!text && selectedImages.length === 0) { showToast("写真を選択するかメモを入力してください。", "error"); return; }
+        analyzeAndAddProblem(text);
+    });
+}
+
 function listenToCloudData(uid) {
     const userProblemsRef = ref(database, 'users/' + uid + '/problems');
     onValue(userProblemsRef, (snapshot) => {
@@ -496,18 +1180,24 @@ onAuthStateChanged(auth, (user) => {
     const authChip = document.getElementById("auth-chip");
     const loginNotice = document.getElementById("login-required-notice");
     const mainContent = document.getElementById("main-content");
+    const registerBtn = document.getElementById("open-modal-btn");
 
     if (user) {
+        currentUser = user;
         authChip.className = "m-auth-chip";
         authChip.innerHTML = `<img src="${user.photoURL}"><span>${user.displayName}</span>`;
         loginNotice.style.display = "none";
         mainContent.style.display = "block";
+        if (registerBtn) registerBtn.style.display = "flex";
         listenToCloudData(user.uid);
+        checkAndLoadLinkedLesson(user.uid);
     } else {
+        currentUser = null;
         authChip.className = "m-auth-chip signed-out";
         authChip.textContent = "未サインイン";
         loginNotice.style.display = "block";
         mainContent.style.display = "none";
+        if (registerBtn) registerBtn.style.display = "none";
     }
 });
 </script>
