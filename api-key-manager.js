@@ -4,6 +4,7 @@
    - 旧・単一キー保存("RE_MIND_GEMINI_KEY"等)は自動的に新形式へ移行
    - 追加/削除できる管理モーダルUIをその場で注入
    - fetchWithKeyRotation() で「1つのキーが失敗(429やエラー)したら次のキーへ」を共通化
+   - 429（クォータ上限）時は「モデル × キー」単位で日次リセットまでお休みに設定
    ========================================================================== */
 
 const STORAGE = {
@@ -75,10 +76,7 @@ export function clearAllKeys() {
 }
 
 // --------------------------------------------------------------------------
-// 🏷️【新設】キーのニックネーム（表示名）。
-// キー本文の文字列そのものをID代わりに使って紐付けるので、キーの並び替え・
-// 他のキーの削除があっても対応がズレない（配列indexで持つと順番が変わった時に
-// 「別のキー」を指してしまうため、識別子には必ずキー本文を使う）。
+// 🏷️ キーのニックネーム（表示名）
 // --------------------------------------------------------------------------
 const KEY_LABELS_STORAGE = "RE_MIND_KEY_LABELS";
 
@@ -110,24 +108,103 @@ export function setKeyLabel(engine, key, label) {
 }
 
 // --------------------------------------------------------------------------
-// 🔁 キー・ローテーション付きfetch
-// buildRequest(key) => { url, options } を渡すと、登録済みキーを先頭から順に試す。
-// 429・認証エラー・通信エラーなど、どんな失敗でも「次のキー」へフォールバックし、
-// 全キーが失敗した時だけ最後のエラーをthrowする。
+// 🩺「モデル × キー」単位の429（一時お休み）管理
 // --------------------------------------------------------------------------
-// requestTimeoutMs: 1回のfetchがハングした場合に強制的に諦めて次のキー/モデルへ進むまでの上限(ms)。
-// 過去、Gemini側が過負荷の際に単一リクエストが数十秒〜数分ハングし続け、
-// 登録キー数ぶん直列に待たされて体感の遅さの主因になっていたため追加。
-// 🩹【調整】実際のNetworkログを見ると正常応答・503確定とも20〜40秒台かかるケースがあり、
-//   20秒だと本来成功するはずのリクエストまでタイムアウト扱いで打ち切ってしまっていたため60秒に延長。
-export async function fetchWithKeyRotation(keys, buildRequest, { requestTimeoutMs = 60000 } = {}) {
+const KEY_COOLDOWN_STORAGE = "RE_MIND_KEY_COOLDOWN";
+
+function getCooldownStorageKey(modelName, key) {
+    return modelName ? `${modelName}:${key}` : key;
+}
+
+function loadCooldowns() {
+    let map = {};
+    try {
+        const raw = localStorage.getItem(KEY_COOLDOWN_STORAGE);
+        const parsed = raw ? JSON.parse(raw) : {};
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) map = parsed;
+    } catch (e) {
+        map = {};
+    }
+    const now = Date.now();
+    let changed = false;
+    for (const k of Object.keys(map)) {
+        if (typeof map[k] !== "number" || map[k] <= now) {
+            delete map[k];
+            changed = true;
+        }
+    }
+    if (changed) {
+        try { localStorage.setItem(KEY_COOLDOWN_STORAGE, JSON.stringify(map)); } catch (e) { /* noop */ }
+    }
+    return map;
+}
+
+export function isKeyCoolingDown(key, modelName = "") {
+    const map = loadCooldowns();
+    const cKey = getCooldownStorageKey(modelName, key);
+    const until = map[cKey];
+    return typeof until === "number" && Date.now() < until;
+}
+
+export function setKeyCooldown(key, modelName = "", ms = null) {
+    const map = loadCooldowns();
+    const cKey = getCooldownStorageKey(modelName, key);
+    const duration = (typeof ms === "number" && ms > 0) ? ms : Math.max(0, nextGeminiQuotaResetAt() - Date.now());
+    map[cKey] = Date.now() + duration;
+    try { localStorage.setItem(KEY_COOLDOWN_STORAGE, JSON.stringify(map)); } catch (e) { /* noop */ }
+}
+
+export function getKeyCooldownRemainingMs(key, modelName = "") {
+    const map = loadCooldowns();
+    const cKey = getCooldownStorageKey(modelName, key);
+    const until = map[cKey];
+    if (typeof until !== "number") return null;
+    const remaining = until - Date.now();
+    return remaining > 0 ? remaining : null;
+}
+
+function nextGeminiQuotaResetAt() {
+    const now = new Date();
+    const laParts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Los_Angeles",
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+    }).formatToParts(now).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
+
+    const laNowAsLocal = new Date(`${laParts.year}-${laParts.month}-${laParts.day}T${laParts.hour}:${laParts.minute}:${laParts.second}`);
+    const laOffsetMs = laNowAsLocal.getTime() - now.getTime();
+
+    const laMidnightAsLocal = new Date(`${laParts.year}-${laParts.month}-${laParts.day}T00:00:00`);
+    laMidnightAsLocal.setDate(laMidnightAsLocal.getDate() + 1);
+    return laMidnightAsLocal.getTime() - laOffsetMs;
+}
+
+// --------------------------------------------------------------------------
+// 🔁 キー・ローテーション付きfetch
+// --------------------------------------------------------------------------
+export async function fetchWithKeyRotation(keys, buildRequest, { requestTimeoutMs = 60000, startIndex = 0, modelName = "" } = {}) {
     if (!keys || keys.length === 0) {
         throw new Error("APIキーが1件も登録されていません。右下の🔑ボタンから登録してください。");
     }
 
+    const availableIndices = keys
+        .map((k, idx) => ({ key: k, originalIndex: idx }))
+        .filter(item => !isKeyCoolingDown(item.key, modelName));
+
+    if (availableIndices.length === 0) {
+        const tag = modelName ? `[${modelName}] ` : "";
+        throw new Error(`${tag}全キーが日次利用上限のためお休み中です`);
+    }
+
+    const activeCount = availableIndices.length;
+    const offset = ((startIndex % activeCount) + activeCount) % activeCount;
+    const order = Array.from({ length: activeCount }, (_, step) => availableIndices[(offset + step) % activeCount]);
+
     let lastError = null;
-    for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
+    for (const item of order) {
+        const key = item.key;
+        const i = item.originalIndex;
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), requestTimeoutMs);
         try {
@@ -136,13 +213,14 @@ export async function fetchWithKeyRotation(keys, buildRequest, { requestTimeoutM
             clearTimeout(timeoutId);
 
             if (response.status === 429) {
-                console.warn(`⚠️ キー#${i + 1} がレート制限（429）に達しました → 次のキーへフォールバック`);
-                lastError = new Error(`レート制限(429): キー#${i + 1}`);
+                const cooldownMs = Math.max(0, nextGeminiQuotaResetAt() - Date.now());
+                setKeyCooldown(key, modelName, cooldownMs);
+                const hoursLeft = Math.max(1, Math.round(cooldownMs / 3600000));
+                const tag = modelName ? `[${modelName}] ` : "";
+                console.warn(`⚠️ ${tag}キー#${i + 1} が上限（429）に達しました → 日次リセット（あと約${hoursLeft}時間）までお休みに設定し、次のキーへ`);
+                lastError = new Error(`レート制限(429): ${tag}キー#${i + 1}`);
                 continue;
             }
-            // 🩹 503(モデル過負荷)はキー固有の問題ではなく、どのキーで叩いても結果は同じになりやすい。
-            //    以前は他の全キーを順番に試し尽くしてから次モデルへ進んでいたため、
-            //    キー登録数が多いほど1モデルの見切りに時間がかかっていた → 即座に次モデルへ。
             if (response.status === 503) {
                 console.warn(`⚠️ モデルが過負荷（503） → 残りのキーは試さず次のモデルへフォールバック`);
                 lastError = new Error(`モデル過負荷(503)`);
@@ -171,11 +249,8 @@ export async function fetchWithKeyRotation(keys, buildRequest, { requestTimeoutM
 }
 
 // --------------------------------------------------------------------------
-// 🧠【共通化】以前は各ページに個別コピペされていたGemini関連の定数・ヘルパー群。
-// モデルの追加/削除やJSON抽出ロジックの修正は、今後ここ1箇所を直せば全ページに反映される。
+// 🧠 Geminiモデル一覧・機能定義
 // --------------------------------------------------------------------------
-
-// ✨ 無料枠のRPD制限（1日20回など）に達したモデルから順に切り替えるフォールバック順
 export const GEMINI_MODEL_FALLBACK_LIST = [
     'gemini-3.7-flash',
     'gemini-3.6-flash',
@@ -187,13 +262,6 @@ export const GEMINI_MODEL_FALLBACK_LIST = [
     'gemini-2.5-flash-lite'
 ];
 
-// --------------------------------------------------------------------------
-// ⚙️【新設】機能ごとに「使うモデル」「使うキー」を個別設定できるようにするための定義。
-// 各ページはcallGeminiJSON/callGeminiChatのoptionsに { featureId: "..." } を渡すことで、
-// ここで設定された優先モデル順・使用キーの絞り込みが自動的に反映される。
-// 未設定（該当featureIdの設定が無い、または空配列）の場合は、common全体のデフォルト
-// （GEMINI_MODEL_FALLBACK_LIST全体・登録キー全部）がそのまま使われる。
-// --------------------------------------------------------------------------
 export const GEMINI_FEATURES = [
     { id: "subject_analysis", label: "問題登録：科目/単元 自動分析", page: "index.html" },
     { id: "explanation",      label: "問題解説の生成（初回）",        page: "problem.html" },
@@ -208,14 +276,11 @@ export const GEMINI_FEATURES = [
     { id: "lesson_teach",     label: "授業内AIチャット",             page: "lesson.html" },
     { id: "memorization_points", label: "単元の暗記事項リスト生成（授業プランとは別リクエスト）", page: "lesson.html" },
     { id: "refbook_extract",  label: "参考書の写真からの問題読み取り",  page: "refbook.html" },
+    { id: "refbook_answer_generate", label: "参考書問題のAIによる解答・解説生成", page: "refbook.html" },
 ];
 
 const FEATURE_CONFIG_STORAGE = "RE_MIND_FEATURE_CONFIG";
 
-// 保存形式: { [featureId]: { models: string[]|null, keys: string[]|null } }
-// models/keys が null または未設定・空配列の場合は「デフォルト（全部使う）」を意味する。
-// 🩹 keysは配列indexではなく「キー本文そのもの」で持つ。indexで持つと、キーの追加/削除/
-//    並び替えが起きた時に「意図していたのと別のキー」を指してしまうバグが起きるため。
 function loadFeatureConfig() {
     try {
         const raw = localStorage.getItem(FEATURE_CONFIG_STORAGE);
@@ -231,12 +296,6 @@ function saveFeatureConfig(cfg) {
     localStorage.setItem(FEATURE_CONFIG_STORAGE, JSON.stringify(cfg));
 }
 
-// --------------------------------------------------------------------------
-// 📤📥【新設】このアプリのAI設定（APIキー・ニックネーム・機能ごとの割り当て）を
-//    まとめてJSONファイルにエクスポート／インポートする。
-//    あくまでこのアプリ内で完結する機能で、他サービスとの連携やクラウド送信は行わない。
-//    ※APIキーの本文がそのまま含まれるファイルになるため、扱いには注意（他人と共有しない）。
-// --------------------------------------------------------------------------
 const AI_SETTINGS_EXPORT_TYPE = "lolz-ai-settings-export";
 const AI_SETTINGS_EXPORT_VERSION = 1;
 
@@ -253,8 +312,6 @@ export function exportAISettings() {
     };
 }
 
-// data: exportAISettingsが返す形式のオブジェクト（JSON.parse済み）
-// 戻り値: 取り込んだ項目数の内訳（トーストの文言用）
 export function importAISettings(data) {
     if (!data || typeof data !== "object") {
         throw new Error("ファイルの中身を読み取れませんでした。");
@@ -297,7 +354,6 @@ function setFeatureEntry(featureId, entry) {
     saveFeatureConfig(cfg);
 }
 
-// 🖥 管理画面ページ（ai-settings.html）向けの公開API
 export function getFeatureAssignment(featureId) { return getFeatureEntry(featureId); }
 export function setFeatureAssignment(featureId, { models, keys }) {
     setFeatureEntry(featureId, {
@@ -309,8 +365,6 @@ export function resetFeatureAssignment(featureId) {
     setFeatureEntry(featureId, { models: null, keys: null });
 }
 
-// featureIdに紐づく「有効なモデルだけを、共通フォールバック順のまま」返す。
-// 設定が無い/空なら全モデルを返す（＝今までどおりの挙動）。
 export function getEffectiveModelList(featureId) {
     if (!featureId) return GEMINI_MODEL_FALLBACK_LIST;
     const entry = getFeatureEntry(featureId);
@@ -320,8 +374,6 @@ export function getEffectiveModelList(featureId) {
     return filtered.length > 0 ? filtered : GEMINI_MODEL_FALLBACK_LIST;
 }
 
-// featureIdに紐づく「有効なキーだけを、登録順のまま」返す。
-// 設定が無い/空、または指定されたキーが1つも現存しない場合は登録済みキー全部を返す。
 export function getEffectiveGeminiKeys(featureId) {
     const allKeys = getGeminiKeys();
     if (!featureId) return allKeys;
@@ -336,7 +388,6 @@ export function buildGeminiUrl(modelName, apiKey) {
     return `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 }
 
-// Markdownのコードブロックタグ（```json ... ```）を取り除く
 export function stripCodeFence(text) {
     let t = text.trim();
     if (t.startsWith("```json")) t = t.substring(7);
@@ -345,7 +396,6 @@ export function stripCodeFence(text) {
     return t.trim();
 }
 
-// AIが\fracなどのバックスラッシュをエスケープし忘れた場合の保険的な修正
 export function fixJsonEscapes(str) {
     let inString = false; let result = "";
     for (let i = 0; i < str.length; i++) {
@@ -358,7 +408,6 @@ export function fixJsonEscapes(str) {
             else if (next === 'n' && (str[i+2] === ' ' || str[i+2] === '"' || str[i+2] === '\\' || !/[a-zA-Z]/.test(str[i+2]))) { result += '\\n'; i++; }
             else { result += '\\\\'; }
         } else if (inString && c.charCodeAt(0) < 0x20) {
-            // 🩹 生の制御文字（未エスケープの改行・タブ等）がJSON文字列中に紛れ込んだ場合の保険
             if (c === '\n') result += '\\n';
             else if (c === '\r') result += '\\r';
             else if (c === '\t') result += '\\t';
@@ -368,7 +417,6 @@ export function fixJsonEscapes(str) {
     return result;
 }
 
-// テキストの中から最初の { ... } を対応する括弧の深さで正確に切り出す
 export function extractJsonObject(text) {
     const start = text.indexOf('{');
     if (start === -1) return text;
@@ -384,7 +432,6 @@ export function extractJsonObject(text) {
     return text.substring(start);
 }
 
-// テキストの中から最初の [ ... ] を対応する括弧の深さで正確に切り出す（出題フォーマットが配列の場合）
 export function extractJsonArray(text) {
     const start = text.indexOf('[');
     if (start === -1) return text;
@@ -401,39 +448,20 @@ export function extractJsonArray(text) {
 }
 
 // --------------------------------------------------------------------------
-// 🧠【共通化】各ページに個別コピペされていた「Geminiにcontentsを投げて、モデルを
-// 順にフォールバックしながらJSONで受け取る」ループ本体。ここを直せば、
-// モデル追加・リトライ仕様の変更・エラーメッセージの修正が全ページに一括反映される。
-//
-// - callGeminiJSON(parts, systemInstruction, options)  : 単発質問（画像添付OK）用
-// - callGeminiChat(contents, systemInstruction, options): 複数ターンの会話履歴を渡す用
-// どちらも中身は同じで、渡す contents の組み立て方が違うだけ。
-//
-// options:
-//   temperature: number（省略時 0.4）
-//   arrayMode: true にすると応答をJSON配列として抽出する（省略時はJSONオブジェクト）
-//   silentFallback: true にすると notifyModelFallback（画面右下トースト）を出さない
+// 🧠 Gemini フォールバック実行ループ
 // --------------------------------------------------------------------------
 async function runGeminiFallbackLoop(contents, systemInstruction, options = {}) {
-    const { temperature = 0.4, arrayMode = false, silentFallback = false, responseSchema = null, featureId = null, requestTimeoutMs = 60000 } = options;
-    // ⚙️ featureIdが渡されていれば、管理画面で機能ごとに絞り込んだモデル順・キーだけを使う。
-    //    未指定/未設定なら従来どおり全モデル・全キーが対象。
+    const { temperature = 0.4, arrayMode = false, silentFallback = false, responseSchema = null, featureId = null, requestTimeoutMs = 60000, keyOffset = 0 } = options;
     const keys = getEffectiveGeminiKeys(featureId);
     const modelList = getEffectiveModelList(featureId);
 
-    // ❗JSON厳守の追加指示（responseSchemaを指定できない呼び出し元向けの保険。
-    //   responseSchemaがある場合はAPI側で構造そのものが強制されるため、これは主にschema未指定時の保険として働く）
     const strictJsonReminder = "\n\n❗最重要ルール: 出力は指定されたJSON形式のみとすること。挨拶・前置き・説明文・Markdownのコードブロック(```)など、JSON以外の文字列は一切含めないこと。";
 
     let lastError = null;
     const fallbackAttempts = [];
 
-    // 1回分のリクエスト実行＋JSON抽出を行う内部ヘルパー
-    // 戻り値: { ok: true, parsed } または { ok: false, isFormatError, reason, error }
     async function attemptOnce(modelName, systemInstructionText) {
         const generationConfig = { "responseMimeType": "application/json", "temperature": temperature };
-        // 🔒【最重要】responseSchemaを渡すと、Gemini側でJSON構造そのものを強制するデコードになり、
-        //   「JSONで返して」という自然文のお願いより遥かに確実にフォーマット崩れを防げる。
         if (responseSchema) generationConfig.responseSchema = responseSchema;
 
         const requestBody = JSON.stringify({
@@ -447,7 +475,7 @@ async function runGeminiFallbackLoop(contents, systemInstruction, options = {}) 
             response = await fetchWithKeyRotation(keys, (key) => ({
                 url: buildGeminiUrl(modelName, key),
                 options: { method: "POST", headers: { "Content-Type": "application/json" }, body: requestBody }
-            }), { requestTimeoutMs });
+            }), { requestTimeoutMs, startIndex: keyOffset, modelName });
         } catch (err) {
             return { ok: false, isFormatError: false, reason: err?.message || "不明な通信エラー", error: err };
         }
@@ -471,8 +499,6 @@ async function runGeminiFallbackLoop(contents, systemInstruction, options = {}) 
     for (const modelName of modelList) {
         let result = await attemptOnce(modelName, systemInstruction);
 
-        // 🔁 JSON形式が崩れていた場合のみ、同じモデル・同じキー群に「JSON厳守」の
-        //   指示を強めて1回だけ再挑戦する（レート制限や通信エラーでは再挑戦しない＝即次のモデルへ）
         if (!result.ok && result.isFormatError) {
             console.warn(`⚠️ ${modelName} の応答が不正なJSONでした → フォーマット厳守の指示を追加して同じモデルに再挑戦`, result.error, result.rawText);
             result = await attemptOnce(modelName, systemInstruction + strictJsonReminder);
@@ -492,24 +518,16 @@ async function runGeminiFallbackLoop(contents, systemInstruction, options = {}) 
     throw new Error(`全モデルが利用できませんでした（レート制限または不正な応答）。時間を置いて再度お試しください。\n最終エラー: ${lastError?.message || "不明"}`);
 }
 
-// ✨ 単発質問用（parts配列＝テキスト＋画像を1ターンとして送る）
-// options.responseSchema にGeminiのSchemaオブジェクトを渡すと、そのJSON構造をAPI側で強制できる
 export async function callGeminiJSON(parts, systemInstruction, options = {}) {
     return runGeminiFallbackLoop([{ "role": "user", "parts": parts }], systemInstruction, options);
 }
 
-// ✨ 複数ターンの会話履歴用（contentsは [{role:"user"|"model", parts:[...]}...] の配列そのもの）
-// options.responseSchema にGeminiのSchemaオブジェクトを渡すと、そのJSON構造をAPI側で強制できる
 export async function callGeminiChat(contents, systemInstruction, options = {}) {
     return runGeminiFallbackLoop(contents, systemInstruction, options);
 }
 
 // --------------------------------------------------------------------------
-// 🖼【共通化】各ページに個別コピペされていた画像の正規化ロジック。
-// Geminiが受け付けるMIMEタイプ（png/jpeg/webp）以外や、iPhoneのHEIC/HEIF、
-// ブラウザがMIMEを正しく判定できない（application/octet-stream等になる）ファイルを、
-// canvasでimage/jpegに再エンコードし直すことで「Unsupported MIME type」400エラーを防ぐ。
-// 戻り値: { mimeType, data(base64), previewUrl(dataURL) }
+// 🖼 画像の正規化 & サムネイル生成
 // --------------------------------------------------------------------------
 export const GEMINI_SUPPORTED_IMAGE_MIME = ["image/png", "image/jpeg", "image/webp"];
 
@@ -544,21 +562,13 @@ export async function normalizeImageFile(file) {
         const jpegUrl = canvas.toDataURL("image/jpeg", 0.92);
         return { mimeType: "image/jpeg", data: jpegUrl.split(",")[1], previewUrl: jpegUrl };
     } catch (e) {
-        console.error("画像の再エンコードに失敗しました（このブラウザはHEIC非対応の可能性）", e);
-        throw new Error(`「${file.name}」を変換できませんでした。iPhoneの「設定 > カメラ > フォーマット」で「互換性優先」にするか、写真アプリの共有時にJPEGへ変換してから再度アップロードしてください。`);
+        console.error("画像の再エンコードに失敗しました", e);
+        throw new Error(`「${file.name}」を変換できませんでした。`);
     } finally {
         URL.revokeObjectURL(objectUrl);
     }
 }
 
-// --------------------------------------------------------------------------
-// 🖼️【新設・パフォーマンス改善】一覧表示専用の極小サムネイル生成。
-// 誤答ノートのダッシュボード一覧は、以前は問題ごとのフルサイズ画像(800px/品質0.6)を
-// 丸ごとRealtime Databaseの同じノードに保存しており、一覧を開くたびに登録問題数ぶんの
-// フル画像を毎回ダウンロードしていた（数十〜数MB規模になり得る）。
-// フルサイズ画像は別ノード(problemImages/{id})に分離し、一覧表示にはこの関数で作る
-// 極小サムネイル(既定90px・品質0.35、数KB程度)だけを使うことで、一覧読み込みを大幅に軽くする。
-// dataUrl: 元となる画像のdata URL（フルサイズ画像やアップロード直後の画像でよい）
 export function generateTinyThumbnail(dataUrl, maxSize = 90, quality = 0.35) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -581,7 +591,7 @@ export function generateTinyThumbnail(dataUrl, maxSize = 90, quality = 0.35) {
 }
 
 // --------------------------------------------------------------------------
-// 🖥 管理モーダルUI（右下の🔑ボタンから開く / 未登録時は自動で開く）
+// 🖥 管理モーダルUI
 // --------------------------------------------------------------------------
 let uiInjected = false;
 
@@ -819,16 +829,9 @@ function injectStylesAndModal() {
         overlay.style.display = "none";
     }
 
-    // 外部からも開けるように公開
     window.__apikmOpen = openModal;
 }
 
-/**
- * 各ページの起動時に1回呼ぶ。
- * - モーダルUIとフローティングボタンを注入
- * - 旧形式キーを新形式へ移行
- * - needGemini/needDeepseekで指定したエンジンのキーが0件なら、自動でモーダルを開いて登録を促す
- */
 export function initApiKeyManager({ needGemini = false, needDeepseek = false } = {}) {
     injectStylesAndModal();
 
@@ -836,7 +839,6 @@ export function initApiKeyManager({ needGemini = false, needDeepseek = false } =
     const missingDeepseek = needDeepseek && getDeepseekKeys().length === 0;
 
     if (missingGemini || missingDeepseek) {
-        // UI描画が終わってから開く
         setTimeout(() => {
             if (window.__apikmOpen) window.__apikmOpen();
         }, 200);
@@ -849,11 +851,7 @@ export function openApiKeyManager() {
 }
 
 // --------------------------------------------------------------------------
-// 🩺 モデル・フォールバック診断ログ
-// callAnalysisEngine / チャット送信 側で「どのモデルが・なぜ失敗したか」を集めて
-// consoleに詳細出力＋画面右下にトースト表示する。
-// attempts: [{ model: "gemini-3.6-flash", reason: "空応答" }, ...]（失敗したものだけ）
-// usedModel: 最終的に成功したモデル名（全滅なら null）
+// 🩺 トースト通知ヘルパー
 // --------------------------------------------------------------------------
 let fallbackToastStyleInjected = false;
 
@@ -895,16 +893,14 @@ function getFallbackToastWrap() {
 }
 
 export function notifyModelFallback(attempts, usedModel) {
-    if (!attempts || attempts.length === 0) return; // 1回目のモデルで成功＝報告不要
+    if (!attempts || attempts.length === 0) return;
 
-    // console側には常に詳細を出す
     console.group(`🩺 モデル・フォールバック診断（${attempts.length}件失敗 → ${usedModel || "全滅"}）`);
     attempts.forEach(a => console.warn(`❌ ${a.model} : ${a.reason}`));
     if (usedModel) console.info(`✅ 最終的に使用: ${usedModel}`);
     else console.error("⛔ 登録済みの全モデル・全キーで失敗しました");
     console.groupEnd();
 
-    // 画面右下にもトーストで簡易表示（消えるまで8秒）
     injectFallbackToastStyles();
     const wrap = getFallbackToastWrap();
 
@@ -935,14 +931,6 @@ export function notifyModelFallback(attempts, usedModel) {
     setTimeout(remove, 8000);
 }
 
-// --------------------------------------------------------------------------
-// 🔔【共通トースト】alert()の代わりに使う、画面を止めない非ブロッキング通知。
-// alert()はOSネイティブのダイアログでクリックするまで操作を止めてしまうため、
-// エラー/成功メッセージの表示にはこちらを使う。破壊的操作の最終確認には
-// 引き続き confirm() を使うこと（あちらは「止めて判断させる」ことが目的のため）。
-// type: "error" | "success" | "info"（省略時は"info"）
-// duration: 自動で消えるまでのms（省略時は6000。0を渡すと自動では消えない）
-// --------------------------------------------------------------------------
 let genericToastStyleInjected = false;
 
 function injectGenericToastStyles() {
@@ -998,7 +986,6 @@ export function showToast(message, type = "info", duration = 6000) {
         <span class="apikm-toast-msg"></span>
         <span class="apikm-toast-x">×</span>
     `;
-    // メッセージはテキストとして挿入（HTMLインジェクション防止）
     toast.querySelector(".apikm-toast-msg").textContent = message;
     wrap.appendChild(toast);
 

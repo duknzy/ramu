@@ -31,7 +31,7 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 
     <style>
-        .refbook-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.6rem; }
+        .refbook-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.6rem; padding-bottom: 5rem; }
 
         header.rb-header {
             display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;
@@ -123,25 +123,63 @@
         .rb-inline-row > div { flex: 1; }
 
         .photo-thumb-strip { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.8rem; }
-        .photo-thumb { position: relative; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; border: 1px solid #22222a; }
+        .photo-thumb { position: relative; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; border: 1px solid #22222a; flex-shrink: 0; }
         .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
         .photo-thumb-remove {
-            position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); color: #fff;
+            position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.75); color: #fff;
             width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 0.7rem; cursor: pointer;
+            font-size: 0.7rem; cursor: pointer; font-weight: 900;
         }
+        .photo-thumb-remove:hover { background: #ff4545; }
+
+        /* 🗂️ リクエスト枠（チャンク）専用UI */
+        .chunk-groups-wrap { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 0.4rem; }
+        .chunk-card {
+            background: rgba(255, 255, 255, 0.02); border: 1px solid #22222a;
+            border-radius: 14px; padding: 0.85rem 1rem; display: flex; flex-direction: column; gap: 0.6rem;
+            transition: border-color 150ms ease;
+        }
+        .chunk-card:hover { border-color: rgba(0, 243, 255, 0.35); }
+        .chunk-card-head { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; }
+        .chunk-card-title {
+            font-size: 0.82rem; font-weight: 800; color: var(--accent-cyan); display: flex; align-items: center; gap: 0.5rem;
+        }
+        .chunk-card-badge { font-size: 0.7rem; color: var(--text-muted); font-weight: 700; }
+        .chunk-delete-btn {
+            background: transparent; border: 1px solid #ff4545; color: #ff4545; border-radius: 6px;
+            padding: 0.2rem 0.5rem; font-size: 0.68rem; cursor: pointer; font-weight: 800;
+        }
+        .chunk-delete-btn:hover { background: rgba(255, 69, 69, 0.15); }
+        .chunk-thumbs-row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+        .chunk-add-photo-btn {
+            width: 72px; height: 72px; border-radius: 10px; border: 1px dashed #33333e;
+            background: rgba(255, 255, 255, 0.02); color: var(--text-muted);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 0.2rem; cursor: pointer; font-size: 0.68rem; font-weight: 800; flex-shrink: 0;
+            transition: all 150ms ease;
+        }
+        .chunk-add-photo-btn:hover {
+            border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(0, 243, 255, 0.06);
+        }
+        .add-chunk-row { margin-top: 0.6rem; }
 
         .extracted-item {
             border: 1px solid #22222a; border-radius: 14px; padding: 1.2rem; margin-top: 1rem; background: rgba(255,255,255,0.02);
         }
         .extracted-item-head { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; }
         .extracted-item-toggle { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 800; }
+        .extracted-item-head-label { color: var(--text-muted); font-size: 0.75rem; flex-grow: 1; }
+        .extracted-item-move { display: flex; gap: 0.3rem; flex-shrink: 0; }
+        .extracted-move-btn {
+            background: rgba(255,255,255,0.06); border: 1px solid #22222a; color: var(--text-bright-muted);
+            border-radius: 8px; width: 28px; height: 28px; font-size: 0.75rem; cursor: pointer; line-height: 1;
+        }
+        .extracted-move-btn:disabled { opacity: 0.25; cursor: default; }
+        .extracted-move-btn:not(:disabled):hover { border-color: var(--accent-cyan); color: #fff; }
+        .extracted-items-toolbar { display: flex; justify-content: flex-end; margin-bottom: 0.6rem; }
 
         .rb-modal-content { width: 92%; max-width: 720px; max-height: 92vh; overflow-y: auto; }
 
-        /* 🩹【修正】style.css側には.modal-overlay/.modal-contentの基底定義が無いため、
-           ここで明示的に定義する（無いと画面中央固定のポップアップにならず、
-           通常のページ要素としてそのまま縦に積まれて表示されてしまう） */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -193,7 +231,7 @@
             font-size: 0.72rem; color: var(--accent-cyan); font-weight: 800; margin-bottom: 0.5rem;
         }
 
-        /* 📝 自分用メモ（一問一答・保存されないその場だけのメモ） */
+        /* 📝 自分用メモ */
         .scratch-memo-row { margin-top: 1.2rem; }
         .scratch-memo-label {
             font-size: 0.75rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.4rem;
@@ -331,7 +369,7 @@
         <div class="squircle-tile modal-content rb-modal-content glass-card">
             <div class="tile-header-group">
                 <span class="badge badge-ai" style="color: var(--accent-cyan);">📸 参考書の写真から問題を登録</span>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.4rem;">同じページ内の複数の問題（例：WARMING UP①〜⑤、基本例題1など）はまとめて1回で読み取れます。</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.4rem;">リクエスト枠ごとに写真を追加できます（1枠につき2〜3枚推奨）。各枠がそれぞれ並列でAIに送信されます。</p>
             </div>
 
             <div class="rb-form-row">
@@ -362,11 +400,13 @@
                 </div>
             </div>
 
+            <!-- 🗂️ リクエスト枠（チャンク）コンテナ -->
             <div class="rb-form-row">
-                <label class="rb-form-label">問題ページの写真（複数選択可）</label>
-                <input type="file" accept="image/*" multiple id="register-image-input" style="display:none;">
-                <button type="button" class="tactile-btn tactile-btn-secondary" id="register-image-trigger-btn">🖼️ 写真を選択</button>
-                <div class="photo-thumb-strip" id="register-photo-preview"></div>
+                <label class="rb-form-label">問題ページの写真（リクエストごとに整理）</label>
+                <div class="chunk-groups-wrap" id="chunk-groups-container"></div>
+                <div class="add-chunk-row">
+                    <button type="button" class="tactile-btn tactile-btn-secondary" id="add-chunk-btn" style="width:100%; padding:0.6rem; font-size:0.82rem;">＋ 新しいリクエスト枠を追加</button>
+                </div>
             </div>
 
             <div class="rb-form-row">
@@ -435,7 +475,7 @@
 
     <script type="module">
         import {
-            getGeminiKeys, initApiKeyManager, showToast, callGeminiJSON, generateTinyThumbnail
+            getGeminiKeys, initApiKeyManager, showToast, callGeminiJSON, generateTinyThumbnail, getEffectiveGeminiKeys
         } from "./api-key-manager.js";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -469,7 +509,10 @@
         let currentQuizIndex = 0;
         let solvedInThisRun = {}; // problemId -> true（今回のセッションで解答表示済み）
 
-        let pendingImages = [];   // 登録モーダルで選択中の画像 {mimeType, base64, dataUrl}
+        // 🗂️ リクエスト枠（チャンク）リスト: [ { id: string, images: [{mimeType, base64, dataUrl}] }, ... ]
+        let chunkGroups = [{ id: "chunk_1", images: [] }];
+        let nextChunkId = 2;
+
         let pendingExtracted = []; // AI読み取り結果のプレビュー行 {number,type,question,hasFigure,answer,explanation,answerGenerated,include}
 
         let problemImagesCache = {}; // problemId -> [dataUrl, ...]（一度取得した元写真をキャッシュ）
@@ -493,7 +536,7 @@
         let editingProblemId = null;
 
         // ----------------------------------------------------------------
-        // 画像圧縮（OCR精度を優先してやや高めの解像度・画質で保持）
+        // 画像圧縮（OCR精度を優先して長辺1600px・品質0.85で保持）
         // ----------------------------------------------------------------
         function compressImageForOcr(file) {
             return new Promise((resolve, reject) => {
@@ -665,7 +708,6 @@
         // 単元詳細（一問一答）
         // ----------------------------------------------------------------
         function naturalSortKey(p) {
-            // number文字列から先頭の数字を拾って並び替えの目安にする（例："基本例題1"→1, "WARMING UP③"→拾えなければorder頼み）
             const m = String(p.number || "").match(/\d+/);
             return m ? parseInt(m[0], 10) : 999999;
         }
@@ -760,7 +802,6 @@
             document.getElementById("quiz-answer-text").innerHTML = renderMathText(p.answer || "（解答なし）");
             document.getElementById("quiz-explanation-text").innerHTML = renderMathText(p.explanation || "（解説なし）");
 
-            // 📝 自分用メモ（この問題のぶんを復元。保存はしない）
             const scratchTa = document.getElementById("quiz-scratch-memo");
             scratchTa.value = scratchMemos[pid] || "";
             updateScratchMemoRecap(pid);
@@ -770,7 +811,6 @@
             document.getElementById("quiz-answer-block").classList.remove("open");
             document.getElementById("quiz-reveal-row").style.display = "flex";
 
-            // 🖼️ 図・元写真の表示
             document.getElementById("quiz-figure-badge").style.display = p.hasFigure ? "inline-flex" : "none";
             loadQuizFigures(pid, !!p.hasFigure);
 
@@ -780,8 +820,6 @@
             typesetMath([document.getElementById("quiz-active-area")]);
         }
 
-        // 📝 自分用メモ（一問一答内だけのその場メモ・DB保存なし）
-        // 入力するたびに更新し、答え・解説と一緒に見比べられるようリキャップ欄にも反映する
         document.getElementById("quiz-scratch-memo").addEventListener("input", (e) => {
             const pid = currentQuizList[currentQuizIndex];
             if (!pid) return;
@@ -802,8 +840,6 @@
             }
         }
 
-        // 🖼️ 現在の問題に紐づく元写真を取得してギャラリーにセットする
-        //    hasFigure が true の場合は最初から開いた状態で表示する
         async function loadQuizFigures(problemId, autoOpen) {
             const toggleBtn = document.getElementById("quiz-figure-toggle-btn");
             const gallery = document.getElementById("quiz-figure-gallery");
@@ -817,11 +853,10 @@
                 try {
                     const snap = await get(ref(database, "users/" + currentUser.uid + "/refBookProblemImages/" + problemId));
                     if (snap.exists()) images = snap.val().images || [];
-                } catch (e) { /* 画像なしでも続行 */ }
+                } catch (e) { /* noop */ }
                 problemImagesCache[problemId] = images;
             }
 
-            // 表示中の問題が切り替わっていないか確認（非同期取得中の競合防止）
             if (currentQuizList[currentQuizIndex] !== problemId) return;
             if (images.length === 0) return;
 
@@ -874,7 +909,6 @@
             renderQuizCard();
         });
 
-        // 「わからなかった → 誤答ノートへ」
         document.getElementById("quiz-dunno-btn").addEventListener("click", async () => {
             const pid = currentQuizList[currentQuizIndex];
             await sendToMistakeNotebook(pid);
@@ -892,7 +926,7 @@
                 try {
                     const imgSnap = await get(ref(database, "users/" + currentUser.uid + "/refBookProblemImages/" + problemId));
                     if (imgSnap.exists()) images = imgSnap.val().images || [];
-                } catch (e) { /* 画像なしでも続行 */ }
+                } catch (e) { /* noop */ }
 
                 let thumb = null;
                 if (images.length > 0) {
@@ -940,7 +974,7 @@
         // ----------------------------------------------------------------
         // 編集モーダル
         // ----------------------------------------------------------------
-        let editAnswerGeneratedFlag = false; // 現在編集中の解答が「AIが作成したもの」かどうか
+        let editAnswerGeneratedFlag = false;
 
         async function openEditModal(problemId) {
             const p = problemsCache[problemId];
@@ -954,7 +988,6 @@
             editAnswerGeneratedFlag = !!p.answerGenerated;
             document.getElementById("edit-modal").style.display = "flex";
 
-            // 登録済みの元写真をプレビュー表示（あれば）
             const previewRow = document.getElementById("edit-figure-preview-row");
             const previewStrip = document.getElementById("edit-figure-preview");
             previewRow.style.display = "none";
@@ -965,7 +998,7 @@
                 try {
                     const snap = await get(ref(database, "users/" + currentUser.uid + "/refBookProblemImages/" + problemId));
                     if (snap.exists()) images = snap.val().images || [];
-                } catch (e) { /* 画像なしでも続行 */ }
+                } catch (e) { /* noop */ }
                 problemImagesCache[problemId] = images;
             }
             if (images.length > 0 && editingProblemId === problemId) {
@@ -988,7 +1021,6 @@
             if (e.target.id === "edit-modal") document.getElementById("edit-modal").style.display = "none";
         });
 
-        // 🤖 登録済みの問題に対して、後からAIに解答・解説を作らせる
         const REFBOOK_ANSWER_SCHEMA = {
             type: "OBJECT",
             properties: {
@@ -1035,7 +1067,6 @@
             }
         });
 
-        // 解答・解説を手動で編集したら「AI作成」フラグを外す
         ["edit-answer-input", "edit-explanation-input"].forEach(id => {
             document.getElementById(id).addEventListener("input", () => { editAnswerGeneratedFlag = false; });
         });
@@ -1074,7 +1105,7 @@
         });
 
         // ----------------------------------------------------------------
-        // 登録モーダル
+        // 📸 登録モーダル & 🗂️ リクエスト枠UI
         // ----------------------------------------------------------------
         function renderUnitSelectOptions() {
             const select = document.getElementById("register-unit-select");
@@ -1101,9 +1132,10 @@
         }
 
         function resetRegisterModal() {
-            pendingImages = [];
+            chunkGroups = [{ id: "chunk_1", images: [] }];
+            nextChunkId = 2;
             pendingExtracted = [];
-            document.getElementById("register-photo-preview").innerHTML = "";
+            renderChunkGroups();
             document.getElementById("extracted-items-container").innerHTML = "";
             document.getElementById("save-extracted-btn").style.display = "none";
             document.getElementById("unit-new-row").style.display = "none";
@@ -1137,34 +1169,96 @@
             showToast("単元を作成しました。", "info");
         });
 
-        document.getElementById("register-image-trigger-btn").addEventListener("click", () => {
-            document.getElementById("register-image-input").click();
-        });
-        document.getElementById("register-image-input").addEventListener("change", async (e) => {
-            const files = Array.from(e.target.files || []);
-            for (const file of files) {
-                try { pendingImages.push(await compressImageForOcr(file)); }
-                catch (err) { console.error("画像読み込み失敗:", err); }
-            }
-            renderPendingImagePreview();
-            e.target.value = "";
-        });
+        // 🗂️ リクエスト枠のレンダリング
+        function renderChunkGroups() {
+            const container = document.getElementById("chunk-groups-container");
+            if (!container) return;
 
-        function renderPendingImagePreview() {
-            const container = document.getElementById("register-photo-preview");
-            container.innerHTML = pendingImages.map((img, i) => `
-                <div class="photo-thumb">
-                    <img src="${img.dataUrl}">
-                    <div class="photo-thumb-remove" data-remove-pending-img="${i}">×</div>
-                </div>
-            `).join("");
-            container.querySelectorAll("[data-remove-pending-img]").forEach(btn => {
+            container.innerHTML = chunkGroups.map((group, gIdx) => {
+                const count = group.images.length;
+                const countBadge = count > 0 ? `(${count} / 3枚 推奨)` : "(0枚・写真を追加してください)";
+                const canDelete = chunkGroups.length > 1;
+
+                const thumbsHtml = group.images.map((img, iIdx) => `
+                    <div class="photo-thumb">
+                        <img src="${img.dataUrl}" data-preview-chunk="${gIdx}" data-preview-img="${iIdx}" style="cursor: zoom-in;">
+                        <div class="photo-thumb-remove" data-remove-chunk="${gIdx}" data-remove-img="${iIdx}" title="この写真を削除">×</div>
+                    </div>
+                `).join("");
+
+                return `
+                    <div class="chunk-card" data-chunk-idx="${gIdx}">
+                        <div class="chunk-card-head">
+                            <div class="chunk-card-title">
+                                <span>🗂️ リクエスト #${gIdx + 1}</span>
+                                <span class="chunk-card-badge">${countBadge}</span>
+                            </div>
+                            ${canDelete ? `<button type="button" class="chunk-delete-btn" data-delete-chunk="${gIdx}">🗑 枠を削除</button>` : ""}
+                        </div>
+                        <div class="chunk-thumbs-row">
+                            ${thumbsHtml}
+                            <label class="chunk-add-photo-btn" title="このリクエスト枠に写真を追加">
+                                <span style="font-size: 1.1rem; line-height: 1;">＋</span>
+                                <span>写真追加</span>
+                                <input type="file" accept="image/*" multiple data-file-chunk="${gIdx}" style="display:none;">
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            // 写真プレビュー（拡大）
+            container.querySelectorAll("[data-preview-chunk]").forEach(imgEl => {
+                imgEl.addEventListener("click", () => {
+                    const gIdx = parseInt(imgEl.getAttribute("data-preview-chunk"), 10);
+                    const iIdx = parseInt(imgEl.getAttribute("data-preview-img"), 10);
+                    openLightbox(chunkGroups[gIdx].images[iIdx].dataUrl);
+                });
+            });
+
+            // 写真の個別削除
+            container.querySelectorAll("[data-remove-chunk]").forEach(btn => {
                 btn.addEventListener("click", () => {
-                    pendingImages.splice(parseInt(btn.getAttribute("data-remove-pending-img"), 10), 1);
-                    renderPendingImagePreview();
+                    const gIdx = parseInt(btn.getAttribute("data-remove-chunk"), 10);
+                    const iIdx = parseInt(btn.getAttribute("data-remove-img"), 10);
+                    chunkGroups[gIdx].images.splice(iIdx, 1);
+                    renderChunkGroups();
+                });
+            });
+
+            // リクエスト枠の削除
+            container.querySelectorAll("[data-delete-chunk]").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const gIdx = parseInt(btn.getAttribute("data-delete-chunk"), 10);
+                    chunkGroups.splice(gIdx, 1);
+                    renderChunkGroups();
+                });
+            });
+
+            // 写真ファイル選択ハンドラ
+            container.querySelectorAll("[data-file-chunk]").forEach(input => {
+                input.addEventListener("change", async (e) => {
+                    const gIdx = parseInt(input.getAttribute("data-file-chunk"), 10);
+                    const files = Array.from(e.target.files || []);
+                    for (const file of files) {
+                        try {
+                            const img = await compressImageForOcr(file);
+                            chunkGroups[gIdx].images.push(img);
+                        } catch (err) {
+                            console.error("画像読み込み失敗:", err);
+                        }
+                    }
+                    renderChunkGroups();
+                    e.target.value = "";
                 });
             });
         }
+
+        // 「＋ 新しいリクエスト枠を追加」
+        document.getElementById("add-chunk-btn").addEventListener("click", () => {
+            chunkGroups.push({ id: "chunk_" + (nextChunkId++), images: [] });
+            renderChunkGroups();
+        });
 
         const REFBOOK_EXTRACT_SCHEMA = {
             type: "OBJECT",
@@ -1214,29 +1308,68 @@
 出力は指定のJSON構造のみとし、他の説明文は一切含めないこと。
 `.trim();
 
+        function buildExtractParts(imageChunk, totalChunks) {
+            const parts = [{ text: "このページに写っている問題をすべて指定のJSONで抽出してください。" }];
+            imageChunk.forEach(img => {
+                parts.push({ inlineData: { mimeType: img.mimeType, data: img.base64 } });
+            });
+            if (imageChunk.length > 1) {
+                parts[0].text += `\n\n写真は${imageChunk.length}枚あります。同じページの別カット、または問題ページと解答ページの組み合わせである可能性があります。すべての画像の情報を統合して抽出してください。`;
+            }
+            if (totalChunks > 1) {
+                parts[0].text += `\n\nこれは参考書の一部のページ群です。他にも別の写真グループが並行して処理されているため、ここに写っていない問題については触れず、この画像群だけで完結する範囲で抽出してください。`;
+            }
+            return parts;
+        }
+
+        // ✨ AIで問題を読み取る（有効なリクエスト枠を並列実行）
         document.getElementById("run-extract-btn").addEventListener("click", async () => {
-            if (pendingImages.length === 0) {
-                showToast("写真を選択してください。", "error");
+            const validChunks = chunkGroups.map(g => g.images).filter(imgs => imgs.length > 0);
+            if (validChunks.length === 0) {
+                showToast("写真を1枚以上追加してください。", "error");
                 return;
             }
             const btn = document.getElementById("run-extract-btn");
             btn.disabled = true;
-            btn.textContent = "Gemini Visionが読み取り中...";
+
+            btn.textContent = validChunks.length > 1
+                ? `Gemini Visionが読み取り中...（${validChunks.length}件に分割して並列処理）`
+                : "Gemini Visionが読み取り中...";
 
             try {
-                const parts = [{ text: "このページに写っている問題をすべて指定のJSONで抽出してください。" }];
-                pendingImages.forEach(img => {
-                    parts.push({ inlineData: { mimeType: img.mimeType, data: img.base64 } });
-                });
-                if (pendingImages.length > 1) {
-                    parts[0].text += `\n\n写真は${pendingImages.length}枚あります。同じページの別カット、または問題ページと解答ページの組み合わせである可能性があります。すべての画像の情報を統合して抽出してください。`;
-                }
+                const effectiveKeyCount = Math.max(1, getEffectiveGeminiKeys("refbook_extract").length);
+                const CHUNK_STAGGER_MS = 400;
 
-                const aiResult = await callGeminiJSON(parts, REFBOOK_EXTRACT_PROMPT, {
-                    temperature: 0.2, responseSchema: REFBOOK_EXTRACT_SCHEMA, featureId: "refbook_extract"
+                const results = await Promise.allSettled(
+                    validChunks.map((chunk, idx) => {
+                        const wave = Math.floor(idx / effectiveKeyCount);
+                        const fire = () => callGeminiJSON(buildExtractParts(chunk, validChunks.length), REFBOOK_EXTRACT_PROMPT, {
+                            temperature: 0.2, responseSchema: REFBOOK_EXTRACT_SCHEMA, featureId: "refbook_extract",
+                            keyOffset: idx
+                        });
+                        if (wave === 0) return fire();
+                        return new Promise(resolve => setTimeout(resolve, wave * CHUNK_STAGGER_MS)).then(fire);
+                    })
+                );
+
+                const mergedProblems = [];
+                let unitLabelGuess = "";
+                let failedCount = 0;
+                let lastError = null;
+
+                results.forEach(r => {
+                    if (r.status === "fulfilled") {
+                        const problems = r.value?.problems || [];
+                        mergedProblems.push(...problems);
+                        if (!unitLabelGuess && r.value?.unitLabelGuess) unitLabelGuess = r.value.unitLabelGuess;
+                    } else {
+                        failedCount++;
+                        lastError = r.reason;
+                        console.error("AI読み取りエラー（一部チャンク）:", r.reason);
+                    }
                 });
 
-                pendingExtracted = (aiResult.problems || []).map(p => ({
+                pendingExtracted = mergedProblems.map(p => ({
                     number: p.number || "",
                     type: p.type || "",
                     question: p.question || "",
@@ -1248,14 +1381,18 @@
                 }));
 
                 if (pendingExtracted.length === 0) {
-                    showToast("問題を読み取れませんでした。写真を変えて再度お試しください。", "error");
+                    const reason = lastError ? `\n\n【原因】${lastError.message}` : "";
+                    showToast("問題を読み取れませんでした。写真を変えて再度お試しください。" + reason, "error", 8000);
                 } else {
-                    if (aiResult.unitLabelGuess && !document.getElementById("new-unit-name-input").value) {
-                        document.getElementById("new-unit-name-input").value = aiResult.unitLabelGuess;
+                    if (unitLabelGuess && !document.getElementById("new-unit-name-input").value) {
+                        document.getElementById("new-unit-name-input").value = unitLabelGuess;
                     }
                     renderExtractedItems();
                     document.getElementById("save-extracted-btn").style.display = "inline-flex";
-                    showToast(`${pendingExtracted.length}問読み取りました。内容を確認して登録してください。`, "info");
+                    const partialNote = failedCount > 0
+                        ? `（${validChunks.length}件中${failedCount}件は読み取りに失敗しました。不足分は写真を分けて再登録してください）`
+                        : "";
+                    showToast(`${pendingExtracted.length}問読み取りました。内容を確認して登録してください。${partialNote}`, failedCount > 0 ? "error" : "info", failedCount > 0 ? 8000 : undefined);
                 }
             } catch (error) {
                 console.error("AI読み取りエラー:", error);
@@ -1266,15 +1403,39 @@
             }
         });
 
+        function circledToDigit(str) {
+            return String(str || "").replace(/[\u2460-\u2473]/g, ch => String(ch.codePointAt(0) - 0x2460 + 1));
+        }
+        function extractLeadingNumber(str) {
+            const m = circledToDigit(str).match(/\d+/);
+            return m ? parseInt(m[0], 10) : Number.POSITIVE_INFINITY;
+        }
+        function sortExtractedByNumber(items) {
+            return [...items].sort((a, b) => extractLeadingNumber(a.number) - extractLeadingNumber(b.number));
+        }
+
         function renderExtractedItems() {
             const container = document.getElementById("extracted-items-container");
-            container.innerHTML = pendingExtracted.map((item, i) => `
+            if (pendingExtracted.length === 0) {
+                container.innerHTML = "";
+                return;
+            }
+            const toolbar = `
+                <div class="extracted-items-toolbar">
+                    <button type="button" class="tactile-btn tactile-btn-secondary" id="sort-extracted-btn" style="padding:0.5rem 1rem; font-size:0.78rem;">🔢 問題番号順に並び替え</button>
+                </div>
+            `;
+            container.innerHTML = toolbar + pendingExtracted.map((item, i) => `
                 <div class="extracted-item" data-idx="${i}">
                     <div class="extracted-item-head">
                         <label class="extracted-item-toggle">
                             <input type="checkbox" data-field="include" ${item.include ? "checked" : ""}> 登録する
                         </label>
-                        <span style="color:var(--text-muted); font-size:0.75rem;">読み取り結果 #${i + 1}（内容はこの下で修正できます）</span>
+                        <span class="extracted-item-head-label">読み取り結果 #${i + 1}（内容はこの下で修正できます）</span>
+                        <div class="extracted-item-move">
+                            <button type="button" class="extracted-move-btn" data-move="up" ${i === 0 ? "disabled" : ""} title="1つ上へ移動">▲</button>
+                            <button type="button" class="extracted-move-btn" data-move="down" ${i === pendingExtracted.length - 1 ? "disabled" : ""} title="1つ下へ移動">▼</button>
+                        </div>
                     </div>
                     <div class="rb-inline-row rb-form-row">
                         <div>
@@ -1311,10 +1472,27 @@
                     const eventName = fieldEl.type === "checkbox" ? "change" : "input";
                     fieldEl.addEventListener(eventName, () => {
                         pendingExtracted[idx][field] = fieldEl.type === "checkbox" ? fieldEl.checked : fieldEl.value;
-                        if (field === "answer") pendingExtracted[idx].answerGenerated = false; // 手動修正したらAI作成フラグは外す
+                        if (field === "answer") pendingExtracted[idx].answerGenerated = false;
+                    });
+                });
+                itemEl.querySelectorAll("[data-move]").forEach(moveBtn => {
+                    moveBtn.addEventListener("click", () => {
+                        const targetIdx = moveBtn.getAttribute("data-move") === "up" ? idx - 1 : idx + 1;
+                        if (targetIdx < 0 || targetIdx >= pendingExtracted.length) return;
+                        [pendingExtracted[idx], pendingExtracted[targetIdx]] = [pendingExtracted[targetIdx], pendingExtracted[idx]];
+                        renderExtractedItems();
                     });
                 });
             });
+
+            const sortBtn = document.getElementById("sort-extracted-btn");
+            if (sortBtn) {
+                sortBtn.addEventListener("click", () => {
+                    pendingExtracted = sortExtractedByNumber(pendingExtracted);
+                    renderExtractedItems();
+                    showToast("問題番号順に並び替えました。内容を確認してください。", "info");
+                });
+            }
         }
 
         function escapeAttr(str) { return escapeHtml(str).replace(/"/g, "&quot;"); }
@@ -1331,7 +1509,7 @@
             btn.textContent = "登録中...";
 
             try {
-                const imagesToStore = pendingImages.map(img => img.dataUrl);
+                const imagesToStore = chunkGroups.flatMap(g => g.images).map(img => img.dataUrl);
                 let i = 0;
                 for (const item of toSave) {
                     const newId = "RB_" + Date.now() + "_" + (i++);
