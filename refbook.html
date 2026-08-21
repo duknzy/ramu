@@ -31,7 +31,7 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 
     <style>
-        .refbook-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.6rem; padding-bottom: 5rem; }
+        .refbook-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.6rem; padding-bottom: 5.5rem; }
 
         header.rb-header {
             display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;
@@ -260,6 +260,7 @@
 <body>
 
     <div class="refbook-container">
+        <!-- スマホ用ヘッダー -->
         <header class="m-mobile-header">
             <a href="index.html" class="m-back-btn" aria-label="誤答ノートに戻る">‹</a>
             <div class="m-mobile-header-title">📚 参考書 一問一答</div>
@@ -292,7 +293,7 @@
                 <a href="#" class="back-link" id="back-to-units-link">← 単元一覧に戻る</a>
                 <div style="display:flex; gap:0.6rem;">
                     <span class="badge badge-math" id="unit-detail-title-badge">単元名</span>
-                    <button type="button" class="tactile-btn tactile-btn-secondary" id="unit-add-problem-btn">＋ この単元に追加登録</button>
+                    <button type="button" class="tactile-btn tactile-btn-secondary" id="unit-add-problem-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">＋ この単元に追加登録</button>
                 </div>
             </div>
 
@@ -311,8 +312,8 @@
                             <span class="mini-badge mini-badge-figure" id="quiz-figure-badge" style="display:none;">🖼️ 図あり</span>
                         </div>
                         <div class="quiz-card-actions">
-                            <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-edit-btn">✏️ 編集</button>
-                            <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-delete-btn">🗑 削除</button>
+                            <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-edit-btn" style="padding:0.4rem 0.8rem; font-size:0.75rem;">✏️ 編集</button>
+                            <button type="button" class="tactile-btn tactile-btn-secondary" id="quiz-delete-btn" style="padding:0.4rem 0.8rem; font-size:0.75rem; color: var(--accent-magenta); border-color: var(--accent-magenta);">🗑 削除</button>
                         </div>
                     </div>
 
@@ -515,10 +516,9 @@
 
         let pendingExtracted = []; // AI読み取り結果のプレビュー行 {number,type,question,hasFigure,answer,explanation,answerGenerated,include}
 
-        let problemImagesCache = {}; // problemId -> [dataUrl, ...]（一度取得した元写真をキャッシュ）
-        let scratchMemos = {}; // problemId -> 自分用メモ（保存しない・ページを閉じたら消える一時メモ）
+        let problemImagesCache = {}; // problemId -> [dataUrl, ...]
+        let scratchMemos = {}; // problemId -> 自分用メモ
 
-        // "data:image/jpeg;base64,xxxx" 形式のURLをGemini用 {mimeType, data} に分解
         function dataUrlToInlineData(dataUrl) {
             const m = /^data:([^;]+);base64,(.*)$/s.exec(dataUrl || "");
             if (!m) return null;
@@ -536,7 +536,7 @@
         let editingProblemId = null;
 
         // ----------------------------------------------------------------
-        // 画像圧縮（OCR精度を優先して長辺1600px・品質0.85で保持）
+        // 画像圧縮（OCR精度優先：長辺1600px / JPEG 0.85）
         // ----------------------------------------------------------------
         function compressImageForOcr(file) {
             return new Promise((resolve, reject) => {
@@ -919,7 +919,7 @@
             if (!p || !currentUser) return;
             const btn = document.getElementById("quiz-dunno-btn");
             btn.disabled = true;
-            btn.textContent = "誤答ノートに送信中...";
+            btn.textContent = "📝 誤答ノートに記録中...";
             try {
                 const unit = unitsCache[p.unitId] || {};
                 let images = [];
@@ -962,7 +962,14 @@
                     await set(ref(database, "users/" + currentUser.uid + "/problemImages/" + newId), { images });
                 }
 
-                location.href = "problem.html?id=" + newId;
+                // ✅ ページ遷移せず、誤答ノート登録完了のトーストを表示して参考書に留まる
+                showToast("✅ 誤答ノートに記録しました！引き続き参考書の問題を解きましょう。", "info", 4000);
+                btn.disabled = false;
+                btn.textContent = "❌ わからなかった → 誤答ノートへ";
+
+                // 次の問題へ自動で進む
+                currentQuizIndex++;
+                renderQuizCard();
             } catch (error) {
                 console.error("誤答ノートへの送信に失敗:", error);
                 showToast("誤答ノートへの登録に失敗しました。", "error");
@@ -1029,11 +1036,22 @@
             },
             required: ["answer", "explanation"]
         };
-        const REFBOOK_ANSWER_PROMPT = `
-あなたは高校生向け参考書の「解答作成AI」です。与えられた問題文（写真が添付されている場合は、図・グラフ・表などもよく確認すること）に対して、正しいと考えられる解答と、解答に至る考え方を高校生にわかりやすく説明する解説を作成してください。
-数式・化学式・記号を含む場合は、$ $ で囲んだLaTeX形式で表現すること（例：$H_2O$、$x^2+1$）。
-出力は指定のJSON構造のみとし、他の説明文は一切含めないこと。
-`.trim();
+
+        // 📚 教科別の解答生成プロンプト
+        const REFBOOK_SUBJECT_ANSWER_PROMPTS = {
+            "数学": `あなたは高校数学の「解答作成AI」です。与えられた問題文（写真が添付されている場合は図・グラフ・表も確認すること）に対して、正しい解答と高校生にわかりやすい解説を作成してください。数式・変数（x, y, a など）は必ず $ $ で囲んだLaTeX形式で表現すること（例：$x^2+1$、$\\sin\\theta$）。解説は手順ごとに改行し箇条書きで出力すること。出力はJSONのみ。`.trim(),
+            "物理": `あなたは高校物理の「解答作成AI」です。与えられた問題文（写真が添付されている場合は図・グラフ・表も確認すること）に対して、正しい解答と高校生にわかりやすい解説を作成してください。数式・単位・物理量（m, v, g, F など）は必ず $ $ で囲んだLaTeX形式で表現すること（例：$F=ma$、$v^2-v_0^2=2ax$）。解説は手順ごとに改行し箇条書きで出力すること。出力はJSONのみ。`.trim(),
+            "化学": `あなたは高校化学の「解答作成AI」です。与えられた問題文（写真が添付されている場合は図・グラフ・表も確認すること）に対して、正しい解答と高校生にわかりやすい解説を作成してください。化学式・化学反応式・数値は必ず $ $ で囲んだLaTeX形式で表現すること（例：$H_2O$、$2H_2+O_2\\rightarrow 2H_2O$）。解説は手順ごとに改行し箇条書きで出力すること。出力はJSONのみ。`.trim(),
+            "英語": `あなたは高校英語の「解答作成AI」です。与えられた問題文（写真が添付されている場合は必ず参照すること）に対して、正しい解答と高校生にわかりやすい日本語の解説を作成してください。数式のLaTeX記法（$記号など）は一切使用しないこと。英文はそのまま英語表記で、解説は日本語で書くこと。出力はJSONのみ。`.trim(),
+            "国語": `あなたは高校国語（現代文・古文・漢文）の「解答作成AI」です。与えられた問題文（写真が添付されている場合は必ず参照すること）に対して、正しい解答と高校生にわかりやすい解説を作成してください。数式のLaTeX記法は一切使用しないこと。古文・漢文の場合は現代語訳や文法の説明も含めること。出力はJSONのみ。`.trim(),
+            "世界史": `あなたは高校世界史の「解答作成AI」です。与えられた問題文（写真が添付されている場合は必ず参照すること）に対して、正しい解答と高校生にわかりやすい解説を作成してください。数式のLaTeX記法は一切使用しないこと。重要な出来事には西暦年を明記し、因果関係や時代背景も含めて解説すること。出力はJSONのみ。`.trim(),
+            "地歴公民": `あなたは高校地理・公民の「解答作成AI」です。与えられた問題文（写真が添付されている場合は必ず参照すること）に対して、正しい解答と高校生にわかりやすい解説を作成してください。数式のLaTeX記法は一切使用しないこと。用語・制度名は正確に使い、根拠とともに解説すること。出力はJSONのみ。`.trim(),
+        };
+        const REFBOOK_ANSWER_PROMPT_DEFAULT = `あなたは高校生向け参考書の「解答作成AI」です。与えられた問題文（写真が添付されている場合は、図・グラフ・表などもよく確認すること）に対して、正しいと考えられる解答と、解答に至る考え方を高校生にわかりやすく説明する解説を作成してください。数式・化学式・記号を含む場合は、$ $ で囲んだLaTeX形式で表現すること（例：$H_2O$、$x^2+1$）。英語・国語・世界史・地歴公民の問題ではLaTeX記法は不要です。解説は手順ごとに改行し箇条書きで出力すること。出力は指定のJSON構造のみとし、他の説明文は一切含めないこと。`.trim();
+
+        function getRefbookAnswerPrompt(subject) {
+            return REFBOOK_SUBJECT_ANSWER_PROMPTS[subject] || REFBOOK_ANSWER_PROMPT_DEFAULT;
+        }
 
         document.getElementById("edit-ai-generate-btn").addEventListener("click", async () => {
             const question = document.getElementById("edit-question-input").value.trim();
@@ -1051,7 +1069,12 @@
                 if (images.length > 0) {
                     parts.push({ text: "上記の写真はこの問題が載っている参考書のページです。図・グラフ・表がある場合は参考にしてください。" });
                 }
-                const result = await callGeminiJSON(parts, REFBOOK_ANSWER_PROMPT, {
+                // 編集中の問題が属する単元の教科を取得してプロンプトを切り替える
+                const editingProblem = problemsCache[editingProblemId];
+                const editingUnit = editingProblem ? (unitsCache[editingProblem.unitId] || {}) : {};
+                const subjectForPrompt = editingUnit.subject || "";
+                const answerPrompt = getRefbookAnswerPrompt(subjectForPrompt);
+                const result = await callGeminiJSON(parts, answerPrompt, {
                     temperature: 0.3, responseSchema: REFBOOK_ANSWER_SCHEMA, featureId: "refbook_answer_generate"
                 });
                 document.getElementById("edit-answer-input").value = result.answer || "";
@@ -1552,6 +1575,7 @@
         }
     </script>
 
+    <!-- スマホ用ボトムナビゲーション -->
     <nav class="m-tabbar">
         <a href="index.html" class="m-tab"><span class="m-tab-icon">🧠</span>誤答ノート</a>
         <a href="lesson.html" class="m-tab"><span class="m-tab-icon">📖</span>授業</a>
